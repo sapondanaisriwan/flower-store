@@ -1,21 +1,43 @@
 ## 1. Clone repository
+
 ```bash
 git clone https://github.com/sapondanaisriwan/flower-store.git
+cd flower-store
+
 ```
 
-## 2. ติดตั้ง Composer Dependencies ชั่วคราว:
+## 1.1 กำหนดชื่อและอีเมล Git สำหรับ Commit ขึ้น GitHub
+```
+git config --global user.name "Your Name"
+
+# ใช้ email ที่ลงชื่อเข้าใช้ github
+git config --global user.email "your_email@example.com" 
+```
+
+## 2. ติดตั้ง Composer Dependencies ชั่วคราว
+
+รัน Composer ผ่าน Docker เพื่อดึง Sail และ dependencies เข้ามาก่อนเริ่มรัน container:
+
 ```bash
 cd flower-store
-docker run --rm -u "$(id -u):$(id -g)" -v "$(pwd):/var/www/html" -w /var/www/html laravelsail/php84-composer:latest composer install --ignore-platform-reqs
+
+docker run --rm -u "$(id -u):$(id -g)" \
+  -v "$(pwd):/var/www/html" -w /var/www/html \
+  laravelsail/php84-composer:latest \
+  composer install --ignore-platform-reqs
+
 ```
 
-## 3. สร้าง ไฟล์ .env และ copy ข้อความด้านล่างวางในไฟล์ .env
-```bash
+## 3. สร้างไฟล์ .env
+
+คัดลอกข้อความด้านล่างไปวางในไฟล์ `.env`:
+
+```env
 APP_NAME=Laravel
 APP_ENV=local
 APP_KEY=base64:xKP4LTbfR8wekg8uJFikxn4F6h69dZIhzZGbYuFZBww=
 APP_DEBUG=true
-APP_URL=http://localhost:8000
+APP_URL=http://localhost
 
 APP_LOCALE=en
 APP_FALLBACK_LOCALE=en
@@ -76,16 +98,50 @@ AWS_BUCKET=
 AWS_USE_PATH_STYLE_ENDPOINT=false
 
 VITE_APP_NAME="${APP_NAME}"
+
 ```
 
-## 5. รันระบบ Sail และ Migrate Database:
+## 4. การตั้งค่าคำสั่ง sail ให้สั้นลง (ทำครั้งเดียว)
+
+หากใช้ **Bash** (Linux / WSL):
+
 ```bash
-   ./vendor/bin/sail up -d
-   ./vendor/bin/sail artisan migrate
+echo "alias sail='[ -f sail ] && sh sail || ./vendor/bin/sail'" >> ~/.bashrc
+source ~/.bashrc
+
 ```
 
-6. ติดตั้ง Node Packages และเปิดหน้าเว็บ:
+หากใช้ **macOS** (Zsh):
+
 ```bash
-   ./vendor/bin/sail npm install
-   ./vendor/bin/sail npm run dev
+echo "alias sail='[ -f sail ] && sh sail || ./vendor/bin/sail'" >> ~/.zshrc
+source ~/.zshrc
+
 ```
+
+## 5. รันระบบ Sail และ Migrate Database
+
+```bash
+sail up -d
+sail artisan migrate
+
+```
+
+## 6. ติดตั้ง Node Packages และเปิดหน้าเว็บ
+
+```bash
+sail npm install
+sail npm run dev
+
+```
+
+เข้าใช้งานเว็บไซต์ผ่านเบราว์เซอร์ได้ที่: [http://localhost](http://localhost)
+
+## 7. การเชื่อม DBeaver
+
+- Port ใช้ `3333`
+- Username ใช้ `admin`
+- Password ใช้ `admin`
+
+<img width="783" height="525" alt="05-10-2026-14-15-39" src="https://github.com/user-attachments/assets/7c8af968-fc85-4e87-8759-133d4b0b24ed" />
+
