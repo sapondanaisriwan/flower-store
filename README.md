@@ -19,8 +19,6 @@ git config --global user.email "your_email@example.com"
 รัน Composer ผ่าน Docker เพื่อดึง Sail และ dependencies เข้ามาก่อนเริ่มรัน container:
 
 ```bash
-cd flower-store
-
 docker run --rm -u "$(id -u):$(id -g)" \
   -v "$(pwd):/var/www/html" -w /var/www/html \
   laravelsail/php84-composer:latest \
