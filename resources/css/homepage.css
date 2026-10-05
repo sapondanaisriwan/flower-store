@@ -1,0 +1,897 @@
+/* LINE Seed Sans TH by LY Corporation. https://seed.line.me/index_th.html
+   SIL Open Font License: /fonts/line-seed/OFL.txt */
+@font-face {
+    font-family: 'LINE Seed Sans TH';
+    src: url('/fonts/line-seed/LINESeedSansTH_W_Rg.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'LINE Seed Sans TH';
+    src: url('/fonts/line-seed/LINESeedSansTH_W_Bd.woff2') format('woff2');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+/* Floral 60/30/10: petal ivory surfaces, dusty rose sections, leaf green actions.
+   Dialogs render in a portal, so they receive the same palette explicitly. */
+.flower-home,
+.flower-dialog {
+    --cream: #fff9f6;
+    --rose: #eed8dc;
+    --rose-soft: #f7e9ec;
+    --accent: #365b45;
+    --accent-hover: #284635;
+    --ink: #3f3839;
+    --muted: #716267;
+    --border: #dbc3ca;
+    --on-accent: #fffdf9;
+}
+.flower-home {
+    background: var(--cream);
+    color: var(--ink);
+    font-family: 'LINE Seed Sans TH', Tahoma, sans-serif;
+    font-size: 14px;
+    line-height: 1.7;
+}
+.flower-home * {
+    box-sizing: border-box;
+}
+.flower-home button,
+.flower-home a {
+    -webkit-tap-highlight-color: transparent;
+}
+.flower-home button {
+    cursor: pointer;
+}
+.flower-home a {
+    text-decoration: none;
+}
+.flower-home :is(a, button, input):focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 5px;
+}
+.flower-container {
+    width: min(1200px, calc(100% - 80px));
+    margin-inline: auto;
+}
+.flower-announcement {
+    min-height: 34px;
+    background: var(--accent);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-size: 11px;
+    letter-spacing: 0.3px;
+}
+.flower-announcement span {
+    margin-left: 26px;
+    color: #e3ebe4;
+    font-size: 9px;
+    letter-spacing: 2px;
+}
+.flower-header {
+    background: var(--cream);
+    position: relative;
+    z-index: 10;
+}
+.flower-header-main {
+    height: 96px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 36px;
+}
+.flower-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--ink);
+    line-height: 1.1;
+    font-size: 21px;
+    letter-spacing: 1px;
+    flex-shrink: 0;
+}
+.flower-brand svg {
+    color: var(--accent);
+}
+.flower-brand-bottom {
+    display: block;
+    font-size: 12px;
+    letter-spacing: 3px;
+    margin-top: 7px;
+}
+.flower-brand-bottom i {
+    font-style: normal;
+    color: var(--accent);
+}
+.flower-search {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 340px;
+    border-bottom: 1px solid var(--border);
+    padding: 10px 0;
+    color: var(--muted);
+}
+.flower-search input {
+    background: transparent;
+    min-width: 0;
+    width: 100%;
+    outline: none;
+    font-size: 12px;
+    color: var(--ink);
+}
+.flower-search button {
+    display: flex;
+}
+.flower-account-actions {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+.flower-account {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid var(--border);
+    border-radius: 30px;
+    padding: 9px 17px;
+    font-size: 12px;
+}
+.flower-icon {
+    display: grid;
+    place-items: center;
+    min-height: 44px;
+    min-width: 32px;
+}
+.flower-menu {
+    display: none;
+}
+.flower-nav {
+    background: var(--rose-soft);
+    display: flex;
+    justify-content: center;
+    gap: 48px;
+    border-top: 1px solid var(--rose-soft);
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+}
+.flower-nav a {
+    padding: 13px 0;
+    position: relative;
+}
+.flower-nav a.active:after {
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    content: '';
+    height: 2px;
+    background: var(--accent);
+}
+.flower-hero {
+    position: relative;
+    min-height: 570px;
+    overflow: hidden;
+    background: var(--rose);
+}
+.flower-hero-image {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+}
+.flower-hero-shade {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        90deg,
+        rgba(238, 216, 220, 0.98),
+        rgba(238, 216, 220, 0.82) 35%,
+        transparent 63%
+    );
+}
+.flower-hero-content {
+    position: relative;
+    padding-block: 65px 62px;
+}
+.flower-eyebrow {
+    font-size: 10px;
+    letter-spacing: 2.3px;
+    font-weight: 400;
+    color: var(--muted);
+}
+.flower-hero .flower-eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 23px;
+}
+.flower-eyebrow span {
+    height: 1px;
+    width: 25px;
+    background: var(--accent);
+}
+.flower-hero-intro {
+    font-size: 19px;
+    margin-bottom: 10px;
+}
+.flower-hero h1 {
+    font-size: clamp(42px, 4.4vw, 66px);
+    font-weight: 700;
+    line-height: 1.35;
+    letter-spacing: -1.8px;
+    margin: 0 0 20px;
+}
+.flower-hero h1 span {
+    color: var(--accent);
+    margin-left: 10px;
+}
+.flower-hero-description {
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.9;
+    margin-bottom: 26px;
+}
+.flower-cta {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    gap: 25px;
+    min-height: 48px;
+    background: var(--accent);
+    border-radius: 28px;
+    padding: 12px 25px;
+    color: var(--on-accent);
+    font-size: 14px;
+    font-weight: 400;
+    transition:
+        background 0.2s,
+        transform 0.2s;
+}
+.flower-cta:hover {
+    background: var(--accent-hover);
+    transform: translateY(-2px);
+}
+.flower-hero-note {
+    margin-top: 20px;
+    font-size: 10px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+.flower-hero-note span {
+    height: 5px;
+    width: 5px;
+    border-radius: 50%;
+    background: var(--accent);
+}
+.flower-hero-caption {
+    position: absolute;
+    right: 5%;
+    bottom: 35px;
+    font-family: 'LINE Seed Sans TH', Tahoma, sans-serif;
+    font-size: 18px;
+    line-height: 1.4;
+    color: var(--ink);
+    text-align: right;
+}
+.flower-scroll {
+    position: absolute;
+    bottom: 22px;
+    left: 50%;
+    border: 1px solid var(--accent);
+    border-radius: 50%;
+    width: 32px;
+    height: 42px;
+    display: grid;
+    place-items: center;
+    color: var(--accent);
+}
+.flower-benefits {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    padding-block: 27px;
+    border-bottom: 1px solid var(--border);
+}
+.flower-benefits > div {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    border-right: 1px solid var(--border);
+}
+.flower-benefits > div:last-child {
+    border: 0;
+}
+.flower-benefits svg {
+    color: var(--accent);
+    width: 27px;
+    height: 27px;
+    stroke-width: 1.2;
+}
+.flower-benefits strong {
+    display: block;
+    font-size: 13px;
+    font-weight: 400;
+}
+.flower-benefits small {
+    font-size: 11px;
+    color: var(--muted);
+}
+.flower-collection {
+    padding-block: 68px 75px;
+    scroll-margin-top: 30px;
+}
+.flower-section-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
+    gap: 20px;
+}
+.flower-section-heading h2 {
+    font-size: 30px;
+    font-weight: 400;
+    letter-spacing: -0.8px;
+    margin-top: 8px;
+}
+.flower-section-heading p:last-child {
+    color: var(--muted);
+    margin-top: 7px;
+    font-size: 13px;
+}
+.flower-text-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 13px;
+    font-size: 12px;
+    border-bottom: 1px solid var(--accent);
+    padding: 7px 0;
+    color: var(--accent);
+}
+.flower-filters {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 28px 0 25px;
+    flex-wrap: wrap;
+}
+.flower-filters button {
+    padding: 8px 18px;
+    min-height: 40px;
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    font-size: 12px;
+    color: var(--muted);
+    transition: background 0.2s;
+}
+.flower-filters button.selected {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+}
+.flower-preview-label {
+    margin-left: auto;
+    font-size: 10px;
+    color: var(--muted);
+}
+.flower-product-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 24px;
+}
+.flower-product-image {
+    position: relative;
+    aspect-ratio: 4/5;
+    background: var(--rose-soft);
+    overflow: hidden;
+    border-radius: 3px;
+}
+.flower-product-open {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+.flower-product-image img {
+    height: 100%;
+    width: 100%;
+    object-fit: cover;
+    transition: transform 0.5s;
+}
+.flower-product-open:hover img {
+    transform: scale(1.045);
+}
+.flower-heart {
+    position: absolute;
+    right: 12px;
+    top: 12px;
+    background: #fff9f6ed;
+    border-radius: 50%;
+    width: 38px;
+    height: 38px;
+    display: grid;
+    place-items: center;
+    color: var(--accent);
+}
+.flower-heart:hover {
+    background: var(--rose);
+}
+.flower-product-tag {
+    position: absolute;
+    left: 12px;
+    top: 15px;
+    background: #fff9f6ed;
+    padding: 3px 8px;
+    font-size: 9px;
+    color: var(--muted);
+    pointer-events: none;
+}
+.flower-product-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #fff9f6ed;
+    padding: 12px;
+    font-size: 12px;
+    display: flex;
+    justify-content: center;
+    gap: 14px;
+    align-items: center;
+    transform: translateY(100%);
+    transition: transform 0.2s;
+}
+.flower-product-open:is(:hover, :focus-visible) .flower-product-overlay {
+    transform: translateY(0);
+}
+.flower-product-info {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 15px;
+}
+.flower-product-info button {
+    text-align: left;
+}
+.flower-product-info h3 {
+    font-family: 'LINE Seed Sans TH', Tahoma, sans-serif;
+    font-size: 19px;
+    font-weight: 400;
+}
+.flower-product-info p {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 3px;
+}
+.flower-price {
+    font-size: 15px;
+    white-space: nowrap;
+    padding-top: 2px;
+}
+.flower-unrated {
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 7px;
+}
+.flower-empty {
+    padding: 45px;
+    text-align: center;
+    display: grid;
+    justify-items: center;
+    gap: 12px;
+}
+.flower-story {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    min-height: 350px;
+    background: var(--rose);
+    overflow: hidden;
+    border-radius: 4px;
+}
+.flower-story-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 85% center;
+}
+.flower-story-copy {
+    padding: 48px 55px;
+}
+.flower-story-copy h2 {
+    font-size: 29px;
+    line-height: 1.55;
+    font-weight: 400;
+    margin: 12px 0;
+}
+.flower-story-copy > p:not(.flower-eyebrow) {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 2;
+}
+.flower-story-copy .flower-text-link {
+    margin-top: 20px;
+}
+.flower-bottom-note {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 55px 20px;
+    color: var(--accent);
+    gap: 8px;
+}
+.flower-bottom-note p {
+    font-family: 'LINE Seed Sans TH', Tahoma, sans-serif;
+    font-style: italic;
+    font-size: 24px;
+}
+.flower-bottom-note span {
+    font-size: 11px;
+    color: var(--muted);
+}
+.flower-footer {
+    background: var(--rose);
+    border-top: 1px solid var(--border);
+}
+.flower-footer > .flower-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding-block: 32px;
+}
+.flower-footer p {
+    font-size: 11px;
+    color: var(--muted);
+}
+.flower-footer .flower-container > div {
+    display: flex;
+    gap: 24px;
+    font-size: 11px;
+}
+.flower-footer-bottom {
+    border-top: 1px solid var(--border);
+    padding: 15px max(40px, calc((100% - 1200px) /2));
+    font-size: 10px;
+    color: var(--muted);
+    display: flex;
+    justify-content: space-between;
+}
+.flower-dialog {
+    font-family: 'LINE Seed Sans TH', Tahoma, sans-serif;
+    background: var(--cream);
+    color: var(--ink);
+}
+.flower-dialog-image {
+    width: 100%;
+    max-height: 230px;
+    object-fit: cover;
+}
+.flower-dialog-price {
+    font-size: 22px;
+}
+.flower-dialog-price small {
+    font-size: 12px;
+    margin-left: 15px;
+}
+.flower-dialog > p {
+    font-size: 13px;
+    line-height: 1.8;
+}
+.flower-dialog-links {
+    display: flex;
+    align-items: center;
+    gap: 25px;
+}
+@media (min-width: 1600px) {
+    .flower-hero {
+        min-height: 650px;
+    }
+    .flower-hero-content {
+        padding-top: 100px;
+    }
+}
+@media (max-width: 1000px) {
+    .flower-container {
+        width: calc(100% - 48px);
+    }
+    .flower-search {
+        width: 260px;
+    }
+    .flower-header-main {
+        gap: 20px;
+    }
+    .flower-account span {
+        display: none;
+    }
+    .flower-account {
+        padding: 10px;
+    }
+    .flower-nav {
+        background: var(--rose-soft);
+        gap: 30px;
+    }
+    .flower-hero-shade {
+        background: linear-gradient(
+            90deg,
+            #eed8dcfa,
+            #eed8dcd1 45%,
+            transparent
+        );
+    }
+    .flower-product-grid {
+        gap: 16px;
+    }
+    .flower-product-info {
+        flex-direction: column;
+        gap: 3px;
+    }
+    .flower-story-copy {
+        padding: 35px;
+    }
+    .flower-footer p {
+        display: none;
+    }
+}
+@media (max-width: 640px) {
+    .flower-container {
+        width: calc(100% - 36px);
+    }
+    .flower-announcement {
+        font-size: 10px;
+        min-height: 30px;
+    }
+    .flower-announcement span {
+        display: none;
+    }
+    .flower-header-main {
+        height: auto;
+        min-height: 118px;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding-block: 15px 10px;
+    }
+    .flower-brand {
+        font-size: 17px;
+        gap: 6px;
+    }
+    .flower-brand-bottom {
+        font-size: 9px;
+    }
+    .flower-brand > svg {
+        width: 26px;
+    }
+    .flower-account-actions {
+        gap: 7px;
+    }
+    .flower-account {
+        border: 0;
+        padding: 7px;
+    }
+    .flower-icon {
+        min-width: 30px;
+    }
+    .flower-menu {
+        display: grid;
+    }
+    .flower-search {
+        order: 3;
+        width: 100%;
+        padding: 7px 0;
+    }
+    .flower-nav {
+        background: var(--rose-soft);
+        display: none;
+        padding: 12px 18px;
+        gap: 4px;
+        flex-direction: column;
+    }
+    .flower-nav.is-open {
+        display: flex;
+    }
+    .flower-nav a {
+        padding: 9px 0;
+    }
+    .flower-hero {
+        min-height: 685px;
+    }
+    .flower-hero-image {
+        height: 360px;
+        top: auto;
+        bottom: 0;
+        object-position: 76% center;
+    }
+    .flower-hero-shade {
+        background: linear-gradient(
+            180deg,
+            var(--rose) 0%,
+            var(--rose) 42%,
+            #eed8dca0 55%,
+            transparent 72%
+        );
+    }
+    .flower-hero-content {
+        padding-block: 30px 0;
+    }
+    .flower-hero .flower-eyebrow {
+        font-size: 8px;
+        letter-spacing: 1.6px;
+        margin-bottom: 16px;
+    }
+    .flower-hero-intro {
+        font-size: 15px;
+    }
+    .flower-hero h1 {
+        font-size: 42px;
+        margin-bottom: 12px;
+        line-height: 1.28;
+    }
+    .flower-hero-description {
+        font-size: 12px;
+        margin-bottom: 18px;
+    }
+    .flower-cta {
+        font-size: 12px;
+        min-height: 45px;
+        padding: 11px 22px;
+    }
+    .flower-hero-note {
+        margin-top: 12px;
+        font-size: 9px;
+    }
+    .flower-hero-caption {
+        font-size: 14px;
+        bottom: 20px;
+        right: 20px;
+    }
+    .flower-scroll {
+        display: none;
+    }
+    .flower-benefits {
+        gap: 12px;
+        padding-block: 21px;
+    }
+    .flower-benefits > div {
+        flex-direction: column;
+        gap: 8px;
+        text-align: center;
+        padding-right: 7px;
+    }
+    .flower-benefits strong {
+        font-size: 10px;
+    }
+    .flower-benefits small {
+        font-size: 9px;
+        line-height: 1.4;
+        display: block;
+        margin-top: 4px;
+    }
+    .flower-benefits svg {
+        width: 23px;
+        height: 23px;
+    }
+    .flower-collection {
+        padding-block: 38px;
+    }
+    .flower-section-heading {
+        align-items: start;
+        gap: 10px;
+    }
+    .flower-section-heading .flower-eyebrow {
+        font-size: 8px;
+        letter-spacing: 1.1px;
+    }
+    .flower-section-heading h2 {
+        font-size: 23px;
+        line-height: 1.4;
+    }
+    .flower-section-heading p:last-child {
+        font-size: 11px;
+    }
+    .flower-section-heading > .flower-text-link {
+        white-space: nowrap;
+        font-size: 10px;
+        gap: 5px;
+        margin-top: 20px;
+    }
+    .flower-filters {
+        gap: 6px;
+        margin: 22px 0 17px;
+    }
+    .flower-filters button {
+        font-size: 10px;
+        padding: 7px 12px;
+    }
+    .flower-preview-label {
+        width: 100%;
+        margin-top: 5px;
+    }
+    .flower-product-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 24px 14px;
+    }
+    .flower-product-info h3 {
+        font-size: 17px;
+    }
+    .flower-product-tag {
+        font-size: 8px;
+        left: 7px;
+        top: 12px;
+        padding: 2px 5px;
+    }
+    .flower-heart {
+        right: 5px;
+        top: 5px;
+        width: 36px;
+        height: 36px;
+    }
+    .flower-product-overlay {
+        display: none;
+    }
+    .flower-story {
+        grid-template-columns: 1fr;
+    }
+    .flower-story-photo {
+        height: 230px;
+    }
+    .flower-story-copy {
+        padding: 27px;
+    }
+    .flower-story-copy h2 {
+        font-size: 25px;
+    }
+    .flower-bottom-note {
+        padding: 38px 15px;
+    }
+    .flower-bottom-note p {
+        font-size: 21px;
+    }
+    .flower-footer > .flower-container {
+        flex-wrap: wrap;
+        padding-block: 25px;
+    }
+    .flower-footer .flower-container > div {
+        font-size: 10px;
+        gap: 16px;
+    }
+    .flower-footer-bottom {
+        padding: 14px 18px;
+        font-size: 9px;
+    }
+    .flower-footer-bottom span {
+        display: none;
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .flower-home * {
+        scroll-behavior: auto !important;
+        transition: none !important;
+    }
+}
+
+.flower-search input::placeholder {
+    color: var(--muted);
+    opacity: 1;
+}
+.flower-nav a:hover,
+.flower-account:hover {
+    color: var(--accent);
+}
+.flower-filters button:not(.selected):hover {
+    background: var(--rose-soft);
+}
+.flower-dialog {
+    --muted-foreground: var(--muted);
+    --ring: var(--accent);
+    border-color: var(--border);
+}
+.flower-dialog :is(a, button):focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 4px;
+}
