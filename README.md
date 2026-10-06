@@ -143,3 +143,4 @@ sail npm run dev
 
 <img width="783" height="525" alt="05-10-2026-14-15-39" src="https://github.com/user-attachments/assets/7c8af968-fc85-4e87-8759-133d4b0b24ed" />
 
+
