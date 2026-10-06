@@ -1,12 +1,6 @@
+import { WishlistButton } from '@/components/store/wishlist-button';
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import {
-    ArrowDown,
-    ArrowRight,
-    Flower2,
-    Heart,
-    Package,
-    Truck,
-} from 'lucide-react';
+import { ArrowDown, ArrowRight, Flower2, Package, Truck } from 'lucide-react';
 import { useState } from 'react';
 import { StoreFooter, StoreHeader } from '@/components/store/store-chrome';
 import {
@@ -218,19 +212,10 @@ export default function Welcome() {
                                         </span>
                                     </button>
                                     {!isAdmin && (
-                                        <button
-                                            className="flower-heart"
-                                            aria-label={`บันทึก ${product.thai}`}
-                                            onClick={() =>
-                                                setNotice(
-                                                    auth.user
-                                                        ? 'รายการโปรดจะพร้อมใช้งานเมื่อเชื่อมต่อระบบร้านค้า'
-                                                        : 'เข้าสู่ระบบเพื่อใช้งานรายการโปรด',
-                                                )
-                                            }
-                                        >
-                                            <Heart size={18} />
-                                        </button>
+                                        <WishlistButton
+                                            productId={product.id}
+                                            name={product.thai}
+                                        />
                                     )}
                                     <span className="flower-product-tag">
                                         ช่อดอกไม้ปลอม

@@ -1,3 +1,4 @@
+import { WishlistButton } from '@/components/store/wishlist-button';
 import { catalog } from '@/data/catalog';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
@@ -5,7 +6,6 @@ import {
     ChevronLeft,
     ChevronRight,
     Flower2,
-    Heart,
     Search,
     SlidersHorizontal,
     Star,
@@ -424,15 +424,10 @@ function ProductsContent({
                                             </span>
                                         </button>
                                         {!isAdmin && (
-                                            <button
-                                                className="flower-heart"
-                                                aria-label={`บันทึก ${item.thai} ลงรายการโปรด`}
-                                                onClick={() =>
-                                                    setWishlistOpen(true)
-                                                }
-                                            >
-                                                <Heart size={18} />
-                                            </button>
+                                            <WishlistButton
+                                                productId={item.id}
+                                                name={item.thai}
+                                            />
                                         )}
                                         {item.stock === 0 && (
                                             <span className="catalog-stock">
