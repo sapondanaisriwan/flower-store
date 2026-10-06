@@ -24,7 +24,7 @@ import { dashboard, login, register } from '@/routes';
 export function StoreHeader({
     current = 'home',
 }: {
-    current?: 'home' | 'products' | 'cart';
+    current?: 'home' | 'products' | 'cart' | 'wishlist' | 'orders' | 'profile';
 }) {
     const { auth } = usePage().props;
     const cart = useCart(auth.user?.id);
@@ -77,20 +77,26 @@ export function StoreHeader({
                     <div className="flower-account-actions">
                         <Link
                             className="flower-account"
-                            href={auth.user ? dashboard() : login()}
+                            href={
+                                auth.user
+                                    ? auth.user.role === 'admin'
+                                        ? dashboard()
+                                        : '/settings/profile'
+                                    : login()
+                            }
                         >
                             <UserRound size={20} />
                             <span>{auth.user?.name ?? 'เข้าสู่ระบบ'}</span>
                         </Link>
                         {auth.user?.role !== 'admin' && (
                             <>
-                                <button
+                                <Link
                                     className="flower-icon"
+                                    href="/wishlist"
                                     aria-label="รายการโปรด"
-                                    onClick={() => setNotice('รายการโปรด')}
                                 >
                                     <Heart size={21} />
-                                </button>
+                                </Link>
                                 <Link
                                     className="flower-icon relative"
                                     href="/cart"
@@ -135,10 +141,31 @@ export function StoreHeader({
                     >
                         เลือกซื้อช่อดอกไม้
                     </Link>
-                    <a href="/#our-story">ความพิเศษของเรา</a>
-                    <a href="/#delivery">การจัดส่ง</a>
+                    {auth.user && auth.user.role !== 'admin' && (
+                        <Link
+                            href="/orders"
+                            className={current === 'orders' ? 'active' : ''}
+                            aria-current={
+                                current === 'orders' ? 'page' : undefined
+                            }
+                        >
+                            ประวัติคำสั่งซื้อ
+                        </Link>
+                    )}
+                    {/* <a href="/#our-story">ความพิเศษของเรา</a> */}
+                    {/* <a href="/#delivery">การจัดส่ง</a> */}
                     {auth.user && (
-                        <Link href={dashboard()}>
+                        <Link
+                            href={
+                                auth.user.role === 'admin'
+                                    ? dashboard()
+                                    : '/settings/profile'
+                            }
+                            className={current === 'profile' ? 'active' : ''}
+                            aria-current={
+                                current === 'profile' ? 'page' : undefined
+                            }
+                        >
                             {auth.user.role === 'admin'
                                 ? 'จัดการร้านค้า'
                                 : 'บัญชีของฉัน'}
@@ -196,7 +223,15 @@ export function StoreFooter() {
                 <p>ช่อดอกไม้ปลอมสำเร็จรูป · ส่งฟรีทั่วประเทศ</p>
                 <div>
                     <Link href="/products">เลือกซื้อสินค้า</Link>
-                    <Link href={auth.user ? dashboard() : login()}>
+                    <Link
+                        href={
+                            auth.user
+                                ? auth.user.role === 'admin'
+                                    ? dashboard()
+                                    : '/settings/profile'
+                                : login()
+                        }
+                    >
                         บัญชีของฉัน
                     </Link>
                 </div>

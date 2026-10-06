@@ -10,6 +10,26 @@ class ProfileUpdateTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_guest_cannot_view_or_update_profile(): void
+    {
+        $this->get(route('profile.edit'))->assertRedirect(route('login'));
+        $this->patch(route('profile.update'), ['name' => 'Guest', 'email' => 'guest@example.com'])->assertRedirect(route('login'));
+    }
+
+    public function test_duplicate_email_does_not_change_profile(): void
+    {
+        $user = User::factory()->create();
+        $other = User::factory()->create();
+        $originalName = $user->name;
+        $originalEmail = $user->email;
+        $this->actingAs($user)->patch(route('profile.update'), [
+            'name' => 'Changed Name',
+            'email' => $other->email,
+        ])->assertSessionHasErrors('email');
+        $this->assertSame($originalName, $user->fresh()->name);
+        $this->assertSame($originalEmail, $user->fresh()->email);
+    }
+
     public function test_profile_page_is_displayed()
     {
         $user = User::factory()->create();

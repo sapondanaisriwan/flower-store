@@ -1,3 +1,4 @@
+import { WishlistButton } from '@/components/store/wishlist-button';
 import { useCart } from '@/hooks/use-cart';
 import { toast } from 'sonner';
 import { Head, Link, usePage } from '@inertiajs/react';
@@ -5,7 +6,6 @@ import {
     ArrowLeft,
     ArrowRight,
     Check,
-    Heart,
     Minus,
     Plus,
     ShoppingBag,
@@ -285,16 +285,11 @@ function ProductView({ product }: { product: CatalogProduct }) {
                                     >
                                         <ShoppingBag size={18} /> เพิ่มลงตะกร้า
                                     </Button>
-                                    <Button
-                                        variant="outline"
-                                        className="h-12 w-12 rounded-full border-[var(--border)] bg-transparent text-[var(--accent)] hover:bg-[var(--rose-soft)] dark:bg-transparent"
-                                        aria-label="เพิ่มรายการโปรด"
-                                        onClick={() =>
-                                            setAction('บันทึกรายการโปรด')
-                                        }
-                                    >
-                                        <Heart size={19} />
-                                    </Button>
+                                    <WishlistButton
+                                        productId={product.id}
+                                        name={product.thai}
+                                        className="grid h-12 w-12 place-items-center rounded-full border border-[var(--border)] text-[var(--accent)] hover:bg-[var(--rose-soft)]"
+                                    />
                                 </div>
                                 <p className="mt-3 text-xs text-[var(--muted)]">
                                     {auth.user

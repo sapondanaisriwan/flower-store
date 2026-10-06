@@ -1,3 +1,8 @@
+import {
+    Collapsible,
+    CollapsibleContent,
+    CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 import { Head, Link, usePage } from '@inertiajs/react';
 import {
     ArrowLeft,
@@ -7,7 +12,11 @@ import {
     QrCode,
     ShoppingBag,
     Truck,
-    UserRound,
+    MapPin,
+    ChevronDown,
+    Minus,
+    Plus,
+    Star,
 } from 'lucide-react';
 import { useState, useSyncExternalStore } from 'react';
 import { StoreFooter, StoreHeader } from '@/components/store/store-chrome';
@@ -130,6 +139,7 @@ export default function Checkout() {
     );
     const saved = parseSaved(raw);
     const [delivery, setDelivery] = useState<Delivery>(blank);
+    const [addressOpen, setAddressOpen] = useState(true);
     const [saveAddress, setSaveAddress] = useState(false);
     const [touched, setTouched] = useState<
         Partial<Record<keyof Delivery, boolean>>
@@ -296,166 +306,433 @@ export default function Checkout() {
                         <form
                             onSubmit={submit}
                             noValidate
-                            className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_360px]"
+                            className="grid items-start gap-8 lg:grid-cols-[minmax(0,1.6fr)_minmax(320px,1fr)] lg:gap-10"
                         >
                             <div className="min-w-0 space-y-6">
-                                <section className="rounded-2xl border border-[var(--border)] p-5 md:p-7">
-                                    <h2 className="mb-5 flex items-center gap-3 text-xl font-bold">
-                                        <UserRound
-                                            size={21}
-                                            className="text-[var(--accent)]"
-                                        />{' '}
-                                        ผู้รับและที่อยู่จัดส่ง
-                                    </h2>
-                                    {saved.length > 0 && (
-                                        <div className="mb-6 space-y-2">
-                                            <Label htmlFor="saved-delivery">
-                                                ข้อมูลที่บันทึกไว้ในเบราว์เซอร์นี้
-                                            </Label>
-                                            <select
-                                                id="saved-delivery"
-                                                defaultValue=""
-                                                className="h-12 w-full rounded-md border border-[var(--border)] bg-[var(--cream)] px-3 text-sm"
-                                                onChange={(event) => {
-                                                    setDelivery(
-                                                        event.target.value ===
-                                                            ''
-                                                            ? { ...blank }
-                                                            : {
-                                                                  ...saved[
-                                                                      Number(
-                                                                          event
-                                                                              .target
-                                                                              .value,
-                                                                      )
-                                                                  ],
-                                                              },
-                                                    );
-                                                    setTouched({});
-                                                }}
-                                            >
-                                                <option value="">
-                                                    เพิ่มผู้รับและที่อยู่ใหม่
-                                                </option>
-                                                {saved.map((item, index) => (
-                                                    <option
-                                                        key={`${index}-${item.name}`}
-                                                        value={index}
-                                                    >
-                                                        {item.name} ·{' '}
-                                                        {item.street} ·{' '}
-                                                        {item.province}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                    )}
-                                    <div className="grid gap-5 sm:grid-cols-2">
-                                        {fields.map((field) => (
-                                            <div
-                                                className={`space-y-2 ${field.key === 'street' ? 'sm:col-span-2' : ''}`}
-                                                key={field.key}
-                                            >
-                                                <Label
-                                                    htmlFor={`delivery-${field.key}`}
-                                                    className="text-sm"
-                                                >
-                                                    {field.label}{' '}
-                                                    <span
-                                                        aria-hidden="true"
-                                                        className="text-[var(--accent)]"
-                                                    >
-                                                        *
+                                <Collapsible
+                                    open={addressOpen}
+                                    onOpenChange={setAddressOpen}
+                                    className="rounded-3xl border border-[var(--border)] bg-[var(--cream)] p-5 md:p-7"
+                                >
+                                    <CollapsibleTrigger asChild>
+                                        <button
+                                            type="button"
+                                            className="flex w-full items-start gap-3 text-left"
+                                        >
+                                            <MapPin
+                                                className="mt-1 shrink-0 text-[var(--accent)]"
+                                                size={24}
+                                            />
+                                            <span className="min-w-0 flex-1">
+                                                <span className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                                                    <span className="text-lg font-bold">
+                                                        {delivery.name.trim() ||
+                                                            'เพิ่มผู้รับและที่อยู่จัดส่ง'}
                                                     </span>
-                                                </Label>
-                                                <Input
-                                                    id={`delivery-${field.key}`}
-                                                    required
-                                                    autoComplete={
-                                                        field.autoComplete
-                                                    }
-                                                    type={
-                                                        field.key === 'phone'
-                                                            ? 'tel'
-                                                            : 'text'
-                                                    }
-                                                    inputMode={
-                                                        field.key === 'postal'
-                                                            ? 'numeric'
-                                                            : undefined
-                                                    }
-                                                    maxLength={
-                                                        field.key === 'postal'
-                                                            ? 5
-                                                            : field.key ===
-                                                                'phone'
-                                                              ? 20
-                                                              : 200
-                                                    }
-                                                    value={delivery[field.key]}
-                                                    placeholder={
-                                                        field.placeholder
-                                                    }
-                                                    onChange={(event) =>
-                                                        setDelivery(
-                                                            (current) => ({
-                                                                ...current,
-                                                                [field.key]:
-                                                                    event.target
-                                                                        .value,
-                                                            }),
-                                                        )
-                                                    }
-                                                    onBlur={() =>
-                                                        setTouched(
-                                                            (current) => ({
-                                                                ...current,
-                                                                [field.key]: true,
-                                                            }),
-                                                        )
-                                                    }
-                                                    aria-invalid={Boolean(
-                                                        touched[field.key] &&
-                                                        errors[field.key],
+                                                    {delivery.phone && (
+                                                        <span className="text-sm text-[var(--muted)]">
+                                                            ({delivery.phone})
+                                                        </span>
                                                     )}
-                                                    aria-describedby={
-                                                        touched[field.key] &&
-                                                        errors[field.key]
-                                                            ? `error-${field.key}`
-                                                            : undefined
-                                                    }
-                                                    className="h-12 border-[var(--border)] bg-[var(--cream)] text-[var(--ink)] placeholder:text-[var(--muted)] dark:bg-[var(--cream)]"
-                                                />
-                                                {touched[field.key] &&
-                                                    errors[field.key] && (
-                                                        <p
-                                                            id={`error-${field.key}`}
-                                                            className="text-xs text-red-700"
+                                                </span>
+                                                <span className="mt-1 block text-sm leading-6 break-words text-[var(--muted)]">
+                                                    {delivery.street
+                                                        ? [
+                                                              delivery.street,
+                                                              delivery.subdistrict,
+                                                              delivery.district,
+                                                              delivery.province,
+                                                              delivery.postal,
+                                                          ]
+                                                              .filter(Boolean)
+                                                              .join(' ')
+                                                        : 'กรอกข้อมูลใหม่ หรือเลือกจากที่อยู่ที่บันทึกไว้'}
+                                                </span>
+                                                {!addressOpen &&
+                                                    Object.keys(errors).length >
+                                                        0 && (
+                                                        <span className="mt-2 block text-xs text-red-700">
+                                                            ข้อมูลยังไม่ครบ
+                                                            กดเพื่อแก้ไข
+                                                        </span>
+                                                    )}
+                                            </span>
+                                            <ChevronDown
+                                                size={21}
+                                                className={`mt-1 shrink-0 transition-transform motion-reduce:transition-none ${addressOpen ? 'rotate-180' : ''}`}
+                                            />
+                                        </button>
+                                    </CollapsibleTrigger>
+                                    <CollapsibleContent className="mt-6 border-t border-[var(--border)] pt-6">
+                                        {' '}
+                                        {saved.length > 0 && (
+                                            <div className="mb-6 space-y-2">
+                                                <Label htmlFor="saved-delivery">
+                                                    ข้อมูลที่บันทึกไว้ในเบราว์เซอร์นี้
+                                                </Label>
+                                                <select
+                                                    id="saved-delivery"
+                                                    defaultValue=""
+                                                    className="h-12 w-full rounded-md border border-[var(--border)] bg-[var(--cream)] px-3 text-sm"
+                                                    onChange={(event) => {
+                                                        setDelivery(
+                                                            event.target
+                                                                .value === ''
+                                                                ? { ...blank }
+                                                                : {
+                                                                      ...saved[
+                                                                          Number(
+                                                                              event
+                                                                                  .target
+                                                                                  .value,
+                                                                          )
+                                                                      ],
+                                                                  },
+                                                        );
+                                                        setTouched({});
+                                                    }}
+                                                >
+                                                    <option value="">
+                                                        เพิ่มผู้รับและที่อยู่ใหม่
+                                                    </option>
+                                                    {saved.map(
+                                                        (item, index) => (
+                                                            <option
+                                                                key={`${index}-${item.name}`}
+                                                                value={index}
+                                                            >
+                                                                {item.name} ·{' '}
+                                                                {item.street} ·{' '}
+                                                                {item.province}
+                                                            </option>
+                                                        ),
+                                                    )}
+                                                </select>
+                                            </div>
+                                        )}
+                                        <div className="grid gap-5 sm:grid-cols-2">
+                                            {fields.map((field) => (
+                                                <div
+                                                    className={`space-y-2 ${field.key === 'street' ? 'sm:col-span-2' : ''}`}
+                                                    key={field.key}
+                                                >
+                                                    <Label
+                                                        htmlFor={`delivery-${field.key}`}
+                                                        className="text-sm"
+                                                    >
+                                                        {field.label}{' '}
+                                                        <span
+                                                            aria-hidden="true"
+                                                            className="text-[var(--accent)]"
                                                         >
-                                                            {errors[field.key]}
+                                                            *
+                                                        </span>
+                                                    </Label>
+                                                    <Input
+                                                        id={`delivery-${field.key}`}
+                                                        required
+                                                        autoComplete={
+                                                            field.autoComplete
+                                                        }
+                                                        type={
+                                                            field.key ===
+                                                            'phone'
+                                                                ? 'tel'
+                                                                : 'text'
+                                                        }
+                                                        inputMode={
+                                                            field.key ===
+                                                            'postal'
+                                                                ? 'numeric'
+                                                                : undefined
+                                                        }
+                                                        maxLength={
+                                                            field.key ===
+                                                            'postal'
+                                                                ? 5
+                                                                : field.key ===
+                                                                    'phone'
+                                                                  ? 20
+                                                                  : 200
+                                                        }
+                                                        value={
+                                                            delivery[field.key]
+                                                        }
+                                                        placeholder={
+                                                            field.placeholder
+                                                        }
+                                                        onChange={(event) =>
+                                                            setDelivery(
+                                                                (current) => ({
+                                                                    ...current,
+                                                                    [field.key]:
+                                                                        event
+                                                                            .target
+                                                                            .value,
+                                                                }),
+                                                            )
+                                                        }
+                                                        onBlur={() =>
+                                                            setTouched(
+                                                                (current) => ({
+                                                                    ...current,
+                                                                    [field.key]: true,
+                                                                }),
+                                                            )
+                                                        }
+                                                        aria-invalid={Boolean(
+                                                            touched[
+                                                                field.key
+                                                            ] &&
+                                                            errors[field.key],
+                                                        )}
+                                                        aria-describedby={
+                                                            touched[
+                                                                field.key
+                                                            ] &&
+                                                            errors[field.key]
+                                                                ? `error-${field.key}`
+                                                                : undefined
+                                                        }
+                                                        className="h-12 border-[var(--border)] bg-[var(--cream)] text-[var(--ink)] placeholder:text-[var(--muted)] dark:bg-[var(--cream)]"
+                                                    />
+                                                    {touched[field.key] &&
+                                                        errors[field.key] && (
+                                                            <p
+                                                                id={`error-${field.key}`}
+                                                                className="text-xs text-red-700"
+                                                            >
+                                                                {
+                                                                    errors[
+                                                                        field
+                                                                            .key
+                                                                    ]
+                                                                }
+                                                            </p>
+                                                        )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <label className="mt-6 flex cursor-pointer items-start gap-3 text-sm">
+                                            <Checkbox
+                                                checked={saveAddress}
+                                                onCheckedChange={(checked) =>
+                                                    setSaveAddress(
+                                                        checked === true,
+                                                    )
+                                                }
+                                                className="mt-1 border-[var(--muted)] data-[state=checked]:border-[var(--accent)] data-[state=checked]:bg-[var(--accent)] data-[state=checked]:text-white"
+                                            />
+                                            <span>
+                                                บันทึกผู้รับและที่อยู่นี้ไว้ใช้ครั้งถัดไป
+                                                <small className="mt-1 block text-xs text-[var(--muted)]">
+                                                    เก็บแยกตามบัญชี เฉพาะเบราว์เซอร์นี้
+                                                    สูงสุด 5 รายการ
+                                                </small>
+                                            </span>
+                                        </label>
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            disabled={
+                                                Object.keys(errors).length > 0
+                                            }
+                                            className="mt-5 rounded-full border-[var(--border)] bg-[var(--cream)] text-[var(--accent)] hover:bg-[var(--rose)]"
+                                            onClick={() =>
+                                                setAddressOpen(false)
+                                            }
+                                        >
+                                            ใช้ที่อยู่นี้ <Check size={16} />
+                                        </Button>
+                                    </CollapsibleContent>
+                                </Collapsible>
+
+                                <section
+                                    className="rounded-3xl border border-[var(--border)] bg-[var(--cream)] p-4 md:p-6"
+                                    aria-labelledby="order-summary-title"
+                                >
+                                    <div className="mb-5 flex flex-wrap items-center justify-between gap-2">
+                                        <h2
+                                            id="order-summary-title"
+                                            className="flex items-center gap-3 text-xl font-bold"
+                                        >
+                                            <ShoppingBag
+                                                size={23}
+                                                className="text-[var(--accent)]"
+                                            />{' '}
+                                            สรุปรายการสินค้า
+                                        </h2>
+                                        <span className="text-xs text-[var(--muted)]">
+                                            {items.length} รายการ · {cart.count}{' '}
+                                            ช่อ
+                                        </span>
+                                    </div>
+                                    <ul
+                                        className="space-y-3 lg:max-h-[520px] lg:overflow-y-auto lg:pr-2"
+                                        aria-label="สินค้าในคำสั่งซื้อ"
+                                    >
+                                        {items.map((item) => (
+                                            <li
+                                                key={item.id}
+                                                className="grid grid-cols-[80px_minmax(0,1fr)] gap-4 rounded-2xl bg-[var(--cream)] p-3 sm:grid-cols-[110px_minmax(0,1fr)] sm:p-4"
+                                            >
+                                                <Link
+                                                    href={`/products/${item.id}`}
+                                                >
+                                                    <img
+                                                        className="aspect-[4/5] w-full rounded-xl object-cover"
+                                                        src="/images/homepage/bouquets.png"
+                                                        alt={item.thai}
+                                                        style={{
+                                                            objectPosition:
+                                                                item.position,
+                                                        }}
+                                                    />
+                                                </Link>
+                                                <div className="min-w-0">
+                                                    <Link
+                                                        href={`/products/${item.id}`}
+                                                        className="text-base font-bold"
+                                                    >
+                                                        {item.name}
+                                                    </Link>
+                                                    <p className="mt-1 text-xs text-[var(--muted)]">
+                                                        {item.thai}
+                                                    </p>
+                                                    <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                                                        <div>
+                                                            <p className="text-xl font-bold text-[var(--accent)]">
+                                                                {money(
+                                                                    item.price *
+                                                                        item.quantity,
+                                                                )}
+                                                            </p>
+                                                            <p className="text-xs text-[var(--muted)]">
+                                                                {money(
+                                                                    item.price,
+                                                                )}{' '}
+                                                                / ช่อ
+                                                            </p>
+                                                        </div>
+                                                        <div className="flex items-center rounded-lg border border-[var(--border)]">
+                                                            <Button
+                                                                type="button"
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                className="size-9"
+                                                                aria-label={`ลดจำนวน ${item.name}`}
+                                                                disabled={
+                                                                    item.quantity <=
+                                                                    1
+                                                                }
+                                                                onClick={() =>
+                                                                    setStorageError(
+                                                                        cart.update(
+                                                                            item.id,
+                                                                            item.quantity -
+                                                                                1,
+                                                                        )
+                                                                            ? ''
+                                                                            : 'ไม่สามารถบันทึกจำนวนได้ กรุณาลองอีกครั้ง',
+                                                                    )
+                                                                }
+                                                            >
+                                                                <Minus
+                                                                    size={14}
+                                                                />
+                                                            </Button>
+                                                            <output
+                                                                className="min-w-7 text-center text-sm"
+                                                                aria-label={`จำนวน ${item.name}`}
+                                                                aria-live="polite"
+                                                            >
+                                                                {item.quantity}
+                                                            </output>
+                                                            <Button
+                                                                type="button"
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                className="size-9"
+                                                                aria-label={`เพิ่มจำนวน ${item.name}`}
+                                                                disabled={
+                                                                    item.quantity >=
+                                                                    item.stock
+                                                                }
+                                                                onClick={() =>
+                                                                    setStorageError(
+                                                                        cart.update(
+                                                                            item.id,
+                                                                            item.quantity +
+                                                                                1,
+                                                                        )
+                                                                            ? ''
+                                                                            : 'ไม่สามารถบันทึกจำนวนได้ กรุณาลองอีกครั้ง',
+                                                                    )
+                                                                }
+                                                            >
+                                                                <Plus
+                                                                    size={14}
+                                                                />
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+                                                    <p className="mt-3 flex items-center gap-1 text-xs text-[var(--accent)]">
+                                                        <Star
+                                                            size={13}
+                                                            fill={
+                                                                item.count
+                                                                    ? 'currentColor'
+                                                                    : 'none'
+                                                            }
+                                                        />{' '}
+                                                        {item.count
+                                                            ? `${item.rating.toFixed(1)} (${item.count}) · คะแนนตัวอย่าง`
+                                                            : 'ยังไม่มีคะแนน'}
+                                                    </p>
+                                                    {item.quantity === 0 && (
+                                                        <p className="mt-2 text-xs text-red-700">
+                                                            สินค้าหมด
+                                                            กรุณากลับไปแก้ไขตะกร้า
                                                         </p>
                                                     )}
-                                            </div>
+                                                </div>
+                                            </li>
                                         ))}
-                                    </div>
-                                    <label className="mt-6 flex cursor-pointer items-start gap-3 text-sm">
-                                        <Checkbox
-                                            checked={saveAddress}
-                                            onCheckedChange={(checked) =>
-                                                setSaveAddress(checked === true)
-                                            }
-                                            className="mt-1 border-[var(--muted)] data-[state=checked]:border-[var(--accent)] data-[state=checked]:bg-[var(--accent)] data-[state=checked]:text-white"
-                                        />
-                                        <span>
-                                            บันทึกผู้รับและที่อยู่นี้ไว้ใช้ครั้งถัดไป
-                                            <small className="mt-1 block text-xs text-[var(--muted)]">
-                                                เก็บแยกตามบัญชี เฉพาะเบราว์เซอร์นี้
-                                                สูงสุด 5 รายการ
-                                            </small>
-                                        </span>
-                                    </label>
+                                    </ul>
                                 </section>
-                                <section className="rounded-2xl border border-[var(--border)] p-5 md:p-7">
+                                <Link href="/cart" className="flower-text-link">
+                                    <ArrowLeft size={16} /> กลับไปแก้ไขตะกร้า
+                                </Link>
+                            </div>
+                            <aside className="min-w-0 rounded-2xl border border-[var(--border)] bg-[var(--rose-soft)] p-5 md:p-6 lg:sticky lg:top-6">
+                                <h2 className="mb-5 text-xl font-bold">
+                                    สรุปค่าใช้จ่าย
+                                </h2>
+
+                                <dl className="mt-6 space-y-4 border-t border-[var(--border)] pt-5 text-sm">
+                                    <div className="flex justify-between">
+                                        <dt>รวมสินค้า ({cart.count} ช่อ)</dt>
+                                        <dd>{money(total)}</dd>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <dt>ค่าจัดส่ง</dt>
+                                        <dd className="text-[var(--accent)]">
+                                            ฟรี
+                                        </dd>
+                                    </div>
+                                    <div className="flex justify-between border-t border-[var(--border)] pt-5">
+                                        <dt className="font-bold">
+                                            ยอดรวมทั้งหมด
+                                        </dt>
+                                        <dd
+                                            className="text-2xl font-bold text-[var(--accent)]"
+                                            aria-live="polite"
+                                        >
+                                            {money(total)}
+                                        </dd>
+                                    </div>
+                                </dl>
+                                <section className="mt-8 border-t border-[var(--border)] pt-6">
                                     <h2 className="mb-5 flex items-center gap-3 text-xl font-bold">
                                         <QrCode
                                             size={21}
@@ -494,83 +771,6 @@ export default function Checkout() {
                                         </p>
                                     </div>
                                 </section>
-                                <Link href="/cart" className="flower-text-link">
-                                    <ArrowLeft size={16} /> กลับไปแก้ไขตะกร้า
-                                </Link>
-                            </div>
-                            <aside className="rounded-2xl border border-[var(--border)] bg-[var(--rose-soft)] p-5 md:p-6 lg:sticky lg:top-6">
-                                <h2 className="mb-5 text-xl font-bold">
-                                    ช่อที่คุณเลือก
-                                </h2>
-                                <ul className="space-y-4">
-                                    {items.map((item) => (
-                                        <li
-                                            key={item.id}
-                                            className="flex items-start gap-3"
-                                        >
-                                            <Link
-                                                href={`/products/${item.id}`}
-                                                className="shrink-0"
-                                            >
-                                                <img
-                                                    className="h-20 w-16 rounded-lg object-cover"
-                                                    src="/images/homepage/bouquets.png"
-                                                    alt={item.thai}
-                                                    style={{
-                                                        objectPosition:
-                                                            item.position,
-                                                    }}
-                                                />
-                                            </Link>
-                                            <div className="min-w-0 flex-1">
-                                                <Link
-                                                    className="text-sm"
-                                                    href={`/products/${item.id}`}
-                                                >
-                                                    {item.name}
-                                                </Link>
-                                                <p className="mt-1 text-xs text-[var(--muted)]">
-                                                    {money(item.price)} ×{' '}
-                                                    {item.quantity} ช่อ
-                                                </p>
-                                                <p className="mt-2 text-sm font-bold text-[var(--accent)]">
-                                                    {money(
-                                                        item.price *
-                                                            item.quantity,
-                                                    )}
-                                                </p>
-                                                {item.quantity === 0 && (
-                                                    <p className="text-xs text-red-700">
-                                                        สินค้าหมด กรุณาแก้ไขตะกร้า
-                                                    </p>
-                                                )}
-                                            </div>
-                                        </li>
-                                    ))}
-                                </ul>
-                                <dl className="mt-6 space-y-4 border-t border-[var(--border)] pt-5 text-sm">
-                                    <div className="flex justify-between">
-                                        <dt>รวมสินค้า ({cart.count} ช่อ)</dt>
-                                        <dd>{money(total)}</dd>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <dt>ค่าจัดส่ง</dt>
-                                        <dd className="text-[var(--accent)]">
-                                            ฟรี
-                                        </dd>
-                                    </div>
-                                    <div className="flex justify-between border-t border-[var(--border)] pt-5">
-                                        <dt className="font-bold">
-                                            ยอดรวมทั้งหมด
-                                        </dt>
-                                        <dd
-                                            className="text-2xl font-bold text-[var(--accent)]"
-                                            aria-live="polite"
-                                        >
-                                            {money(total)}
-                                        </dd>
-                                    </div>
-                                </dl>
                                 {storageError && (
                                     <p
                                         role="alert"
