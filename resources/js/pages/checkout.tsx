@@ -316,7 +316,7 @@ export default function Checkout() {
                                                 id="saved-delivery"
                                                 defaultValue=""
                                                 className="h-12 w-full rounded-md border border-[var(--border)] bg-[var(--cream)] px-3 text-sm"
-                                                onChange={(event) => {
+                                                onChange={(event: { target: { value: string; }; }) => {
                                                     setDelivery(
                                                         event.target.value ===
                                                             ''
