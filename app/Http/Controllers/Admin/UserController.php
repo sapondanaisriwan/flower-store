@@ -3,38 +3,31 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class UserController extends Controller
 {
+    /**
+     * แสดงรายการบัญชีผู้ใช้ทั้งหมด พร้อมจำนวนออเดอร์ที่สั่ง
+     */
     public function index(Request $request): Response
     {
-        $users = DB::table('users')
-            ->leftJoin('orders', 'orders.user_id', '=', 'users.id')
+        $users = User::withCount('orders')
             ->select(
-                'users.id',
-                'users.username',
-                'users.username as name',
-                'users.email',
-                'users.role',
-                'users.is_banned',
-                'users.created_at',
-                DB::raw('COUNT(orders.id) as orders_count')
+                'id',
+                'username',
+                'username as name',
+                'email',
+                'role',
+                'is_banned',
+                'created_at'
             )
-            ->groupBy(
-                'users.id',
-                'users.username',
-                'users.email',
-                'users.role',
-                'users.is_banned',
-                'users.created_at'
-            )
-            ->orderByDesc('users.id')
+            ->orderByDesc('id')
             ->get();
 
         return Inertia::render('admin', [
@@ -43,7 +36,9 @@ class UserController extends Controller
         ]);
     }
 
-
+    /**
+     * สลับสถานะการระงับการใช้งานบัญชี (แบน / ปลดแบน)
+     */
     public function toggleBan(Request $request, int $user): RedirectResponse
     {
         abort_if(
@@ -52,14 +47,11 @@ class UserController extends Controller
             'ไม่สามารถแบนหรือระงับสิทธิ์บัญชีของตนเองได้'
         );
 
-        $target = DB::table('users')->where('id', $user)->first();
-        abort_unless($target !== null, 404);
+        $target = User::findOrFail($user);
 
-        $newBanned = ! (bool) $target->is_banned;
-
-        DB::table('users')->where('id', $user)->update([
+        $newBanned = ! $target->is_banned;
+        $target->update([
             'is_banned' => $newBanned,
-            'updated_at' => now(),
         ]);
 
         $msg = $newBanned ? 'ระงับการใช้งานบัญชี (แบน) เรียบร้อยแล้ว' : 'ปลดการระงับบัญชี (ปลดแบน) เรียบร้อยแล้ว';
@@ -68,7 +60,9 @@ class UserController extends Controller
         return back();
     }
 
-
+    /**
+     * เปลี่ยนบทบาทของบัญชีผู้ใช้ (Customer / Admin)
+     */
     public function updateRole(Request $request, int $user): RedirectResponse
     {
         abort_if(
@@ -81,12 +75,9 @@ class UserController extends Controller
             'role' => ['required', 'string', Rule::in(['customer', 'admin'])],
         ]);
 
-        $target = DB::table('users')->where('id', $user)->first();
-        abort_unless($target !== null, 404);
-
-        DB::table('users')->where('id', $user)->update([
+        $target = User::findOrFail($user);
+        $target->update([
             'role' => $validated['role'],
-            'updated_at' => now(),
         ]);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => "เปลี่ยนบทบาทเป็น {$validated['role']} เรียบร้อยแล้ว"]);

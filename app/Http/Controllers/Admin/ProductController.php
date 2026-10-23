@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Product;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -16,36 +16,12 @@ class ProductController extends Controller
      */
     public function index(Request $request): Response
     {
-        $ratings = DB::table('ratings')
-            ->selectRaw('product_id, AVG(rating) as average_rating, COUNT(*) as rating_count')
-            ->groupBy('product_id');
-
-        $products = DB::table('products')
-            ->leftJoinSub($ratings, 'scores', 'scores.product_id', '=', 'products.id')
-            ->select(
-                'products.id',
-                'products.name',
-                'products.description',
-                'products.price',
-                'products.stock',
-                'products.color',
-                'products.picture_path',
-                'products.is_deleted',
-                'products.created_at',
-                'products.updated_at',
-                DB::raw('COALESCE(scores.average_rating, 5.0) as rating'),
-                DB::raw('COALESCE(scores.rating_count, 0) as rating_count')
-            )
+        $products = Product::withRatingStats()
             ->orderBy('products.is_deleted', 'asc')
             ->orderBy('products.id', 'asc')
             ->get();
 
-        $colors = DB::table('products')
-            ->whereNotNull('color')
-            ->where('color', '<>', '')
-            ->distinct()
-            ->pluck('color')
-            ->values();
+        $colors = Product::getDistinctColors();
 
         return Inertia::render('admin', [
             'initialTab' => 'products',
@@ -59,29 +35,13 @@ class ProductController extends Controller
      */
     public function edit(int $product): Response
     {
-        $item = DB::table('products')->where('id', $product)->first();
-        abort_unless($item !== null, 404);
+        Product::findOrFail($product);
 
-        $ratings = DB::table('ratings')
-            ->selectRaw('product_id, AVG(rating) as average_rating, COUNT(*) as rating_count')
-            ->groupBy('product_id');
-
-        $products = DB::table('products')
-            ->leftJoinSub($ratings, 'scores', 'scores.product_id', '=', 'products.id')
-            ->select(
-                'products.*',
-                DB::raw('COALESCE(scores.average_rating, 5.0) as rating'),
-                DB::raw('COALESCE(scores.rating_count, 0) as rating_count')
-            )
+        $products = Product::withRatingStats()
             ->orderBy('products.id', 'asc')
             ->get();
 
-        $colors = DB::table('products')
-            ->whereNotNull('color')
-            ->where('color', '<>', '')
-            ->distinct()
-            ->pluck('color')
-            ->values();
+        $colors = Product::getDistinctColors();
 
         return Inertia::render('admin', [
             'initialTab' => 'products',
@@ -122,7 +82,7 @@ class ProductController extends Controller
             $picturePath = $request->input('picture_path');
         }
 
-        DB::table('products')->insert([
+        Product::create([
             'name' => $validated['name'],
             'price' => sprintf('%.2f', (float) $validated['price']),
             'stock' => (int) $validated['stock'],
@@ -130,8 +90,6 @@ class ProductController extends Controller
             'description' => $validated['description'] ?? 'ช่อดอกไม้สดใหม่ บรรจงจัดด้วยความประณีต',
             'picture_path' => $picturePath,
             'is_deleted' => false,
-            'created_at' => now(),
-            'updated_at' => now(),
         ]);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'เพิ่มสินค้าใหม่เรียบร้อยแล้ว']);
@@ -155,8 +113,7 @@ class ProductController extends Controller
             'image' => ['nullable', 'file', 'image', 'max:10240'],
         ]);
 
-        $item = DB::table('products')->where('id', $product)->first();
-        abort_unless($item !== null, 404);
+        $item = Product::findOrFail($product);
 
         $picturePath = $item->picture_path;
 
@@ -173,14 +130,13 @@ class ProductController extends Controller
             $picturePath = $request->input('picture_path');
         }
 
-        DB::table('products')->where('id', $product)->update([
+        $item->update([
             'name' => $validated['name'],
             'price' => sprintf('%.2f', (float) $validated['price']),
             'stock' => (int) $validated['stock'],
             'color' => $validated['color'] ? trim($validated['color']) : null,
             'description' => $validated['description'] ?? '',
             'picture_path' => $picturePath ?: '/images/homepage/bouquets.png',
-            'updated_at' => now(),
         ]);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'บันทึกการแก้ไขสินค้าเรียบร้อยแล้ว']);
@@ -193,14 +149,11 @@ class ProductController extends Controller
      */
     public function toggleSell(int $product): RedirectResponse
     {
-        $item = DB::table('products')->where('id', $product)->first();
-        abort_unless($item !== null, 404);
+        $item = Product::findOrFail($product);
 
-        $newDeleted = ! (bool) $item->is_deleted;
-
-        DB::table('products')->where('id', $product)->update([
+        $newDeleted = ! $item->is_deleted;
+        $item->update([
             'is_deleted' => $newDeleted,
-            'updated_at' => now(),
         ]);
 
         $statusText = $newDeleted ? 'ปิดการขายสินค้าแล้ว' : 'เปิดการขายสินค้าแล้ว';
@@ -218,12 +171,10 @@ class ProductController extends Controller
             'stock' => ['required', 'integer', 'min:0', 'max:1000000'],
         ]);
 
-        $updated = DB::table('products')->where('id', $product)->update([
+        $item = Product::findOrFail($product);
+        $item->update([
             'stock' => (int) $validated['stock'],
-            'updated_at' => now(),
         ]);
-
-        abort_unless($updated > 0 || DB::table('products')->where('id', $product)->exists(), 404);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'ปรับปรุงสต็อกสินค้าเรียบร้อยแล้ว']);
 
@@ -235,12 +186,10 @@ class ProductController extends Controller
      */
     public function destroy(int $product): RedirectResponse
     {
-        $deleted = DB::table('products')->where('id', $product)->update([
+        $item = Product::findOrFail($product);
+        $item->update([
             'is_deleted' => true,
-            'updated_at' => now(),
         ]);
-
-        abort_unless($deleted > 0, 404);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'ลบสินค้าเรียบร้อยแล้ว']);
 
