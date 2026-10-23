@@ -1,7 +1,6 @@
 import { Link, usePage } from '@inertiajs/react';
 import { Heart } from 'lucide-react';
 import { useState } from 'react';
-import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -22,7 +21,7 @@ export function WishlistButton({
     className?: string;
 }) {
     const { auth } = usePage().props;
-    const wishlist = useWishlist(auth.user?.id);
+    const wishlist = useWishlist();
     const [signIn, setSignIn] = useState(false);
     const saved = wishlist.has(productId);
     if (auth.user?.role === 'admin') return null;
@@ -33,18 +32,13 @@ export function WishlistButton({
                 className={className}
                 aria-label={`${saved ? 'ลบ' : 'บันทึก'} ${name} ${saved ? 'ออกจาก' : 'ลง'}รายการโปรด`}
                 aria-pressed={saved}
+                disabled={wishlist.pending}
                 onClick={() => {
                     if (!auth.user) {
                         setSignIn(true);
                         return;
                     }
-                    if (wishlist.toggle(productId))
-                        toast.success(
-                            saved
-                                ? 'นำออกจากรายการโปรดแล้ว'
-                                : 'บันทึกไว้ในรายการโปรดแล้ว',
-                        );
-                    else toast.error('บันทึกไม่ได้ กรุณาตรวจสอบพื้นที่จัดเก็บเบราว์เซอร์');
+                    wishlist.toggle(productId);
                 }}
             >
                 <Heart size={18} fill={saved ? 'currentColor' : 'none'} />

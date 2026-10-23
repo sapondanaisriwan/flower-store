@@ -15,10 +15,11 @@ use Inertia\Response;
 class ProfileController extends Controller
 {
     /**
-     * Show the user's profile settings page.
+     * เปิดหน้าโปรไฟล์ของคนที่ล็อกอินอยู่
      */
     public function edit(Request $request): Response
     {
+        // ส่งข้อมูลไปแสดงที่ resources/js/pages/settings/profile.tsx
         return Inertia::render('settings/profile', [
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status' => $request->session()->get('status'),
@@ -26,25 +27,33 @@ class ProfileController extends Controller
     }
 
     /**
-     * Update the user's profile information.
+     * บันทึกชื่อและอีเมลที่แก้จากหน้าโปรไฟล์
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        // ใช้บัญชีที่ล็อกอินอยู่ ไม่รับรหัสผู้ใช้จากฟอร์มมาเลือกบัญชี
+        $user = $request->user();
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+        // Request ตรวจชื่อและอีเมลก่อนเข้ามาตรงนี้ รับเฉพาะข้อมูลที่ผ่านการตรวจ
+        $user->fill($request->validated());
+
+        // isDirty เช็กว่าอีเมลเปลี่ยนจากเดิมไหม ถ้าเปลี่ยนต้องยืนยันอีเมลใหม่
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
         }
 
-        $request->user()->save();
+        // บันทึกข้อมูลที่แก้ลงตาราง users
+        $user->save();
 
+        // ฝากข้อความสำเร็จไว้ให้หน้าเว็บแสดง
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Profile updated.')]);
 
+        // กลับหน้าโปรไฟล์หลังบันทึกเสร็จ
         return to_route('profile.edit');
     }
 
     /**
-     * Delete the user's profile.
+     * ลบบัญชีตามโค้ดเดิม ส่วนนี้ยังไม่ได้ปรับเรื่องประวัติการซื้อ
      */
     public function destroy(ProfileDeleteRequest $request): RedirectResponse
     {

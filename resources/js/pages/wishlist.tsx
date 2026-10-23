@@ -1,20 +1,22 @@
-import { Head, Link, usePage } from '@inertiajs/react';
-import { ArrowRight, Heart, ShoppingBag, Star, Trash2 } from 'lucide-react';
-import { toast } from 'sonner';
+import { Head, Link } from '@inertiajs/react';
+import { ArrowRight, Heart, Star, Trash2 } from 'lucide-react';
 import { StoreFooter, StoreHeader } from '@/components/store/store-chrome';
 import { Button } from '@/components/ui/button';
-import { catalog } from '@/data/catalog';
-import { useCart } from '@/hooks/use-cart';
 import { useWishlist } from '@/hooks/use-wishlist';
 import '../../css/homepage.css';
-export default function Wishlist() {
-    const { auth } = usePage().props;
-    const wishlist = useWishlist(auth.user?.id);
-    const cart = useCart(auth.user?.id);
-    const items = wishlist.ids.flatMap((id) => {
-        const item = catalog.find((product) => product.id === id);
-        return item ? [item] : [];
-    });
+type WishlistItem = {
+    id: number;
+    name: string;
+    description: string;
+    price: string;
+    stock: number;
+    picture_path: string;
+    average_rating: string | null;
+    rating_count: number | null;
+};
+
+export default function Wishlist({ items }: { items: WishlistItem[] }) {
+    const wishlist = useWishlist();
     const primary =
         'h-11 rounded-full bg-[var(--accent)] text-[var(--on-accent)] hover:bg-[var(--accent-hover)]';
     return (
@@ -49,10 +51,6 @@ export default function Wishlist() {
                         เลือกชมทุกช่อ <ArrowRight size={16} />
                     </Link>
                 </div>
-                <p className="mb-8 rounded-xl bg-[var(--rose-soft)] p-4 text-xs leading-6 text-[var(--muted)]">
-                    รายการโปรดทดลอง บันทึกแยกตามบัญชีในเบราว์เซอร์นี้ · ภาพ ราคา
-                    และคะแนนเป็นข้อมูลตัวอย่าง
-                </p>
                 {items.length === 0 ? (
                     <section className="flex flex-col items-center rounded-2xl border border-[var(--border)] px-5 py-16 text-center">
                         <span className="mb-5 grid size-20 place-items-center rounded-full bg-[var(--rose)] text-[var(--accent)]">
@@ -77,11 +75,12 @@ export default function Wishlist() {
                                     className="group relative block aspect-[4/5] overflow-hidden rounded-xl bg-[var(--rose-soft)]"
                                 >
                                     <img
-                                        src="/images/homepage/bouquets.png"
-                                        alt={item.thai}
-                                        style={{
-                                            objectPosition: item.position,
-                                        }}
+                                        src={
+                                            item.picture_path.startsWith('/')
+                                                ? item.picture_path
+                                                : `/storage/${item.picture_path}`
+                                        }
+                                        alt={item.name}
                                         loading="lazy"
                                         className="h-full w-full object-cover transition-transform group-hover:scale-105 motion-reduce:transition-none"
                                     />
@@ -99,13 +98,13 @@ export default function Wishlist() {
                                         <Star
                                             size={12}
                                             fill={
-                                                item.count
+                                                item.rating_count
                                                     ? 'currentColor'
                                                     : 'none'
                                             }
                                         />
-                                        {item.count
-                                            ? `${item.rating.toFixed(1)} (${item.count})`
+                                        {item.rating_count
+                                            ? `${Number(item.average_rating ?? 0).toFixed(1)} (${item.rating_count})`
                                             : 'ยังไม่มีคะแนน'}
                                     </span>
                                 </div>
@@ -114,57 +113,27 @@ export default function Wishlist() {
                                         {item.name}
                                     </h2>
                                     <p className="mt-1 text-xs text-[var(--muted)]">
-                                        {item.thai}
+                                        {item.description}
                                     </p>
                                 </Link>
                                 <p className="mt-3 text-lg font-bold text-[var(--accent)]">
-                                    ฿{item.price.toLocaleString('th-TH')}
+                                    ฿
+                                    {Number(item.price).toLocaleString('th-TH')}
                                 </p>
                                 <Button
-                                    className={`${primary} mt-4 w-full px-2 text-xs sm:text-sm`}
-                                    disabled={
-                                        !item.stock ||
-                                        (cart.lines.find(
-                                            (line) => line.id === item.id,
-                                        )?.quantity ?? 0) >= item.stock
-                                    }
-                                    onClick={() => {
-                                        const result = cart.add(item.id, 1);
-                                        if (result === 'ok')
-                                            toast.success(
-                                                'เพิ่ม 1 ช่อลงตะกร้าทดลองแล้ว',
-                                            );
-                                        else
-                                            toast.error(
-                                                result === 'stock'
-                                                    ? 'จำนวนเกินสินค้าคงเหลือ'
-                                                    : 'ไม่สามารถบันทึกตะกร้าได้',
-                                            );
-                                    }}
+                                    asChild
+                                    className={`${primary} mt-4 w-full`}
                                 >
-                                    <ShoppingBag size={16} />
-                                    {!item.stock
-                                        ? 'สินค้าหมด'
-                                        : (cart.lines.find(
-                                                (line) => line.id === item.id,
-                                            )?.quantity ?? 0) >= item.stock
-                                          ? 'ครบจำนวนในสต็อกแล้ว'
-                                          : 'เพิ่มลงตะกร้า'}
+                                    <Link href={`/products/${item.id}`}>
+                                        ดูสินค้า
+                                    </Link>
                                 </Button>
                                 <Button
                                     variant="ghost"
                                     className="mt-1 w-full text-xs text-[var(--muted)] hover:bg-[var(--rose-soft)]"
                                     aria-label={`ลบ ${item.name} ออกจากรายการโปรด`}
-                                    onClick={() => {
-                                        if (wishlist.remove(item.id))
-                                            toast.success(
-                                                'นำออกจากรายการโปรดแล้ว',
-                                            );
-                                        else
-                                            toast.error(
-                                                'ไม่สามารถบันทึกการเปลี่ยนแปลงได้',
-                                            );
-                                    }}
+                                    disabled={wishlist.pending}
+                                    onClick={() => wishlist.remove(item.id)}
                                 >
                                     <Trash2 size={14} /> ลบออกจากรายการโปรด
                                 </Button>
