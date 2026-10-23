@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
     {
         // 1. Seed ดอกไม้ 9 รายการเริ่มต้นเข้าร้าน
         $this->call(ProductSeeder::class);
+        $this->call(ColorSeeder::class);
 
         // 2. สร้างบัญชี Admin เริ่มต้นสำหรับเข้าจัดการระบบ
         User::firstOrCreate(
