@@ -15,11 +15,31 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        // 1. Seed ดอกไม้ 9 รายการเริ่มต้นเข้าร้าน
+        $this->call(ProductSeeder::class);
 
-        User::factory()->create([
-            'username' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        // 2. สร้างบัญชี Admin เริ่มต้นสำหรับเข้าจัดการระบบ
+        User::firstOrCreate(
+            ['email' => 'admin@flowerstore.com'],
+            [
+                'username' => 'Shop Admin',
+                'role' => 'admin',
+                'is_banned' => false,
+                'password' => bcrypt('password'),
+                'email_verified_at' => now(),
+            ]
+        );
+
+        // 3. สร้างบัญชีลูกค้าทดสอบ
+        User::firstOrCreate(
+            ['email' => 'customer@flowerstore.com'],
+            [
+                'username' => 'Test Customer',
+                'role' => 'customer',
+                'is_banned' => false,
+                'password' => bcrypt('password'),
+                'email_verified_at' => now(),
+            ]
+        );
     }
 }
