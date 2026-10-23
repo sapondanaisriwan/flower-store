@@ -14,7 +14,6 @@ return new class extends Migration
             // เก็บราคาแบบทศนิยม 2 ตำแหน่งเพื่อหลีกเลี่ยงความคลาดเคลื่อนของ float
             $table->decimal('price', 12, 2)->unsigned();
             $table->unsignedInteger('stock')->default(0);
-            $table->string('color');
             $table->text('description');
             // เก็บตำแหน่งไฟล์รูปภาพ ไม่เก็บไฟล์ภาพลงในคอลัมน์นี้
             $table->string('picture_path');
