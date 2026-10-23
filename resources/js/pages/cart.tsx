@@ -1,4 +1,4 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import {
     ArrowLeft,
     ArrowRight,
@@ -19,35 +19,28 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { catalog } from '@/data/catalog';
+import { type CartProduct, productImage } from '@/types/shop';
 import { useCart } from '@/hooks/use-cart';
 import '../../css/homepage.css';
 
-export default function Cart() {
-    const { auth } = usePage().props;
-    const cart = useCart(auth.user?.id);
+export default function Cart({ items }: { items: CartProduct[] }) {
+    const cart = useCart();
     const [removeId, setRemoveId] = useState<number | null>(null);
-    const [error, setError] = useState('');
-    const items = cart.lines.flatMap((line) => {
-        const product = catalog.find((item) => item.id === line.id);
-        return product ? [{ ...product, quantity: line.quantity }] : [];
-    });
     const total = items.reduce(
-        (sum, item) => sum + item.price * item.quantity,
+        (sum, item) => sum + Number(item.price) * item.quantity,
         0,
     );
     const unavailable = items.some(
-        (item) => item.stock === 0 || item.quantity < 1,
+        (item) =>
+            !!item.is_deleted ||
+            item.stock === 0 ||
+            item.quantity < 1 ||
+            item.quantity > item.stock,
     );
     const money = (value: number) => `฿${value.toLocaleString('th-TH')}`;
     const primary =
         'h-12 rounded-full bg-[var(--accent)] px-6 text-[var(--on-accent)] hover:bg-[var(--accent-hover)]';
-    const update = (id: number, quantity: number) =>
-        setError(
-            cart.update(id, quantity)
-                ? ''
-                : 'ไม่สามารถบันทึกจำนวนได้ กรุณาตรวจสอบพื้นที่จัดเก็บของเบราว์เซอร์',
-        );
+    const update = (id: number, quantity: number) => cart.update(id, quantity);
     return (
         <div className="flower-home">
             <Head title="ตะกร้าสินค้า — My Flower Shop" />
@@ -80,15 +73,6 @@ export default function Cart() {
                         <ArrowLeft size={16} /> เลือกซื้อสินค้าต่อ
                     </Link>
                 </div>
-                <p className="mb-6 rounded-lg bg-[var(--rose-soft)] px-4 py-3 text-xs leading-6 text-[var(--muted)]">
-                    ตะกร้าทดลองสำหรับข้อมูลสินค้าตัวอย่าง บันทึกเฉพาะบัญชีนี้ในเบราว์เซอร์ที่ใช้อยู่
-                    ยังไม่เปิดรับคำสั่งซื้อ
-                </p>
-                {error && (
-                    <p role="alert" className="mb-4 text-sm text-red-700">
-                        {error}
-                    </p>
-                )}
                 {items.length === 0 ? (
                     <section className="flex flex-col items-center rounded-2xl border border-[var(--border)] px-5 py-16 text-center">
                         <span className="mb-6 grid size-20 place-items-center rounded-full bg-[var(--rose)] text-[var(--accent)]">
@@ -123,11 +107,10 @@ export default function Cart() {
                                     <Link href={`/products/${item.id}`}>
                                         <img
                                             className="aspect-[4/5] w-full rounded-lg object-cover"
-                                            style={{
-                                                objectPosition: item.position,
-                                            }}
-                                            src="/images/homepage/bouquets.png"
-                                            alt={item.thai}
+                                            src={productImage(
+                                                item.picture_path,
+                                            )}
+                                            alt={item.description}
                                         />
                                     </Link>
                                     <div className="min-w-0">
@@ -136,19 +119,19 @@ export default function Cart() {
                                                 {item.name}
                                             </h2>
                                             <p className="mt-1 text-xs text-[var(--muted)]">
-                                                {item.thai}
+                                                {item.description}
                                             </p>
                                         </Link>
                                         <p className="mt-2 text-sm">
-                                            {money(item.price)}{' '}
+                                            {money(Number(item.price))}{' '}
                                             <span className="text-xs text-[var(--muted)]">
                                                 / ช่อ
                                             </span>
                                         </p>
                                         <p className="mt-1 text-xs text-[var(--muted)]">
-                                            {item.stock
+                                            {!item.is_deleted && item.stock
                                                 ? `คงเหลือ ${item.stock} ช่อ`
-                                                : 'สินค้าหมด กรุณาลบออกก่อนดำเนินการต่อ'}
+                                                : 'สินค้าไม่พร้อมขาย กรุณาลบออกก่อนดำเนินการต่อ'}
                                         </p>
                                         <Button
                                             variant="ghost"
@@ -167,6 +150,8 @@ export default function Cart() {
                                             className="size-10"
                                             aria-label={`ลดจำนวน ${item.name}`}
                                             disabled={
+                                                cart.pending ||
+                                                !!item.is_deleted ||
                                                 item.quantity <= 1 ||
                                                 !item.stock
                                             }
@@ -192,6 +177,8 @@ export default function Cart() {
                                             className="size-10"
                                             aria-label={`เพิ่มจำนวน ${item.name}`}
                                             disabled={
+                                                cart.pending ||
+                                                !!item.is_deleted ||
                                                 item.quantity >= item.stock
                                             }
                                             onClick={() =>
@@ -205,7 +192,9 @@ export default function Cart() {
                                         </Button>
                                     </div>
                                     <strong className="col-start-2 text-lg text-[var(--accent)] md:col-start-auto md:text-right">
-                                        {money(item.price * item.quantity)}
+                                        {money(
+                                            Number(item.price) * item.quantity,
+                                        )}
                                     </strong>
                                 </article>
                             ))}
@@ -238,18 +227,18 @@ export default function Cart() {
                             </dl>
                             <Button
                                 className={`${primary} mt-6 w-full`}
-                                disabled={unavailable}
+                                disabled={unavailable || cart.pending}
                                 onClick={() => router.visit('/checkout')}
                             >
                                 ดำเนินการสั่งซื้อ <ArrowRight size={17} />
                             </Button>
                             {unavailable && (
                                 <p className="mt-3 text-xs text-red-700">
-                                    กรุณาลบสินค้าที่หมดออกจากตะกร้า
+                                    กรุณาลบสินค้าที่ไม่พร้อมขายหรือปรับจำนวนให้ไม่เกินสต็อก
                                 </p>
                             )}
                             <p className="mt-3 text-center text-xs text-[var(--muted)]">
-                                ไปกรอกข้อมูลจัดส่งและทดลอง Checkout
+                                กรอกข้อมูลจัดส่งก่อนยืนยันคำสั่งซื้อ
                             </p>
                             <div className="mt-6 flex items-center gap-3 border-t border-[var(--border)] pt-5 text-[var(--accent)]">
                                 <Truck size={21} />
@@ -276,7 +265,7 @@ export default function Cart() {
                         <DialogTitle>ลบสินค้าจากตะกร้า?</DialogTitle>
                         <DialogDescription>
                             นำ{' '}
-                            {catalog.find((item) => item.id === removeId)?.name}{' '}
+                            {items.find((item) => item.id === removeId)?.name}{' '}
                             ออกจากตะกร้า คุณสามารถกลับมาเพิ่มใหม่ได้
                         </DialogDescription>
                     </DialogHeader>
@@ -289,13 +278,9 @@ export default function Cart() {
                         </Button>
                         <Button
                             className={primary}
+                            disabled={cart.pending}
                             onClick={() => {
-                                if (removeId !== null)
-                                    setError(
-                                        cart.remove(removeId)
-                                            ? ''
-                                            : 'ไม่สามารถบันทึกตะกร้าได้ กรุณาลองอีกครั้ง',
-                                    );
+                                if (removeId !== null) cart.remove(removeId);
                                 setRemoveId(null);
                             }}
                         >
