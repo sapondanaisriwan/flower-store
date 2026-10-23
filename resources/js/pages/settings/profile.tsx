@@ -29,7 +29,10 @@ export default function Profile({
     status?: string;
 }) {
     const { auth } = usePage().props;
-    const form = useForm({ name: auth.user.name, email: auth.user.email });
+    const form = useForm({
+        username: auth.user.username,
+        email: auth.user.email,
+    });
     const primary =
         'h-11 rounded-full bg-[var(--accent)] px-6 text-[var(--on-accent)] hover:bg-[var(--accent-hover)]';
     const inputStyle =
@@ -70,7 +73,7 @@ export default function Profile({
                                 ยินดีต้อนรับกลับมา
                             </p>
                             <h2 className="mt-2 text-xl font-bold break-words">
-                                {auth.user.name}
+                                {auth.user.username}
                             </h2>
                             <p className="mt-2 text-xs leading-6 break-all text-[var(--muted)]">
                                 {auth.user.email}
@@ -134,8 +137,8 @@ export default function Profile({
                                         onError: (errors) =>
                                             document
                                                 .getElementById(
-                                                    errors.name
-                                                        ? 'name'
+                                                    errors.username
+                                                        ? 'username'
                                                         : 'email',
                                                 )
                                                 ?.focus(),
@@ -145,35 +148,37 @@ export default function Profile({
                             >
                                 <div className="grid gap-6 sm:grid-cols-2">
                                     <div className="space-y-2">
-                                        <Label htmlFor="name">
+                                        <Label htmlFor="username">
                                             ชื่อที่แสดง{' '}
                                             <span aria-hidden="true">*</span>
                                         </Label>
                                         <Input
-                                            id="name"
-                                            name="name"
-                                            value={form.data.name}
+                                            id="username"
+                                            name="username"
+                                            value={form.data.username}
                                             onChange={(event) =>
                                                 form.setData(
-                                                    'name',
+                                                    'username',
                                                     event.target.value,
                                                 )
                                             }
                                             required
                                             maxLength={255}
-                                            autoComplete="name"
+                                            autoComplete="username"
                                             disabled={form.processing}
-                                            aria-invalid={!!form.errors.name}
+                                            aria-invalid={
+                                                !!form.errors.username
+                                            }
                                             aria-describedby={
-                                                form.errors.name
-                                                    ? 'name-error'
+                                                form.errors.username
+                                                    ? 'username-error'
                                                     : undefined
                                             }
                                             className={inputStyle}
                                         />
                                         <InputError
-                                            id="name-error"
-                                            message={form.errors.name}
+                                            id="username-error"
+                                            message={form.errors.username}
                                         />
                                     </div>
                                     <div className="space-y-2">

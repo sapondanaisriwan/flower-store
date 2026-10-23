@@ -27,7 +27,7 @@ export function StoreHeader({
     current?: 'home' | 'products' | 'cart' | 'wishlist' | 'orders' | 'profile';
 }) {
     const { auth } = usePage().props;
-    const cart = useCart(auth.user?.id);
+    const cart = useCart();
     const [query, setQuery] = useState('');
     const [menu, setMenu] = useState(false);
     const [notice, setNotice] = useState<string | null>(null);
@@ -86,7 +86,7 @@ export function StoreHeader({
                             }
                         >
                             <UserRound size={20} />
-                            <span>{auth.user?.name ?? 'เข้าสู่ระบบ'}</span>
+                            <span>{auth.user?.username ?? 'เข้าสู่ระบบ'}</span>
                         </Link>
                         {auth.user?.role !== 'admin' && (
                             <>

@@ -24,21 +24,26 @@ export default function Register({ passwordRules }: Props) {
                 {({ processing, errors }) => (
                     <>
                         <div className="grid gap-2">
-                            <Label htmlFor="name">ชื่อที่แสดง</Label>
+                            <Label htmlFor="username">ชื่อที่แสดง</Label>
                             <Input
-                                id="name"
-                                name="name"
+                                id="username"
+                                name="username"
                                 required
                                 maxLength={255}
-                                autoComplete="name"
+                                autoComplete="username"
                                 placeholder="อยากให้เราเรียกคุณว่าอะไร"
                                 className="auth-input"
-                                aria-invalid={!!errors.name}
+                                aria-invalid={!!errors.username}
                                 aria-describedby={
-                                    errors.name ? 'name-error' : undefined
+                                    errors.username
+                                        ? 'username-error'
+                                        : undefined
                                 }
                             />
-                            <InputError id="name-error" message={errors.name} />
+                            <InputError
+                                id="username-error"
+                                message={errors.username}
+                            />
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="email">อีเมล</Label>

@@ -1,6 +1,5 @@
 import { WishlistButton } from '@/components/store/wishlist-button';
 import { useCart } from '@/hooks/use-cart';
-import { toast } from 'sonner';
 import { Head, Link, usePage } from '@inertiajs/react';
 import {
     ArrowLeft,
@@ -48,7 +47,7 @@ export default function ProductDetail({ productId }: { productId: number }) {
 }
 function ProductView({ product }: { product: CatalogProduct }) {
     const { auth } = usePage().props;
-    const cart = useCart(auth.user?.id);
+    const cart = useCart();
     const [quantity, setQuantity] = useState(product.stock ? '1' : '0');
     const [zoom, setZoom] = useState(false);
     const [action, setAction] = useState<string | null>(null);
@@ -254,7 +253,9 @@ function ProductView({ product }: { product: CatalogProduct }) {
                                     <Button
                                         className={primary}
                                         disabled={
-                                            !validQuantity || !product.stock
+                                            !validQuantity ||
+                                            !product.stock ||
+                                            cart.pending
                                         }
                                         onClick={() => {
                                             if (!auth.user) {
@@ -263,24 +264,7 @@ function ProductView({ product }: { product: CatalogProduct }) {
                                             }
                                             if (isAdmin || !validQuantity)
                                                 return;
-                                            const result = cart.add(
-                                                product.id,
-                                                amount,
-                                            );
-                                            if (result === 'ok')
-                                                toast.success(
-                                                    'เพิ่มลงตะกร้าทดลองแล้ว',
-                                                    {
-                                                        description:
-                                                            'บันทึกในเบราว์เซอร์นี้ ยังไม่มีการสั่งซื้อ',
-                                                    },
-                                                );
-                                            else
-                                                toast.error(
-                                                    result === 'stock'
-                                                        ? 'จำนวนรวมในตะกร้าเกินสินค้าคงเหลือ'
-                                                        : 'บันทึกไม่ได้ กรุณาตรวจสอบพื้นที่จัดเก็บเบราว์เซอร์',
-                                                );
+                                            cart.add(product.id, amount);
                                         }}
                                     >
                                         <ShoppingBag size={18} /> เพิ่มลงตะกร้า

@@ -48,6 +48,10 @@ class HandleInertiaRequests extends Middleware
                     ->where('wishlist_user_id', $request->user()->id)->where('products.is_deleted', false)
                     ->pluck('product_id')->all()
                 : [],
+            'cartLines' => fn () => $request->user()?->role === 'customer' && ! $request->user()->is_banned
+                ? DB::table('cart_product')->where('cart_user_id', $request->user()->id)
+                    ->select('product_id as id', 'quantity')->orderBy('product_id')->get()
+                : [],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
     }

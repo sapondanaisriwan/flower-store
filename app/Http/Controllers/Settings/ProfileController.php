@@ -37,9 +37,6 @@ class ProfileController extends Controller
         // Request ตรวจชื่อและอีเมลก่อนเข้ามาตรงนี้ รับเฉพาะข้อมูลที่ผ่านการตรวจ
         $user->fill($request->validated());
 
-        // หน้าเว็บใช้ name ส่วน schema มี username จึงบันทึกชื่อเดียวกันทั้งสองช่อง
-        $user->username = $user->name;
-
         // isDirty เช็กว่าอีเมลเปลี่ยนจากเดิมไหม ถ้าเปลี่ยนต้องยืนยันอีเมลใหม่
         if ($user->isDirty('email')) {
             $user->email_verified_at = null;

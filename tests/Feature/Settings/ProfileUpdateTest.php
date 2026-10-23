@@ -15,7 +15,7 @@ class ProfileUpdateTest extends TestCase
     public function test_guest_cannot_view_or_update_profile(): void
     {
         $this->get(route('profile.edit'))->assertRedirect(route('login'));
-        $this->patch(route('profile.update'), ['name' => 'Guest', 'email' => 'guest@example.com'])->assertRedirect(route('login'));
+        $this->patch(route('profile.update'), ['username' => 'Guest', 'email' => 'guest@example.com'])->assertRedirect(route('login'));
     }
 
     // ใช้อีเมลของคนอื่นไม่ได้ และข้อมูลเดิมต้องไม่เปลี่ยน
@@ -23,13 +23,13 @@ class ProfileUpdateTest extends TestCase
     {
         $user = User::factory()->create();
         $other = User::factory()->create();
-        $originalName = $user->name;
+        $originalName = $user->username;
         $originalEmail = $user->email;
         $this->actingAs($user)->patch(route('profile.update'), [
-            'name' => 'Changed Name',
+            'username' => 'Changed Name',
             'email' => $other->email,
         ])->assertSessionHasErrors('email');
-        $this->assertSame($originalName, $user->fresh()->name);
+        $this->assertSame($originalName, $user->fresh()->username);
         $this->assertSame($originalEmail, $user->fresh()->email);
     }
 
@@ -45,7 +45,7 @@ class ProfileUpdateTest extends TestCase
         $response->assertOk();
     }
 
-    // แก้ข้อมูลสำเร็จ ชื่อทั้งสองช่องตรงกัน และอีเมลใหม่ยังไม่ถือว่ายืนยันแล้ว
+    // แก้ข้อมูลสำเร็จ username ถูกบันทึก และอีเมลใหม่ยังไม่ถือว่ายืนยันแล้ว
     public function test_profile_information_can_be_updated()
     {
         $user = User::factory()->create();
@@ -53,7 +53,7 @@ class ProfileUpdateTest extends TestCase
         $response = $this
             ->actingAs($user)
             ->patch(route('profile.update'), [
-                'name' => 'Test User',
+                'username' => 'Test User',
                 'email' => 'test@example.com',
             ]);
 
@@ -64,7 +64,6 @@ class ProfileUpdateTest extends TestCase
         // อ่านข้อมูลล่าสุดจากฐานข้อมูลมาตรวจ
         $user->refresh();
 
-        $this->assertSame('Test User', $user->name);
         $this->assertSame('Test User', $user->username);
         $this->assertSame('test@example.com', $user->email);
         $this->assertNull($user->email_verified_at);
@@ -78,7 +77,7 @@ class ProfileUpdateTest extends TestCase
         $response = $this
             ->actingAs($user)
             ->patch(route('profile.update'), [
-                'name' => 'Test User',
+                'username' => 'Test User',
                 'email' => $user->email,
             ]);
 
@@ -94,12 +93,12 @@ class ProfileUpdateTest extends TestCase
     {
         $user = User::factory()->create();
         $other = User::factory()->create();
-        $originalOtherName = $other->name;
+        $originalOtherName = $other->username;
 
         $this->actingAs($user)->patch(route('profile.update'), [
             'id' => $other->id,
-            'name' => 'Green',
-            'username' => 'Injected name',
+            'username' => 'Green',
+            'name' => 'Ignored legacy field',
             'email' => $user->email,
             'role' => 'admin',
             'is_banned' => true,
@@ -107,29 +106,28 @@ class ProfileUpdateTest extends TestCase
 
         // อ่านข้อมูลล่าสุดจากฐานข้อมูลมาตรวจ
         $user->refresh();
-        $this->assertSame('Green', $user->name);
         $this->assertSame('Green', $user->username);
         $this->assertSame('customer', $user->role);
         $this->assertEquals(0, $user->is_banned);
-        $this->assertSame($originalOtherName, $other->fresh()->name);
+        $this->assertSame($originalOtherName, $other->fresh()->username);
     }
 
     // ลองชื่อว่าง ชื่อยาวเกิน และอีเมลผิดรูปแบบ ต้องไม่บันทึก
     public function test_invalid_profile_fields_are_rejected(): void
     {
         $user = User::factory()->create();
-        $originalName = $user->name;
+        $originalName = $user->username;
 
         foreach ([
-            ['name' => '', 'email' => $user->email],
-            ['name' => str_repeat('a', 256), 'email' => $user->email],
-            ['name' => 'Green', 'email' => 'invalid-email'],
+            ['username' => '', 'email' => $user->email],
+            ['username' => str_repeat('a', 256), 'email' => $user->email],
+            ['username' => 'Green', 'email' => 'invalid-email'],
         ] as $input) {
             $this->actingAs($user)->patch(route('profile.update'), $input)
                 ->assertSessionHasErrors();
         }
 
-        $this->assertSame($originalName, $user->fresh()->name);
+        $this->assertSame($originalName, $user->fresh()->username);
     }
 
     // ทดสอบลบบัญชีเดิม กรณียังไม่มีที่อยู่หรือออเดอร์ผูกอยู่
