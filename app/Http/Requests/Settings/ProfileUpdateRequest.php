@@ -17,6 +17,7 @@ class ProfileUpdateRequest extends FormRequest
      */
     public function rules(): array
     {
+        // ใช้กฎตรวจชื่อและอีเมล โดยอนุญาตให้ใช้อีเมลเดิมของตัวเองได้
         return $this->profileRules($this->user()->id);
     }
 }

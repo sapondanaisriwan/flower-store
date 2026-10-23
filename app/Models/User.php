@@ -17,6 +17,9 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
 /**
  * @property int $id
  * @property string $name
+ * @property string $role
+ * @property bool $is_banned
+ * @property string|null $username
  * @property string $email
  * @property Carbon|null $email_verified_at
  * @property string $password
@@ -34,6 +37,13 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
 
+    // ให้บัญชีที่เพิ่งสร้างมีค่าเดียวกับค่าเริ่มต้นในฐานข้อมูลทันที
+    /** @var array<string, mixed> */
+    protected $attributes = [
+        'role' => 'customer',
+        'is_banned' => false,
+    ];
+
     /**
      * Get the attributes that should be cast.
      *
@@ -44,6 +54,7 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_banned' => 'boolean',
             'two_factor_confirmed_at' => 'datetime',
         ];
     }

@@ -1,66 +1,34 @@
-import { useSyncExternalStore } from 'react';
-import { catalog } from '@/data/catalog';
-const eventName = 'flower-wishlist-change';
-function subscribe(callback: () => void) {
-    window.addEventListener('storage', callback);
-    window.addEventListener(eventName, callback);
-    return () => {
-        window.removeEventListener('storage', callback);
-        window.removeEventListener(eventName, callback);
-    };
-}
-function parse(raw: string): number[] {
-    try {
-        const value: unknown = JSON.parse(raw);
-        return Array.isArray(value)
-            ? [
-                  ...new Set(
-                      value.filter(
-                          (id): id is number =>
-                              typeof id === 'number' &&
-                              catalog.some((item) => item.id === id),
-                      ),
-                  ),
-              ]
-            : [];
-    } catch {
-        return [];
+import { router, usePage } from '@inertiajs/react';
+import { useState } from 'react';
+import { toast } from 'sonner';
+
+export function useWishlist() {
+    const { wishlistIds } = usePage().props;
+    const [pending, setPending] = useState(false);
+
+    function save(productId: number, remove: boolean) {
+        if (pending) return;
+        setPending(true);
+
+        // รอให้ backend บันทึกสำเร็จก่อนแสดงข้อความและเปลี่ยนสถานะหัวใจ
+        const options = {
+            preserveScroll: true,
+            onSuccess: () =>
+                toast.success(
+                    remove ? 'นำออกจากรายการโปรดแล้ว' : 'บันทึกไว้ในรายการโปรดแล้ว',
+                ),
+            onError: () => toast.error('บันทึกไม่ได้ สินค้าอาจไม่พร้อมขาย กรุณาลองใหม่'),
+            onFinish: () => setPending(false),
+        };
+
+        if (remove) router.delete(`/wishlist/${productId}`, options);
+        else router.post('/wishlist', { product_id: productId }, options);
     }
-}
-export function useWishlist(userId?: number) {
-    const key = userId ? `flower-shop:wishlist:v1:${userId}` : null;
-    const read = () => {
-        try {
-            return key ? (window.localStorage.getItem(key) ?? '[]') : '[]';
-        } catch {
-            return '[]';
-        }
-    };
-    const raw = useSyncExternalStore(subscribe, read, () => '[]');
-    const ids = parse(raw);
-    function write(next: number[]) {
-        if (!key) return false;
-        try {
-            window.localStorage.setItem(key, JSON.stringify(next));
-            window.dispatchEvent(new Event(eventName));
-            return true;
-        } catch {
-            return false;
-        }
-    }
+
     return {
-        ids,
-        has: (id: number) => ids.includes(id),
-        remove: (id: number) =>
-            write(parse(read()).filter((value) => value !== id)),
-        toggle(id: number) {
-            if (!catalog.some((item) => item.id === id)) return false;
-            const current = parse(read());
-            return write(
-                current.includes(id)
-                    ? current.filter((value) => value !== id)
-                    : [...current, id],
-            );
-        },
+        pending,
+        has: (id: number) => wishlistIds.includes(id),
+        remove: (id: number) => save(id, true),
+        toggle: (id: number) => save(id, wishlistIds.includes(id)),
     };
 }

@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -41,6 +42,12 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
             ],
+            // ส่งรหัสสินค้าที่บันทึกไว้ ให้ปุ่มหัวใจทุกหน้ารู้สถานะเดียวกัน
+            'wishlistIds' => fn () => $request->user()?->role === 'customer' && ! $request->user()->is_banned
+                ? DB::table('wishlist_product')->join('products', 'products.id', '=', 'wishlist_product.product_id')
+                    ->where('wishlist_user_id', $request->user()->id)->where('products.is_deleted', false)
+                    ->pluck('product_id')->all()
+                : [],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
     }
