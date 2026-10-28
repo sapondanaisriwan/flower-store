@@ -15,11 +15,53 @@ use Inertia\Inertia;
 
 Route::inertia('/', 'welcome')->name('home');
 Route::inertia('/products', 'products')->name('products');
-Route::get('/products/{product}', function (string $product) {
-    abort_unless(in_array($product, array_map('strval', range(1, 9)), true), 404);
+Route::get('/products/{product}', function (int $product) {
+    // เช็คว่ามี ID สินค้านี้อยู่ในฐานข้อมูลจริง และยังไม่ถูกลบ (is_deleted = false)
+    $exists = false;
+    try {
+        $exists = \App\Models\Product::where('id', $product)
+            ->where('is_deleted', false)
+            ->exists();
+    } catch (\Throwable) {
+        $exists = in_array($product, range(1, 9), true);
+    }
 
-    return Inertia::render('product-detail', ['productId' => (int) $product]);
+    // หากไม่พบในฐานข้อมูล แต่เป็น mock catalog ID 1-9 ให้เปิดดูได้โดยไม่ 404
+    if (! $exists && in_array($product, range(1, 9), true)) {
+        $exists = true;
+    }
+
+    abort_unless($exists, 404);
+
+    return Inertia::render('product-detail', ['productId' => $product]);
 })->whereNumber('product')->name('products.show');
+
+// หน้าแยก Dashboard ตามสิทธิ์ (Admin -> /dashboard/admin, User -> /dashboard/user)
+Route::get('/dashboard', function (\Illuminate\Http\Request $request) {
+    if ($request->user()?->role === 'admin') {
+        return redirect()->to('/dashboard/admin');
+    }
+
+    return redirect()->to('/dashboard/user');
+})->middleware('auth')->name('dashboard');
+
+// Dashboard สำหรับ User ทั่วไป / ลูกค้า
+Route::get('/dashboard/user', function (\Illuminate\Http\Request $request) {
+    if ($request->user()?->role === 'admin') {
+        return redirect()->to('/dashboard/admin');
+    }
+
+    return Inertia::render('dashboard');
+})->middleware('auth')->name('dashboard.user');
+
+// Dashboard สำหรับ Admin
+Route::middleware(['auth', EnsureAdmin::class])->group(function () {
+    Route::get('/dashboard/admin', [AdminProductController::class, 'index'])->name('dashboard.admin');
+    Route::get('/dashboard/admin/products', [AdminProductController::class, 'index']);
+    Route::get('/dashboard/admin/orders', [AdminOrderController::class, 'index']);
+    Route::get('/dashboard/admin/users', [AdminUserController::class, 'index']);
+});
+
 // งานฝั่งผู้ดูแลระบบ (Admin)
 Route::middleware(['auth', EnsureAdmin::class])->prefix('admin')->name('admin.')->group(function () {
     // หน้าหลัก Admin (เริ่มต้นที่หน้าสินค้า)
@@ -44,9 +86,7 @@ Route::middleware(['auth', EnsureAdmin::class])->prefix('admin')->name('admin.')
     Route::patch('/users/{user}/ban', [AdminUserController::class, 'toggleBan'])->whereNumber('user')->name('users.ban');
     Route::patch('/users/{user}/role', [AdminUserController::class, 'updateRole'])->whereNumber('user')->name('users.role');
 });
-Route::redirect('/admin', '/admin/products');
-
-Route::inertia('dashboard', 'dashboard')->middleware('auth')->name('dashboard');
+Route::redirect('/admin', '/dashboard/admin');
 
 // งานฝั่งลูกค้า ต้องล็อกอินและไม่ถูกแบน
 Route::middleware(['auth', EnsureCustomer::class])->group(function () {

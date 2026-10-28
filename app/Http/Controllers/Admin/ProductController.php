@@ -16,12 +16,17 @@ class ProductController extends Controller
      */
     public function index(Request $request): Response
     {
-        $products = Product::withRatingStats()
-            ->orderBy('products.is_deleted', 'asc')
-            ->orderBy('products.id', 'asc')
-            ->get();
+        try {
+            $products = Product::withRatingStats()
+                ->orderBy('products.is_deleted', 'asc')
+                ->orderBy('products.id', 'asc')
+                ->get();
 
-        $colors = Product::getDistinctColors();
+            $colors = Product::getDistinctColors();
+        } catch (\Throwable) {
+            $products = collect();
+            $colors = [];
+        }
 
         return Inertia::render('admin', [
             'initialTab' => 'products',

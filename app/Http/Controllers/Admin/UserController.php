@@ -17,18 +17,22 @@ class UserController extends Controller
      */
     public function index(Request $request): Response
     {
-        $users = User::withCount('orders')
-            ->select(
-                'id',
-                'username',
-                'username as name',
-                'email',
-                'role',
-                'is_banned',
-                'created_at'
-            )
-            ->orderByDesc('id')
-            ->get();
+        try {
+            $users = User::withCount('orders')
+                ->select(
+                    'id',
+                    'username',
+                    'username as name',
+                    'email',
+                    'role',
+                    'is_banned',
+                    'created_at'
+                )
+                ->orderByDesc('id')
+                ->get();
+        } catch (\Throwable) {
+            $users = collect();
+        }
 
         return Inertia::render('admin', [
             'initialTab' => 'users',

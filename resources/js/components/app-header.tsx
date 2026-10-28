@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid, Menu, Search } from 'lucide-react';
+import { Flower2, Heart, Home, LayoutGrid, Menu, Package, Search, Settings, ShoppingBag } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import AppLogoIcon from '@/components/app-logo-icon';
 import { Breadcrumbs } from '@/components/breadcrumbs';
@@ -39,35 +39,74 @@ type Props = {
     breadcrumbs?: BreadcrumbItem[];
 };
 
-const mainNavItems: NavItem[] = [
-    {
-        title: 'Dashboard',
-        href: dashboard(),
-        icon: LayoutGrid,
-    },
-];
-
-const rightNavItems: NavItem[] = [
-    {
-        title: 'Repository',
-        href: 'https://github.com/laravel/react-starter-kit',
-        icon: Folder,
-    },
-    {
-        title: 'Documentation',
-        href: 'https://laravel.com/docs/starter-kits#react',
-        icon: BookOpen,
-    },
-];
-
 const activeItemStyles =
     'text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100';
 
 export function AppHeader({ breadcrumbs = [] }: Props) {
     const page = usePage();
     const { auth } = page.props;
+    const isAdmin = auth?.user?.role === 'admin';
     const getInitials = useInitials();
     const { isCurrentUrl, whenCurrentUrl } = useCurrentUrl();
+
+    const mainNavItems: NavItem[] = isAdmin
+        ? [
+              {
+                  title: 'Admin Dashboard',
+                  href: '/dashboard/admin',
+                  icon: LayoutGrid,
+              },
+              {
+                  title: 'Products',
+                  href: '/admin/products',
+                  icon: Flower2,
+              },
+              {
+                  title: 'Orders',
+                  href: '/admin/orders',
+                  icon: Package,
+              },
+              {
+                  title: 'Users',
+                  href: '/admin/users',
+                  icon: Settings,
+              },
+          ]
+        : [
+              {
+                  title: 'Dashboard',
+                  href: '/dashboard/user',
+                  icon: LayoutGrid,
+              },
+              {
+                  title: 'Shop',
+                  href: '/products',
+                  icon: Flower2,
+              },
+              {
+                  title: 'Orders',
+                  href: '/orders',
+                  icon: Package,
+              },
+              {
+                  title: 'Wishlist',
+                  href: '/wishlist',
+                  icon: Heart,
+              },
+              {
+                  title: 'Cart',
+                  href: '/cart',
+                  icon: ShoppingBag,
+              },
+          ];
+
+    const rightNavItems: NavItem[] = [
+        {
+            title: 'Store Homepage',
+            href: '/',
+            icon: Home,
+        },
+    ];
 
     return (
         <>
@@ -135,7 +174,7 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                     </div>
 
                     <Link
-                        href={dashboard()}
+                        href={isAdmin ? '/dashboard/admin' : '/dashboard/user'}
                         prefetch
                         className="flex items-center space-x-2"
                     >
