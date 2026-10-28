@@ -29,32 +29,37 @@ class OrderController extends Controller
             'cancelled' => ['cancelled', 'canceled'],
         ];
 
-        $counts = Order::getStatusCounts($groups);
+        try {
+            $counts = Order::getStatusCounts($groups);
 
-        $query = Order::withCustomer();
+            $query = Order::withCustomer();
 
-        if ($statusFilter !== 'all' && isset($groups[$statusFilter])) {
-            $query->whereIn('orders.status', $groups[$statusFilter]);
-        }
+            if ($statusFilter !== 'all' && isset($groups[$statusFilter])) {
+                $query->whereIn('orders.status', $groups[$statusFilter]);
+            }
 
-        $orders = $query->orderByDesc('orders.id')->get();
+            $orders = $query->orderByDesc('orders.id')->get();
 
-        // โหลดรายการสินค้าของแต่ละออเดอร์ผ่าน Model
-        $items = OrderProduct::whereIn('order_id', $orders->pluck('id'))
-            ->orderBy('product_order')
-            ->get()
-            ->groupBy('order_id');
+            // โหลดรายการสินค้าของแต่ละออเดอร์ผ่าน Model
+            $items = OrderProduct::whereIn('order_id', $orders->pluck('id'))
+                ->orderBy('product_order')
+                ->get()
+                ->groupBy('order_id');
 
-        foreach ($orders as $order) {
-            $order->items = $items->get($order->id, collect())->values();
-            $order->customer_name = $order->customer_name ?: 'Customer';
-            $order->delivery = null;
-            if (! empty($order->address)) {
-                $decoded = json_decode($order->address, true);
-                if (is_array($decoded)) {
-                    $order->delivery = $decoded;
+            foreach ($orders as $order) {
+                $order->items = $items->get($order->id, collect())->values();
+                $order->customer_name = $order->customer_name ?: 'Customer';
+                $order->delivery = null;
+                if (! empty($order->address)) {
+                    $decoded = json_decode($order->address, true);
+                    if (is_array($decoded)) {
+                        $order->delivery = $decoded;
+                    }
                 }
             }
+        } catch (\Throwable) {
+            $counts = ['pending' => 0, 'delivery' => 0, 'success' => 0, 'cancelled' => 0];
+            $orders = collect();
         }
 
         return Inertia::render('admin', [

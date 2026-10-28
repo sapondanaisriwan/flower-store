@@ -13,6 +13,7 @@ import {
     Flower2,
     Info,
     Layers,
+    LogOut,
     Mail,
     MapPin,
     Minus,
@@ -38,6 +39,7 @@ import {
     X,
 } from 'lucide-react';
 import React, { useState } from 'react';
+import { logout } from '@/routes';
 import '../../css/homepage.css';
 
 interface OrderItem {
@@ -889,7 +891,7 @@ export default function AdminPage({
                         </div>
                     </div>
 
-                    {/* Admin User Profile */}
+                    {/* Admin User Profile & Logout */}
                     <div className="flex items-center gap-3">
                         <div className="flex items-center gap-3 rounded-full border border-[var(--border)] bg-white/80 py-1.5 pr-4 pl-2 shadow-xs backdrop-blur-xs">
                             <div className="grid size-9 place-items-center rounded-full bg-[var(--rose)] text-[var(--accent)]">
@@ -904,6 +906,17 @@ export default function AdminPage({
                                 </span>
                             </div>
                         </div>
+
+                        {/* Log Out Button */}
+                        <Link
+                            href={logout()}
+                            as="button"
+                            className="inline-flex h-11 items-center gap-2 rounded-full border border-[var(--border)] bg-white/90 px-4 text-xs font-semibold text-[var(--muted)] shadow-xs transition-all hover:border-red-200 hover:bg-red-50 hover:text-red-600 active:scale-95"
+                            title="ออกจากระบบ (Log Out)"
+                        >
+                            <LogOut size={16} />
+                            <span>Log out</span>
+                        </Link>
                     </div>
                 </div>
 
