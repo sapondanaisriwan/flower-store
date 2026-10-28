@@ -30,16 +30,18 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        // 3. สร้างบัญชีลูกค้าทดสอบ
-        User::firstOrCreate(
-            ['email' => 'customer@flowerstore.com'],
-            [
-                'username' => 'Test Customer',
-                'role' => 'customer',
-                'is_banned' => false,
-                'password' => bcrypt('password'),
-                'email_verified_at' => now(),
-            ]
-        );
+        // 3. สร้างบัญชีลูกค้าทดสอบ 10 คน (customer1 - customer10)
+        for ($i = 1; $i <= 10; $i++) {
+            User::firstOrCreate(
+                ['email' => "customer{$i}@flowerstore.com"],
+                [
+                    'username' => "Customer {$i}",
+                    'role' => 'customer',
+                    'is_banned' => false,
+                    'password' => bcrypt('password'),
+                    'email_verified_at' => now(),
+                ]
+            );
+        }
     }
 }
