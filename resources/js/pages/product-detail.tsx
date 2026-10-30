@@ -82,13 +82,24 @@ function ProductView({
 
     const isAdmin = auth.user?.role === 'admin';
 
-    // เผื่อกรณี Admin พิมพ์สีเข้ามาเอง ไม่ตรงกับที่มีในระบบ ให้แสดงชื่อสีนั้นไปเลย
+    // เผื่อกรณี Admin เลือกหลายสีหรือสร้างสีใหม่ ให้แสดงรายชื่อสีทั้งหมดของช่อดอกไม้
     const colorOptions: Record<string, string> = {
         pink: 'ชมพู & พีช',
         white: 'ขาวครีม',
         red: 'แดงไวน์',
     };
-    const color = colorOptions[product.color] || product.color || 'ไม่ระบุ';
+    const productColorList =
+        product.colors && product.colors.length > 0
+            ? product.colors
+            : product.color
+              ? [product.color]
+              : [];
+    const color =
+        productColorList.length > 0
+            ? productColorList
+                  .map((c) => colorOptions[c.toLowerCase()] || c)
+                  .join(', ')
+            : 'ไม่ระบุ';
 
     const primary =
         'h-12 rounded-full bg-[var(--accent)] px-6 text-[var(--on-accent)] hover:bg-[var(--accent-hover)]';

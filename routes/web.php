@@ -51,9 +51,10 @@ Route::middleware(['auth', EnsureAdmin::class])->prefix('admin')->name('admin.')
     // หน้าหลัก Admin (เริ่มต้นที่หน้าสินค้า)
     Route::get('/', [AdminProductController::class, 'index'])->name('index');
 
-    // จัดการสินค้า: ดู / เพิ่ม / แก้ / ปิดขาย / สต็อก / ลบ
+    // จัดการสินค้า: ดู / เพิ่ม / แก้ / ปิดขาย / สต็อก / ลบ / เพิ่มสีใหม่
     Route::get('/products', [AdminProductController::class, 'index'])->name('products');
     Route::post('/products', [AdminProductController::class, 'store'])->name('products.store');
+    Route::post('/colors', [AdminProductController::class, 'storeColor'])->name('colors.store');
     Route::get('/products/{product}/edit', [AdminProductController::class, 'edit'])->whereNumber('product')->name('products.edit');
     Route::match(['patch', 'post'], '/products/{product}', [AdminProductController::class, 'update'])->whereNumber('product')->name('products.update');
     Route::patch('/products/{product}/toggle', [AdminProductController::class, 'toggleSell'])->whereNumber('product')->name('products.toggle');

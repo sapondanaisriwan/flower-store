@@ -174,7 +174,7 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                     </div>
 
                     <Link
-                        href={isAdmin ? '/dashboard/admin' : '/dashboard/user'}
+                        href={isAdmin ? '/dashboard/admin' : '/'}
                         prefetch
                         className="flex items-center space-x-2"
                     >

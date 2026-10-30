@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\Wishlist\StoreWishlistRequest;
+use App\Models\ColorProduct;
 use App\Models\Rating;
 use App\Models\Wishlist;
 use App\Models\WishlistProduct;
@@ -17,13 +18,15 @@ class WishlistController extends Controller
     public function index(Request $request): Response
     {
         $ratings = Rating::selectRaw('product_id, AVG(rating) as average_rating, COUNT(*) as rating_count')->groupBy('product_id');
+        $productColors = ColorProduct::selectRaw('product_id, MIN(color_name) as primary_color')->groupBy('product_id');
 
         // อ่านสินค้าใน Wishlist ของตัวเอง พร้อมคะแนนเฉลี่ยจากฐานข้อมูล
         $items = WishlistProduct::where('wishlist_user_id', $request->user()->id)
             ->join('products', 'products.id', '=', 'wishlist_product.product_id')
             ->leftJoinSub($ratings, 'scores', 'scores.product_id', '=', 'products.id')
+            ->leftJoinSub($productColors, 'product_colors', 'product_colors.product_id', '=', 'products.id')
             ->where('products.is_deleted', false)
-            ->select('products.*', 'scores.average_rating', 'scores.rating_count')
+            ->select('products.*', DB::raw('product_colors.primary_color as color'), 'scores.average_rating', 'scores.rating_count')
             ->orderByDesc('wishlist_product.added_at')
             ->orderBy('products.id')
             ->get();

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Order;
+use App\Models\Product;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -33,6 +35,11 @@ class UserController extends Controller
         return Inertia::render('admin', [
             'initialTab' => 'users',
             'dbUsers' => $users,
+            'navCounts' => [
+                'products' => Product::count(),
+                'orders' => Order::count(),
+                'users' => $users->count(),
+            ],
         ]);
     }
 

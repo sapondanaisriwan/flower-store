@@ -11,6 +11,7 @@ interface DbProduct {
     price: string | number;
     stock: number;
     color: string | null;
+    colors?: { name: string; hex_code?: string }[];
     picture_path: string | null;
     is_deleted: boolean;
     rating: string | number;
@@ -24,6 +25,8 @@ interface NormalisedProduct {
     thai: string;
     price: number;
     color: string;
+    colors: string[];
+    colorObjects: { name: string; hex_code?: string }[];
     rating: number;
     count: number;
     stock: number;
@@ -113,7 +116,13 @@ function ProductsContent({
                 `${item.name} ${item.thai}`
                     .toLowerCase()
                     .includes(query.trim().toLowerCase()) &&
-                (!chosenColors.length || chosenColors.includes(item.color)) &&
+                (!chosenColors.length ||
+                    chosenColors.some(
+                        (c) =>
+                            item.colors.some(
+                                (ic) => ic.toLowerCase() === c.toLowerCase(),
+                            ) || item.color.toLowerCase() === c.toLowerCase(),
+                    )) &&
                 item.price >= range.min &&
                 item.price < range.max &&
                 item.rating >= Number(rating),

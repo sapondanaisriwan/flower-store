@@ -147,7 +147,8 @@ class Product extends Model
             ->selectRaw('product_id, MIN(color_name) as primary_color')
             ->groupBy('product_id');
 
-        return $query->leftJoinSub($ratings, 'scores', 'scores.product_id', '=', 'products.id')
+        return $query->with('colors')
+            ->leftJoinSub($ratings, 'scores', 'scores.product_id', '=', 'products.id')
             ->leftJoinSub($productColors, 'product_colors', 'product_colors.product_id', '=', 'products.id')
             ->select(
                 'products.id',
@@ -173,6 +174,17 @@ class Product extends Model
         return Color::query()
             ->orderBy('name')
             ->pluck('name')
+            ->values();
+    }
+
+    /**
+     * ดึงข้อมูลสีทั้งหมดพร้อมรหัสสี (name, hex_code)
+     */
+    public static function getColorCatalog(): Collection
+    {
+        return Color::query()
+            ->orderBy('name')
+            ->get(['name', 'hex_code'])
             ->values();
     }
 }

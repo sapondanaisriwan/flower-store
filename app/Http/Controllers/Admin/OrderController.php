@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\OrderProduct;
 use App\Models\Product;
+use App\Models\User;
 use App\Support\OrderStatus;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -65,6 +66,11 @@ class OrderController extends Controller
             'dbOrders' => $orders,
             'statusCounts' => $counts,
             'selectedOrderStatus' => $statusFilter,
+            'navCounts' => [
+                'products' => Product::count(),
+                'orders' => $counts['all'] ?? Order::count(),
+                'users' => User::count(),
+            ],
         ]);
     }
 
@@ -95,6 +101,11 @@ class OrderController extends Controller
             'initialTab' => 'orders',
             'selectedOrder' => $record,
             'dbOrders' => [$record],
+            'navCounts' => [
+                'products' => Product::count(),
+                'orders' => Order::count(),
+                'users' => User::count(),
+            ],
         ]);
     }
 

@@ -30,7 +30,12 @@ export default function Welcome({
     const [notice, setNotice] = useState<string | null>(null);
     const isAdmin = auth.user?.role === 'admin';
     const visible = products.filter(
-        (product) => filter === 'all' || product.color === filter,
+        (product) =>
+            filter === 'all' ||
+            product.colors.some(
+                (c) => c.toLowerCase() === filter.toLowerCase(),
+            ) ||
+            product.color.toLowerCase() === filter.toLowerCase(),
     );
     return (
         <div className="flower-home">
@@ -137,19 +142,27 @@ export default function Welcome({
                         aria-label="กรองตามสี"
                     >
                         {[
-                            { id: 'all', label: 'ทุกช่อ' },
+                            { id: 'all', label: 'ทุกช่อ', hex: null },
                             ...colors.map((color) => ({
                                 id: color.value,
                                 label: color.label,
+                                hex: color.hex,
                             })),
                         ].map((item) => (
                             <button
                                 key={item.id}
                                 aria-pressed={filter === item.id}
-                                className={filter === item.id ? 'selected' : ''}
+                                className={`inline-flex items-center gap-2 ${filter === item.id ? 'selected' : ''}`}
                                 onClick={() => setFilter(item.id)}
                             >
-                                {item.label}
+                                {item.hex && (
+                                    <span
+                                        aria-hidden="true"
+                                        className="size-3 shrink-0 rounded-full border border-[#ba9ea6]"
+                                        style={{ backgroundColor: item.hex }}
+                                    />
+                                )}
+                                <span>{item.label}</span>
                             </button>
                         ))}
                         <span className="flower-preview-label">
