@@ -44,15 +44,13 @@ export function StoreHeader({
                     <Link
                         className="flower-brand"
                         href="/"
-                        aria-label="My Flower Shop หน้าแรก"
+                        aria-label="Bloomie Flower Shop หน้าแรก"
                     >
-                        <Flower2 size={33} strokeWidth={1.25} />
-                        <span>
-                            MY FLOWER
-                            <span className="flower-brand-bottom">
-                                SHOP <i>·</i> made to last
-                            </span>
-                        </span>
+                        <img
+                            src="/logo.png"
+                            alt="Bloomie Flower Shop"
+                            className="flower-brand-logo"
+                        />
                     </Link>
                     <form
                         className="flower-search"
@@ -219,14 +217,16 @@ export function StoreFooter() {
     return (
         <footer className="flower-footer">
             <div className="flower-container">
-                <Link className="flower-brand" href="/">
-                    <Flower2 size={28} strokeWidth={1.25} />
-                    <span>
-                        MY FLOWER
-                        <span className="flower-brand-bottom">
-                            SHOP <i>·</i> made to last
-                        </span>
-                    </span>
+                <Link
+                    className="flower-brand"
+                    href="/"
+                    aria-label="Bloomie Flower Shop หน้าแรก"
+                >
+                    <img
+                        src="/logo.png"
+                        alt="Bloomie Flower Shop"
+                        className="flower-brand-logo"
+                    />
                 </Link>
                 <p>ช่อดอกไม้ปลอมสำเร็จรูป · ส่งฟรีทั่วประเทศ</p>
                 <div>

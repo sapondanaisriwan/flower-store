@@ -144,9 +144,9 @@ function ProductView({
                                 className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105 motion-reduce:transition-none"
                                 fetchPriority="high"
                             />
-                            <span className="absolute top-4 left-4 rounded-full bg-[var(--cream)] px-3 py-1 text-xs">
+                            {/* <span className="absolute top-4 left-4 rounded-full bg-[var(--cream)] px-3 py-1 text-xs">
                                 ช่อดอกไม้ปลอม
-                            </span>
+                            </span> */}
                             <span className="absolute right-4 bottom-4 flex items-center gap-2 rounded-full bg-[var(--cream)] px-3 py-2 text-xs">
                                 <ZoomIn size={16} /> ขยายภาพ
                             </span>

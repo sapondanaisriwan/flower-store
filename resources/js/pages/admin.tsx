@@ -674,16 +674,13 @@ export default function AdminPage({
                         className="flower-brand group transition-transform duration-200 hover:scale-[1.02]"
                         title="Return to Main Store"
                     >
-                        <Flower2
-                            size={34}
-                            strokeWidth={1.3}
-                            className="text-[var(--accent)] transition-transform duration-300 group-hover:rotate-12"
+                        <img
+                            src="/logo.png"
+                            alt="Bloomie Flower Shop"
+                            className="flower-brand-logo"
                         />
-                        <span className="flex flex-col">
-                            <span className="font-bold tracking-tight">
-                                MY FLOWER SHOP
-                            </span>
-                            <span className="flower-brand-bottom text-xs tracking-widest text-[var(--muted)]">
+                        <span className="hidden flex-col sm:flex">
+                            <span className="flower-brand-bottom !mt-0 text-xs tracking-widest text-[var(--muted)]">
                                 ADMIN <i>·</i> portal
                             </span>
                         </span>

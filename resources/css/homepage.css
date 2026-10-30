@@ -79,6 +79,19 @@
     letter-spacing: 1px;
     flex-shrink: 0;
 }
+.flower-brand-logo {
+    height: 76px;
+    width: auto;
+    object-fit: contain;
+    display: block;
+    transition: transform 0.2s ease;
+}
+.flower-brand:hover .flower-brand-logo {
+    transform: scale(1.03);
+}
+.flower-footer .flower-brand-logo {
+    height: 60px;
+}
 .flower-brand svg {
     color: var(--accent);
 }
@@ -645,6 +658,12 @@
     .flower-brand {
         font-size: 17px;
         gap: 6px;
+    }
+    .flower-brand-logo {
+        height: 54px;
+    }
+    .flower-footer .flower-brand-logo {
+        height: 48px;
     }
     .flower-brand-bottom {
         font-size: 9px;

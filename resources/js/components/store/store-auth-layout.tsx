@@ -23,11 +23,11 @@ export function StoreAuthLayout({
                     />
                     <div className="store-auth-shade" />
                     <Link href="/" className="store-auth-brand">
-                        <Flower2 size={30} strokeWidth={1.3} />
-                        <span>
-                            MY FLOWER SHOP
-                            <small>made to last, made with love</small>
-                        </span>
+                        <img
+                            src="/logo.png"
+                            alt="Bloomie Flower Shop"
+                            className="h-14 w-auto object-contain"
+                        />
                     </Link>
                     <div className="store-auth-story-copy">
                         {/* <span className="store-auth-tag">
