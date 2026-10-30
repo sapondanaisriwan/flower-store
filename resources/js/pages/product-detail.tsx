@@ -27,8 +27,10 @@ import { catalog, type CatalogProduct } from '@/data/catalog';
 import { login, register } from '@/routes';
 import '../../css/homepage.css';
 
-export default function ProductDetail({ productId }: { productId: number }) {
-    const product = catalog.find((item) => item.id === productId);
+export default function ProductDetail({ productId, dbProduct }: { productId: number, dbProduct: any }) {
+    // ดึงจาก Database เป็นหลัก ถ้าไม่มีถึงจะไปหาใน catalog (ข้อมูลจำลอง)
+    const product = dbProduct || catalog.find((item) => item.id === productId);
+
     if (!product)
         return (
             <div className="flower-home">
@@ -43,29 +45,52 @@ export default function ProductDetail({ productId }: { productId: number }) {
                 <StoreFooter />
             </div>
         );
-    return <ProductView key={product.id} product={product} />;
+
+    // จัดรูปแบบข้อมูลให้พร้อมส่งให้ Component ด้านล่าง
+    const formattedProduct = {
+        id: product.id,
+        name: product.name,
+        thai: product.description || 'ช่อดอกไม้สดใหม่ บรรจงจัดด้วยความประณีต',
+        price: Number(product.price),
+        stock: Number(product.stock),
+        color: product.color || 'white', 
+        rating: Number(product.avg_rating || 0),
+        count: Number(product.rating_count || 0),
+        picture_path: product.picture_path || '/images/homepage/bouquets.png', // ใช้รูปจาก DB หรือรูป fallback
+        position: product.position || 'center'
+    };
+
+    return <ProductView key={formattedProduct.id} product={formattedProduct} />;
 }
-function ProductView({ product }: { product: CatalogProduct }) {
+
+function ProductView({ product }: { product: any }) {
     const { auth } = usePage().props;
     const cart = useCart();
     const [quantity, setQuantity] = useState(product.stock ? '1' : '0');
     const [zoom, setZoom] = useState(false);
     const [action, setAction] = useState<string | null>(null);
+    
     const amount = Number(quantity);
     const validQuantity =
         quantity.trim() !== '' &&
         Number.isInteger(amount) &&
         amount >= 1 &&
         amount <= product.stock;
+        
     const isAdmin = auth.user?.role === 'admin';
-    const color = { pink: 'ชมพู & พีช', white: 'ขาวครีม', red: 'แดงไวน์' }[
-        product.color
-    ];
+    
+    // เผื่อกรณี Admin พิมพ์สีเข้ามาเอง ไม่ตรงกับที่มีในระบบ ให้แสดงชื่อสีนั้นไปเลย
+    const colorOptions: Record<string, string> = { pink: 'ชมพู & พีช', white: 'ขาวครีม', red: 'แดงไวน์' };
+    const color = colorOptions[product.color] || product.color || 'ไม่ระบุ';
+    
+    // สินค้าที่เกี่ยวข้อง (ยังคงใช้ catalog ไปก่อน ถ้าในอนาคตมี API ดึงสินค้าแนะนำ ค่อยมาแก้ตรงนี้)
     const related = catalog
         .filter((item) => item.id !== product.id)
         .slice(0, 3);
+        
     const primary =
         'h-12 rounded-full bg-[var(--accent)] px-6 text-[var(--on-accent)] hover:bg-[var(--accent-hover)]';
+        
     const changeQuantity = (delta: number) =>
         setQuantity(
             String(
@@ -79,6 +104,7 @@ function ProductView({ product }: { product: CatalogProduct }) {
                 ),
             ),
         );
+
     return (
         <div className="flower-home">
             <Head title={`${product.name} — My Flower Shop`}>
@@ -108,8 +134,9 @@ function ProductView({ product }: { product: CatalogProduct }) {
                             aria-label={`ขยายภาพ ${product.thai}`}
                             className="group relative block aspect-[4/5] w-full overflow-hidden rounded-xl bg-[var(--rose-soft)]"
                         >
+                            {/* แก้ไขให้ดึง src มาจากข้อมูลใน Database */}
                             <img
-                                src="/images/homepage/bouquets.png"
+                                src={product.picture_path}
                                 alt={product.thai}
                                 style={{ objectPosition: product.position }}
                                 className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105 motion-reduce:transition-none"
@@ -122,10 +149,6 @@ function ProductView({ product }: { product: CatalogProduct }) {
                                 <ZoomIn size={16} /> ขยายภาพ
                             </span>
                         </button>
-                        <p className="mt-3 text-xs leading-relaxed text-[var(--muted)]">
-                            ภาพประกอบตัวอย่าง · สินค้า ราคา คะแนน
-                            และสต็อกในหน้านี้เป็นข้อมูลสาธิต
-                        </p>
                     </section>
                     <section
                         aria-labelledby="product-title"
@@ -363,6 +386,7 @@ function ProductView({ product }: { product: CatalogProduct }) {
                                 className="group min-w-0"
                             >
                                 <div className="aspect-[4/3] overflow-hidden rounded-lg bg-[var(--rose-soft)]">
+                                    {/* รูปแบบสินค้าแนะนำ (ใช้ของ mock เดิมไปก่อน) */}
                                     <img
                                         loading="lazy"
                                         src="/images/homepage/bouquets.png"
@@ -394,8 +418,9 @@ function ProductView({ product }: { product: CatalogProduct }) {
                         <DialogTitle>{product.name}</DialogTitle>
                         <DialogDescription>ภาพประกอบสินค้า</DialogDescription>
                     </DialogHeader>
+                    {/* แก้ไขให้ดึงรูปตอนกดซูมมาจาก Database */}
                     <img
-                        src="/images/homepage/bouquets.png"
+                        src={product.picture_path}
                         alt={product.thai}
                         className="max-h-[70dvh] w-full rounded-md object-contain"
                     />

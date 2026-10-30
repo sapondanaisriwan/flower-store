@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\ProductController;
 use App\Http\Controllers\UserAddressController;
 use App\Http\Controllers\WishlistController;
 use App\Http\Middleware\EnsureAdmin;
@@ -14,27 +15,8 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::inertia('/', 'welcome')->name('home');
-Route::inertia('/products', 'products')->name('products');
-Route::get('/products/{product}', function (int $product) {
-    // เช็คว่ามี ID สินค้านี้อยู่ในฐานข้อมูลจริง และยังไม่ถูกลบ (is_deleted = false)
-    $exists = false;
-    try {
-        $exists = \App\Models\Product::where('id', $product)
-            ->where('is_deleted', false)
-            ->exists();
-    } catch (\Throwable) {
-        $exists = in_array($product, range(1, 9), true);
-    }
-
-    // หากไม่พบในฐานข้อมูล แต่เป็น mock catalog ID 1-9 ให้เปิดดูได้โดยไม่ 404
-    if (! $exists && in_array($product, range(1, 9), true)) {
-        $exists = true;
-    }
-
-    abort_unless($exists, 404);
-
-    return Inertia::render('product-detail', ['productId' => $product]);
-})->whereNumber('product')->name('products.show');
+Route::get('/products', [ProductController::class, 'index'])->name('products');
+Route::get('/products/{product}', [ProductController::class, 'show'])->whereNumber('product')->name('products.show');
 
 // หน้าแยก Dashboard ตามสิทธิ์ (Admin -> /dashboard/admin, User -> /dashboard/user)
 Route::get('/dashboard', function (\Illuminate\Http\Request $request) {
