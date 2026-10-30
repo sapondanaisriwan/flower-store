@@ -191,6 +191,7 @@ export default function Profile({
                                             name="email"
                                             type="email"
                                             value={form.data.email}
+                                            // disabled={form.processing}
                                             onChange={(event) =>
                                                 form.setData(
                                                     'email',
@@ -200,7 +201,7 @@ export default function Profile({
                                             required
                                             maxLength={255}
                                             autoComplete="email"
-                                            disabled={form.processing}
+                                            disabled={true}
                                             aria-invalid={!!form.errors.email}
                                             aria-describedby={
                                                 form.errors.email

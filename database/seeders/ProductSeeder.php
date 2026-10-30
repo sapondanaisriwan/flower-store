@@ -123,8 +123,29 @@ class ProductSeeder extends Seeder
             ],
         ];
 
+        $colors = [
+            'pink' => '#dca3b2',
+            'white' => '#fff9e9',
+            'red' => '#9a3b50',
+        ];
+
+        foreach ($colors as $name => $hexCode) {
+            DB::table('colors')->updateOrInsert(
+                ['name' => $name],
+                ['hex_code' => $hexCode]
+            );
+        }
+
         foreach ($products as $product) {
+            $colorName = $product['color'];
+            unset($product['color']);
+
             DB::table('products')->updateOrInsert(['id' => $product['id']], $product);
+
+            DB::table('color_product')->updateOrInsert([
+                'color_name' => $colorName,
+                'product_id' => $product['id'],
+            ]);
         }
     }
 }

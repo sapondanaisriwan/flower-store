@@ -41,7 +41,9 @@ class UsernameMigrationTest extends TestCase
     public function test_shop_tables_match_the_designed_fields(): void
     {
         $tables = [
-            'products' => ['id', 'name', 'price', 'stock', 'color', 'description', 'picture_path', 'is_deleted', 'created_at', 'updated_at'],
+            'products' => ['id', 'name', 'price', 'stock', 'description', 'picture_path', 'is_deleted', 'created_at', 'updated_at'],
+            'colors' => ['name', 'hex_code'],
+            'color_product' => ['color_name', 'product_id'],
             'user_addresses' => ['user_id', 'address_name', 'recipient_name', 'address_line', 'subdistrict', 'district', 'province', 'postal_code', 'phone_number', 'is_active', 'created_at', 'updated_at'],
             'carts' => ['user_id'],
             'wishlists' => ['user_id'],

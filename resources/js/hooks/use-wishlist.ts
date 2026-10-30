@@ -26,6 +26,7 @@ export function useWishlist() {
     }
 
     return {
+        count: wishlistIds.length,
         pending,
         has: (id: number) => wishlistIds.includes(id),
         remove: (id: number) => save(id, true),

@@ -1,4 +1,5 @@
 import { useCart } from '@/hooks/use-cart';
+import { useWishlist } from '@/hooks/use-wishlist';
 import { Link, router, usePage } from '@inertiajs/react';
 import {
     ArrowRight,
@@ -28,6 +29,7 @@ export function StoreHeader({
 }) {
     const { auth } = usePage().props;
     const cart = useCart();
+    const wishlist = useWishlist();
     const [query, setQuery] = useState('');
     const [menu, setMenu] = useState(false);
     const [notice, setNotice] = useState<string | null>(null);
@@ -91,11 +93,17 @@ export function StoreHeader({
                         {auth.user?.role !== 'admin' && (
                             <>
                                 <Link
-                                    className="flower-icon"
+                                    className="flower-icon relative"
                                     href="/wishlist"
-                                    aria-label="รายการโปรด"
+                                    aria-label={`รายการโปรด ${wishlist.count} ช่อ`}
                                 >
                                     <Heart size={21} />
+
+                                    {wishlist.count > 0 && (
+                                        <span className="absolute -top-1 -right-2 grid min-w-4 place-items-center rounded-full bg-[var(--accent)] px-1 text-[10px] text-[var(--on-accent)]">
+                                            {wishlist.count}
+                                        </span>
+                                    )}
                                 </Link>
                                 <Link
                                     className="flower-icon relative"

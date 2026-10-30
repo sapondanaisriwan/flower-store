@@ -82,15 +82,16 @@ class ProductController extends Controller
             $picturePath = $request->input('picture_path');
         }
 
-        Product::create([
+        $product = Product::create([
             'name' => $validated['name'],
             'price' => sprintf('%.2f', (float) $validated['price']),
             'stock' => (int) $validated['stock'],
-            'color' => trim($validated['color']),
             'description' => $validated['description'] ?? 'ช่อดอกไม้สดใหม่ บรรจงจัดด้วยความประณีต',
             'picture_path' => $picturePath,
             'is_deleted' => false,
         ]);
+
+        $product->syncColors($validated['color']);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'เพิ่มสินค้าใหม่เรียบร้อยแล้ว']);
 
@@ -134,10 +135,11 @@ class ProductController extends Controller
             'name' => $validated['name'],
             'price' => sprintf('%.2f', (float) $validated['price']),
             'stock' => (int) $validated['stock'],
-            'color' => trim($validated['color']),
             'description' => $validated['description'] ?? '',
             'picture_path' => $picturePath ?: '/images/homepage/bouquets.png',
         ]);
+
+        $item->syncColors($validated['color']);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'บันทึกการแก้ไขสินค้าเรียบร้อยแล้ว']);
 

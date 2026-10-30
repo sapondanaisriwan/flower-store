@@ -32,11 +32,16 @@ class WishlistTest extends TestCase
 
     private function product(bool $deleted = false): int
     {
-        return DB::table('products')->insertGetId([
-            'name' => 'ช่อทดสอบ', 'price' => 590, 'stock' => 0, 'color' => 'pink',
+        $id = DB::table('products')->insertGetId([
+            'name' => 'ช่อทดสอบ', 'price' => 590, 'stock' => 0,
             'description' => 'ดอกไม้', 'picture_path' => 'products/test.jpg', 'is_deleted' => $deleted,
             'created_at' => now(), 'updated_at' => now(),
         ]);
+
+        DB::table('colors')->insertOrIgnore(['name' => 'pink', 'hex_code' => '#dca3b2']);
+        DB::table('color_product')->insertOrIgnore(['color_name' => 'pink', 'product_id' => $id]);
+
+        return $id;
     }
 
     // เพิ่มซ้ำต้องไม่เกิดแถวซ้ำ และลบได้เฉพาะรายการของตัวเอง

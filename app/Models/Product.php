@@ -35,7 +35,6 @@ class Product extends Model
         'name',
         'price',
         'stock',
-        'color',
         'description',
         'picture_path',
         'is_deleted',
@@ -95,6 +94,47 @@ class Product extends Model
     }
 
     /**
+     * รายการเชื่อมโยงสีของสินค้านี้ (features_in)
+     */
+    public function colorProducts(): HasMany
+    {
+        return $this->hasMany(ColorProduct::class, 'product_id', 'id');
+    }
+
+    /**
+     * สีทั้งหมดของสินค้านี้
+     */
+    public function colors(): BelongsToMany
+    {
+        return $this->belongsToMany(Color::class, 'color_product', 'product_id', 'color_name', 'id', 'name');
+    }
+
+    /**
+     * บันทึกสีของสินค้าลงตาราง colors และ color_product
+     *
+     * @param  string|list<string>  $colors
+     */
+    public function syncColors(string|array $colors, ?string $hexCode = null): void
+    {
+        $names = is_array($colors) ? $colors : explode(',', $colors);
+        $cleanNames = array_values(array_unique(array_filter(array_map('trim', $names), fn (string $n) => $n !== '')));
+
+        ColorProduct::where('product_id', $this->id)->delete();
+
+        foreach ($cleanNames as $name) {
+            Color::firstOrCreate(
+                ['name' => $name],
+                ['hex_code' => $hexCode ?: Color::defaultHexFor($name)]
+            );
+
+            ColorProduct::firstOrCreate([
+                'color_name' => $name,
+                'product_id' => $this->id,
+            ]);
+        }
+    }
+
+    /**
      * Scope สำหรับโหลดสินค้าพร้อมคะแนนเฉลี่ยและจำนวนรีวิว
      */
     public function scopeWithRatingStats($query)
@@ -103,14 +143,19 @@ class Product extends Model
             ->selectRaw('product_id, AVG(rating) as average_rating, COUNT(*) as rating_count')
             ->groupBy('product_id');
 
+        $productColors = ColorProduct::query()
+            ->selectRaw('product_id, MIN(color_name) as primary_color')
+            ->groupBy('product_id');
+
         return $query->leftJoinSub($ratings, 'scores', 'scores.product_id', '=', 'products.id')
+            ->leftJoinSub($productColors, 'product_colors', 'product_colors.product_id', '=', 'products.id')
             ->select(
                 'products.id',
                 'products.name',
                 'products.description',
                 'products.price',
                 'products.stock',
-                'products.color',
+                DB::raw('product_colors.primary_color as color'),
                 'products.picture_path',
                 'products.is_deleted',
                 'products.created_at',
@@ -125,11 +170,9 @@ class Product extends Model
      */
     public static function getDistinctColors(): Collection
     {
-        return static::query()
-            ->whereNotNull('color')
-            ->where('color', '<>', '')
-            ->distinct()
-            ->pluck('color')
+        return Color::query()
+            ->orderBy('name')
+            ->pluck('name')
             ->values();
     }
 }
