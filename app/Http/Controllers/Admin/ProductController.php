@@ -16,17 +16,12 @@ class ProductController extends Controller
      */
     public function index(Request $request): Response
     {
-        try {
-            $products = Product::withRatingStats()
-                ->orderBy('products.is_deleted', 'asc')
-                ->orderBy('products.id', 'asc')
-                ->get();
+        $products = Product::withRatingStats()
+            ->orderBy('products.is_deleted', 'asc')
+            ->orderBy('products.id', 'asc')
+            ->get();
 
-            $colors = Product::getDistinctColors();
-        } catch (\Throwable) {
-            $products = collect();
-            $colors = [];
-        }
+        $colors = Product::getDistinctColors();
 
         return Inertia::render('admin', [
             'initialTab' => 'products',
@@ -65,7 +60,7 @@ class ProductController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'price' => ['required', 'numeric', 'min:0', 'max:9999999.99'],
             'stock' => ['required', 'integer', 'min:0', 'max:1000000'],
-            'color' => ['nullable', 'string', 'max:100'],
+            'color' => ['required', 'string', 'max:100'],
             'description' => ['nullable', 'string', 'max:2000'],
             'picture_path' => ['nullable', 'string', 'max:255'],
             'picture' => ['nullable', 'file', 'image', 'max:10240'],
@@ -80,9 +75,9 @@ class ProductController extends Controller
             if (! file_exists($destDir)) {
                 mkdir($destDir, 0755, true);
             }
-            $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+            $filename = time().'_'.uniqid().'.'.$file->extension();
             $file->move($destDir, $filename);
-            $picturePath = '/images/homepage/' . $filename;
+            $picturePath = '/images/homepage/'.$filename;
         } elseif ($request->filled('picture_path')) {
             $picturePath = $request->input('picture_path');
         }
@@ -91,7 +86,7 @@ class ProductController extends Controller
             'name' => $validated['name'],
             'price' => sprintf('%.2f', (float) $validated['price']),
             'stock' => (int) $validated['stock'],
-            'color' => $validated['color'] ? trim($validated['color']) : null,
+            'color' => trim($validated['color']),
             'description' => $validated['description'] ?? 'ช่อดอกไม้สดใหม่ บรรจงจัดด้วยความประณีต',
             'picture_path' => $picturePath,
             'is_deleted' => false,
@@ -111,7 +106,7 @@ class ProductController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'price' => ['required', 'numeric', 'min:0', 'max:9999999.99'],
             'stock' => ['required', 'integer', 'min:0', 'max:1000000'],
-            'color' => ['nullable', 'string', 'max:100'],
+            'color' => ['required', 'string', 'max:100'],
             'description' => ['nullable', 'string', 'max:2000'],
             'picture_path' => ['nullable', 'string', 'max:255'],
             'picture' => ['nullable', 'file', 'image', 'max:10240'],
@@ -128,9 +123,9 @@ class ProductController extends Controller
             if (! file_exists($destDir)) {
                 mkdir($destDir, 0755, true);
             }
-            $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+            $filename = time().'_'.uniqid().'.'.$file->extension();
             $file->move($destDir, $filename);
-            $picturePath = '/images/homepage/' . $filename;
+            $picturePath = '/images/homepage/'.$filename;
         } elseif ($request->filled('picture_path')) {
             $picturePath = $request->input('picture_path');
         }
@@ -139,7 +134,7 @@ class ProductController extends Controller
             'name' => $validated['name'],
             'price' => sprintf('%.2f', (float) $validated['price']),
             'stock' => (int) $validated['stock'],
-            'color' => $validated['color'] ? trim($validated['color']) : null,
+            'color' => trim($validated['color']),
             'description' => $validated['description'] ?? '',
             'picture_path' => $picturePath ?: '/images/homepage/bouquets.png',
         ]);

@@ -1,3 +1,5 @@
+import { productColors } from '@/data/product-colors';
+import { normalizeProduct, type StoreProduct } from '@/data/store-product';
 import { WishlistButton } from '@/components/store/wishlist-button';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { ArrowDown, ArrowRight, Flower2, Package, Truck } from 'lucide-react';
@@ -13,45 +15,16 @@ import {
 import { login, register } from '@/routes';
 import '../../css/homepage.css';
 
-const products = [
-    {
-        id: 1,
-        name: 'Peachy Morning',
-        thai: 'ช่อกุหลาบโทนพีช',
-        price: 690,
-        color: 'pink',
-        image: '/images/homepage/bouquets.png',
-        position: '74% 50%',
-    },
-    {
-        id: 2,
-        name: 'Ivory Whisper',
-        thai: 'ช่อกุหลาบสีขาวครีม',
-        price: 590,
-        color: 'white',
-        image: '/images/homepage/bouquets.png',
-        position: '95% 60%',
-    },
-    {
-        id: 3,
-        name: 'A Little Romance',
-        thai: 'ช่อดอกไม้โทนโรแมนติก',
-        price: 790,
-        color: 'pink',
-        image: '/images/homepage/bouquets.png',
-        position: '65% 35%',
-    },
-    {
-        id: 4,
-        name: 'Forever Yours',
-        thai: 'ช่อกุหลาบสีแดงไวน์',
-        price: 890,
-        color: 'red',
-        image: '/images/homepage/bouquets.png',
-        position: '85% 80%',
-    },
-];
-export default function Welcome() {
+export default function Welcome({
+    dbProducts = [],
+}: {
+    dbProducts?: StoreProduct[];
+}) {
+    const products = dbProducts.map((product) => ({
+        ...normalizeProduct(product),
+        image: normalizeProduct(product).picture_path,
+    }));
+    const colors = productColors(products);
     const { auth } = usePage().props;
     const [filter, setFilter] = useState('all');
     const [notice, setNotice] = useState<string | null>(null);
@@ -165,9 +138,10 @@ export default function Welcome() {
                     >
                         {[
                             { id: 'all', label: 'ทุกช่อ' },
-                            { id: 'pink', label: 'ชมพู & พีช' },
-                            { id: 'white', label: 'ขาวละมุน' },
-                            { id: 'red', label: 'แดงโรแมนติก' },
+                            ...colors.map((color) => ({
+                                id: color.value,
+                                label: color.label,
+                            })),
                         ].map((item) => (
                             <button
                                 key={item.id}
@@ -179,10 +153,15 @@ export default function Welcome() {
                             </button>
                         ))}
                         <span className="flower-preview-label">
-                            คอลเลกชันตัวอย่าง
+                            ช่อดอกไม้จากร้าน
                         </span>
                     </div>
                     <div className="flower-product-grid">
+                        {visible.length === 0 && (
+                            <p className="py-8 text-[var(--muted)]">
+                                ยังไม่มีสินค้าในหมวดนี้
+                            </p>
+                        )}
                         {visible.map((product) => (
                             <article
                                 className="flower-product"
@@ -236,7 +215,11 @@ export default function Welcome() {
                                         ฿{product.price.toLocaleString()}
                                     </span>
                                 </div>
-                                <p className="flower-unrated">ยังไม่มีคะแนน</p>
+                                <p className="flower-unrated">
+                                    {product.count
+                                        ? `★ ${product.rating.toFixed(1)} (${product.count})`
+                                        : 'ยังไม่มีคะแนน'}
+                                </p>
                             </article>
                         ))}
                     </div>

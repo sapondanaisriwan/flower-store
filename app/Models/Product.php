@@ -115,7 +115,7 @@ class Product extends Model
                 'products.is_deleted',
                 'products.created_at',
                 'products.updated_at',
-                DB::raw('COALESCE(scores.average_rating, 5.0) as rating'),
+                DB::raw('COALESCE(scores.average_rating, 0) as rating'),
                 DB::raw('COALESCE(scores.rating_count, 0) as rating_count')
             );
     }

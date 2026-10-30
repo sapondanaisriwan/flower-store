@@ -1,5 +1,6 @@
+import { productColors } from '@/data/product-colors';
+import { normalizeProduct } from '@/data/store-product';
 import { WishlistButton } from '@/components/store/wishlist-button';
-import { catalog } from '@/data/catalog';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 
 /** สินค้าจากฐานข้อมูล (ส่งมาจาก ProductController) */
@@ -31,18 +32,7 @@ interface NormalisedProduct {
 }
 
 function normaliseDbProducts(dbProducts: DbProduct[]): NormalisedProduct[] {
-    return dbProducts.map((p) => ({
-        id: p.id,
-        name: p.name,
-        thai: p.description,
-        price: Number(p.price),
-        color: p.color ?? 'pink',
-        rating: Number(p.rating ?? 0),
-        count: Number(p.rating_count ?? 0),
-        stock: p.stock,
-        position: '50% 50%',
-        picture_path: p.picture_path ?? null,
-    }));
+    return dbProducts.map(normalizeProduct);
 }
 import {
     ArrowRight,
@@ -69,15 +59,10 @@ import { login } from '@/routes';
 import '../../css/homepage.css';
 import '../../css/products.css';
 
-const colors = [
-    { value: 'pink', label: 'ชมพู & พีช', hex: '#dca3b2' },
-    { value: 'white', label: 'ขาวครีม', hex: '#fff9e9' },
-    { value: 'red', label: 'แดงไวน์', hex: '#9a3b50' },
-];
 const prices = [
     { value: 'all', label: 'ทุกราคา', min: 0, max: Infinity },
-    { value: 'under500', label: 'ต่ำกว่า ฿500', min: 0, max: 499 },
-    { value: '500to999', label: '฿500 – ฿999', min: 500, max: 999 },
+    { value: 'under500', label: 'ต่ำกว่า ฿500', min: 0, max: 500 },
+    { value: '500to999', label: '฿500 – ต่ำกว่า ฿1,000', min: 500, max: 1000 },
     { value: '1000plus', label: '฿1,000 ขึ้นไป', min: 1000, max: Infinity },
 ];
 const PAGE_SIZE = 6;
@@ -88,11 +73,8 @@ export default function Products({ dbProducts }: { dbProducts?: DbProduct[] }) {
     const initialQuery =
         new URL(url, 'http://localhost').searchParams.get('q') ?? '';
 
-    // ใช้ข้อมูลจาก DB ถ้ามี มิฉะนั้นใช้ catalog mock
-    const products: NormalisedProduct[] =
-        dbProducts && dbProducts.length > 0
-            ? normaliseDbProducts(dbProducts)
-            : (catalog as NormalisedProduct[]);
+    // แสดงรายการจริงจาก Controller รวมถึงกรณีไม่มีสินค้า
+    const products: NormalisedProduct[] = normaliseDbProducts(dbProducts ?? []);
 
     return (
         <ProductsContent
@@ -115,6 +97,7 @@ function ProductsContent({
     loggedIn: boolean;
     products: NormalisedProduct[];
 }) {
+    const colors = productColors(products);
     const [query, setQuery] = useState(initialQuery);
     const [chosenColors, setChosenColors] = useState<string[]>([]);
     const [price, setPrice] = useState('all');
@@ -132,7 +115,7 @@ function ProductsContent({
                     .includes(query.trim().toLowerCase()) &&
                 (!chosenColors.length || chosenColors.includes(item.color)) &&
                 item.price >= range.min &&
-                item.price <= range.max &&
+                item.price < range.max &&
                 item.rating >= Number(rating),
         )
         .sort((a, b) =>
@@ -443,8 +426,7 @@ function ProductsContent({
                             </div>
                         )}
                         <p className="catalog-demo">
-                            คอลเลกชันตัวอย่าง · ภาพ ราคา คะแนน
-                            และสต็อกใช้เพื่อแสดงหน้าร้าน
+                            เลือกช่อที่ชอบ · จัดส่งฟรีทั่วประเทศ
                         </p>
                         <div className="catalog-grid">
                             {shown.map((item) => (
@@ -463,7 +445,10 @@ function ProductsContent({
                                             aria-label={`ดูรายละเอียด ${item.thai}`}
                                         >
                                             <img
-                                                src={item.picture_path ?? '/images/homepage/bouquets.png'}
+                                                src={
+                                                    item.picture_path ??
+                                                    '/images/homepage/bouquets.png'
+                                                }
                                                 alt={item.thai}
                                                 style={{
                                                     objectPosition:

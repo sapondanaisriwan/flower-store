@@ -7,19 +7,21 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\RatingController;
 use App\Http\Controllers\UserAddressController;
 use App\Http\Controllers\WishlistController;
 use App\Http\Middleware\EnsureAdmin;
 use App\Http\Middleware\EnsureCustomer;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-Route::inertia('/', 'welcome')->name('home');
+Route::get('/', [ProductController::class, 'home'])->name('home');
 Route::get('/products', [ProductController::class, 'index'])->name('products');
 Route::get('/products/{product}', [ProductController::class, 'show'])->whereNumber('product')->name('products.show');
 
 // หน้าแยก Dashboard ตามสิทธิ์ (Admin -> /dashboard/admin, User -> /dashboard/user)
-Route::get('/dashboard', function (\Illuminate\Http\Request $request) {
+Route::get('/dashboard', function (Request $request) {
     if ($request->user()?->role === 'admin') {
         return redirect()->to('/dashboard/admin');
     }
@@ -28,7 +30,7 @@ Route::get('/dashboard', function (\Illuminate\Http\Request $request) {
 })->middleware('auth')->name('dashboard');
 
 // Dashboard สำหรับ User ทั่วไป / ลูกค้า
-Route::get('/dashboard/user', function (\Illuminate\Http\Request $request) {
+Route::get('/dashboard/user', function (Request $request) {
     if ($request->user()?->role === 'admin') {
         return redirect()->to('/dashboard/admin');
     }
@@ -72,6 +74,7 @@ Route::redirect('/admin', '/dashboard/admin');
 
 // งานฝั่งลูกค้า ต้องล็อกอินและไม่ถูกแบน
 Route::middleware(['auth', EnsureCustomer::class])->group(function () {
+    Route::put('/orders/{order}/products/{product}/rating', [RatingController::class, 'store'])->whereNumber('order')->whereNumber('product')->name('orders.rating');
     Route::get('/cart', [CartController::class, 'index'])->name('cart');
     Route::post('/cart', [CartController::class, 'store'])->name('cart.store');
     Route::patch('/cart/{product}', [CartController::class, 'update'])->whereNumber('product')->name('cart.update');
