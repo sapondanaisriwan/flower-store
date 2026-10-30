@@ -48,6 +48,7 @@ export const productImage = (path: string) =>
 export function orderStatus(status: string) {
     const labels: Record<string, string> = {
         pending: 'รอจัดส่ง',
+        processing: 'ระหว่างจัดส่ง',
         shipping: 'ระหว่างจัดส่ง',
         delivery: 'ระหว่างจัดส่ง',
         shipped: 'ระหว่างจัดส่ง',

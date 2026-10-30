@@ -1,46 +1,57 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     ArrowLeft,
+    ArrowRight,
     Ban,
     Check,
     CheckCircle2,
     ChevronDown,
+    ChevronRight,
     Clock,
-    DollarSign,
     Edit3,
-    Eye,
-    Filter,
     Flower2,
     Info,
-    Layers,
     LogOut,
     Mail,
     MapPin,
+    Menu,
     Minus,
     Package,
     Phone,
     Plus,
-    RotateCcw,
     Save,
     Search,
     ShieldAlert,
     ShieldCheck,
     ShoppingBag,
     Star,
-    Tag,
     Trash2,
     Truck,
     Unlock,
     Upload,
-    User,
     UserCheck,
     UserRound,
     Users,
     X,
 } from 'lucide-react';
 import React, { useState } from 'react';
+import { StoreFooter } from '@/components/store/store-chrome';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { productColors } from '@/data/product-colors';
+import { useFlashToast } from '@/hooks/use-flash-toast';
 import { logout } from '@/routes';
+import { money, orderStatus, productImage } from '@/types/shop';
 import '../../css/homepage.css';
+import '../../css/products.css';
 
 interface OrderItem {
     id: number;
@@ -56,7 +67,8 @@ interface Order {
     id: string;
     date: string;
     total: number;
-    status: 'delivery' | 'success';
+    status: 'pending' | 'delivery' | 'success' | 'cancelled';
+    rawStatus: string;
     items: OrderItem[];
     customerName?: string;
     customerEmail?: string;
@@ -79,216 +91,27 @@ interface UserAccount {
     ordersCount: number;
 }
 
+interface ColorCatalogItem {
+    name: string;
+    hex_code: string;
+}
+
 interface ProductItem {
     id: number;
     name: string;
-    description?: string;
-    thai?: string;
+    description: string;
+    thai: string;
     price: number;
     color: string;
-    size?: string;
+    colors: string[];
+    colorObjects: { name: string; hex_code?: string }[];
     rating: number;
+    ratingCount: number;
     stock: number;
-    position?: string;
+    position: string;
     image: string;
     is_deleted?: boolean;
 }
-
-const initialOrders: Order[] = [
-    {
-        id: 'ORD-2026-0402',
-        date: 'Ordered on April 2, 2026, at 11:11 AM',
-        total: 1998,
-        status: 'delivery',
-        customerName: 'Siravit Phongsawat',
-        customerEmail: 'siravit@flowerboutique.com',
-        customerRole: 'customer',
-        userId: 2,
-        addressName: 'Home',
-        recipientName: 'Siravit Phongsawat',
-        phoneNumber: '081-234-5678',
-        fullAddress: '123 Sukhumvit Road, Khlong Toei, Bangkok 10110',
-        items: [
-            {
-                id: 1,
-                name: 'Peachy Morning Bouquet',
-                variant: 'Color Green',
-                price: 999,
-                quantity: 1,
-                image: '/images/homepage/bouquets.png',
-                position: '74% 50%',
-            },
-            {
-                id: 2,
-                name: 'Ivory Whisper Roses',
-                variant: 'Color Green',
-                price: 999,
-                quantity: 1,
-                image: '/images/homepage/bouquets.png',
-                position: '95% 60%',
-            },
-        ],
-    },
-    {
-        id: 'ORD-2026-0404',
-        date: 'Ordered on April 4, 2026, at 11:11 AM',
-        total: 999,
-        status: 'success',
-        customerName: 'Ananya Srisuk',
-        customerEmail: 'ananya@flowerboutique.com',
-        customerRole: 'customer',
-        userId: 3,
-        addressName: 'Office',
-        recipientName: 'Ananya Srisuk',
-        phoneNumber: '089-876-5432',
-        fullAddress: '88 Silom Road, Bang Rak, Bangkok 10500',
-        items: [
-            {
-                id: 3,
-                name: 'A Little Romance Arrangement',
-                variant: 'Color Green',
-                price: 999,
-                quantity: 1,
-                image: '/images/homepage/bouquets.png',
-                position: '65% 35%',
-            },
-            {
-                id: 4,
-                name: 'Forever Yours Special Edition',
-                variant: 'Color Green',
-                price: 999,
-                quantity: 1,
-                image: '/images/homepage/bouquets.png',
-                position: '85% 80%',
-            },
-        ],
-    },
-];
-
-const initialUsers: UserAccount[] = [
-    {
-        id: 1,
-        username: 'Myname lastname',
-        name: 'Myname lastname',
-        email: 'eieiei@email.com',
-        status: 'active',
-        joined: 'March 14, 2026',
-        ordersCount: 4,
-    },
-    {
-        id: 2,
-        username: 'Ploy Pailin Srisuk',
-        name: 'Ploy Pailin Srisuk',
-        email: 'eieiei@email.com',
-        status: 'active',
-        joined: 'March 20, 2026',
-        ordersCount: 2,
-    },
-    {
-        id: 3,
-        username: 'Nattawut Somchai',
-        name: 'Nattawut Somchai',
-        email: 'eieiei@email.com',
-        status: 'active',
-        joined: 'March 28, 2026',
-        ordersCount: 1,
-    },
-    {
-        id: 4,
-        username: 'Chanya Wongsuwan',
-        name: 'Chanya Wongsuwan',
-        email: 'eieiei@email.com',
-        status: 'active',
-        joined: 'April 01, 2026',
-        ordersCount: 5,
-    },
-    {
-        id: 5,
-        username: 'Thanatorn Prasert',
-        name: 'Thanatorn Prasert',
-        email: 'eieiei@email.com',
-        status: 'active',
-        joined: 'April 03, 2026',
-        ordersCount: 3,
-    },
-    {
-        id: 6,
-        username: 'Akarin Chaiwong',
-        name: 'Akarin Chaiwong',
-        email: 'eieiei@email.com',
-        status: 'blocked',
-        joined: 'January 18, 2026',
-        ordersCount: 0,
-    },
-];
-
-const initialProducts: ProductItem[] = [
-    {
-        id: 1,
-        name: 'Peachy Morning',
-        description: 'ช่อกุหลาบโทนพีช ผสมผสานกลิ่นอายความอบอุ่นและสดใส เหมาะสำหรับทุกโอกาสสำคัญ',
-        thai: 'ช่อกุหลาบโทนพีช',
-        price: 999,
-        color: 'red',
-        size: 'M',
-        rating: 4.5,
-        stock: 8,
-        position: '74% 50%',
-        image: '/images/homepage/bouquets.png',
-    },
-    {
-        id: 2,
-        name: 'Ivory Whisper',
-        description: 'ช่อกุหลาบสีขาวครีม บริสุทธิ์ เรียบหรู ประณีตด้วยริบบิ้นผ้าซาตินคุณภาพพรีเมียม',
-        thai: 'ช่อกุหลาบสีขาวครีม',
-        price: 999,
-        color: 'green',
-        size: 'S',
-        rating: 4.5,
-        stock: 5,
-        position: '50% 90%',
-        image: '/images/homepage/bouquets.png',
-    },
-    {
-        id: 3,
-        name: 'A Little Romance',
-        description: 'ช่อดอกไม้ชมพูหวานละมุน สื่อถึงความรักและความห่วงใยที่ยืนยาวอย่างงดงาม',
-        thai: 'ช่อดอกไม้ชมพูโรแมนติก',
-        price: 999,
-        color: 'blue',
-        size: 'L',
-        rating: 4.5,
-        stock: 12,
-        position: '70% 20%',
-        image: '/images/homepage/bouquets.png',
-    },
-    {
-        id: 4,
-        name: 'Forever Yours',
-        description: 'ช่อกุหลาบแดงเข้มคลาสสิก แทนความรู้สึกจากหัวใจ มอบความประทับใจไม่รู้ลืม',
-        thai: 'ช่อกุหลาบแดงหรูหรา',
-        price: 999,
-        color: 'red',
-        size: 'M',
-        rating: 4.5,
-        stock: 6,
-        position: '100% 80%',
-        image: '/images/homepage/bouquets.png',
-    },
-    {
-        id: 5,
-        name: 'Sunlit Meadow',
-        description: 'ช่อดอกไม้วันสดใส ผสมดอกไม้หลากสีสัน เติมพลังบวกให้ทุกเช้าวันใหม่',
-        thai: 'ช่อดอกไม้วันสดใส',
-        price: 999,
-        color: 'green',
-        size: 'M',
-        rating: 4.5,
-        stock: 10,
-        position: '48% 85%',
-        image: '/images/homepage/bouquets.png',
-    },
-];
 
 interface AdminProps {
     initialTab?: 'orders' | 'users' | 'products';
@@ -297,48 +120,424 @@ interface AdminProps {
     dbOrders?: any[];
     dbUsers?: any[];
     dbColors?: string[];
+    dbColorCatalog?: ColorCatalogItem[];
     statusCounts?: Record<string, number>;
+    navCounts?: {
+        products?: number;
+        orders?: number;
+        users?: number;
+    };
 }
 
-// Utility to verify if color string can be rendered in CSS (returns valid color or null)
-const getValidCssColor = (colorStr?: string): string | null => {
+const prices = [
+    { value: 'all', label: 'ทุกราคา', min: 0, max: Infinity },
+    { value: 'under500', label: 'ต่ำกว่า ฿500', min: 0, max: 500 },
+    { value: '500to999', label: '฿500 – ต่ำกว่า ฿1,000', min: 500, max: 1000 },
+    { value: '1000plus', label: '฿1,000 ขึ้นไป', min: 1000, max: Infinity },
+];
+
+const colorSwatches: Record<string, string> = {
+    pink: '#dca3b2',
+    white: '#fff9e9',
+    red: '#9a3b50',
+    purple: '#a78bbd',
+    yellow: '#e6c871',
+    green: '#6b8f71',
+    blue: '#779fbd',
+    orange: '#d99866',
+};
+
+const colorLabels: Record<string, string> = {
+    pink: 'ชมพู & พีช (pink)',
+    white: 'ขาวครีม (white)',
+    red: 'แดงไวน์ (red)',
+};
+
+const presetPaletteSwatches = [
+    { label: 'โรสพิงค์', hex: '#dca3b2' },
+    { label: 'ขาวครีม', hex: '#fff9e9' },
+    { label: 'แดงไวน์', hex: '#9a3b50' },
+    { label: 'ม่วงลาเวนเดอร์', hex: '#a78bbd' },
+    { label: 'เหลืองพาสเทล', hex: '#e6c871' },
+    { label: 'เขียวเซจ', hex: '#6b8f71' },
+    { label: 'ฟ้าพาสเทล', hex: '#779fbd' },
+    { label: 'ส้มพีช', hex: '#d99866' },
+];
+
+const getSwatchColor = (
+    colorStr?: string,
+    customHexLookup?: Record<string, string>,
+): string | null => {
     if (!colorStr) return null;
     const clean = colorStr.trim().toLowerCase();
     if (!clean) return null;
+    if (customHexLookup?.[clean]) return customHexLookup[clean];
+    if (colorSwatches[clean]) return colorSwatches[clean];
     if (/^#([0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(clean)) return clean;
     if (/^(rgb|hsl)a?\(.+\)$/i.test(clean)) return clean;
-    if (typeof window !== 'undefined' && typeof Option !== 'undefined') {
-        const testStyle = new Option().style;
-        testStyle.color = clean;
-        if (testStyle.color !== '') {
-            return clean;
-        }
-    }
-    const standardColors = [
-        'red', 'green', 'blue', 'pink', 'yellow', 'purple', 'orange',
-        'white', 'black', 'gray', 'grey', 'brown', 'violet', 'cyan',
-        'magenta', 'lime', 'coral', 'crimson', 'gold', 'indigo', 'lavender',
-        'peachpuff', 'salmon', 'teal', 'turquoise', 'plum', 'maroon', 'navy',
-        'olive', 'beige', 'khaki', 'ivory', 'chocolate'
-    ];
-    if (standardColors.includes(clean)) return clean;
-    return null;
+    return '#dbc3ca';
 };
 
+interface ColorMultiSelectProps {
+    selectedColors: string[];
+    onChange: (nextColors: string[]) => void;
+    catalogColors: ColorCatalogItem[];
+    onColorCreated: (item: ColorCatalogItem) => void;
+}
+
+function ColorMultiSelect({
+    selectedColors,
+    onChange,
+    catalogColors,
+    onColorCreated,
+}: ColorMultiSelectProps) {
+    const [isCreatingColor, setIsCreatingColor] = useState(false);
+    const [newColorName, setNewColorName] = useState('');
+    const [newColorHex, setNewColorHex] = useState('#dca3b2');
+    const [createError, setCreateError] = useState<string | null>(null);
+    const [isSubmittingColor, setIsSubmittingColor] = useState(false);
+
+    const hexLookup: Record<string, string> = {};
+    for (const item of catalogColors) {
+        hexLookup[item.name.toLowerCase()] = item.hex_code;
+    }
+
+    const isSelected = (name: string) =>
+        selectedColors.some((c) => c.toLowerCase() === name.toLowerCase());
+
+    const toggleColor = (name: string) => {
+        if (isSelected(name)) {
+            onChange(
+                selectedColors.filter(
+                    (c) => c.toLowerCase() !== name.toLowerCase(),
+                ),
+            );
+        } else {
+            onChange([...selectedColors, name]);
+        }
+    };
+
+    const handleCreateNewColor = () => {
+        const cleanName = newColorName.trim();
+        if (!cleanName) {
+            setCreateError('กรุณาตั้งชื่อสีใหม่ เช่น พีชพาสเทล หรือ lavender');
+            return;
+        }
+        const validHex = /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/.test(newColorHex)
+            ? newColorHex.toLowerCase()
+            : '#dca3b2';
+
+        setCreateError(null);
+        setIsSubmittingColor(true);
+
+        router.post(
+            '/admin/colors',
+            {
+                name: cleanName,
+                hex_code: validHex,
+            },
+            {
+                preserveScroll: true,
+                preserveState: true,
+                onSuccess: () => {
+                    onColorCreated({ name: cleanName, hex_code: validHex });
+                    if (!isSelected(cleanName)) {
+                        onChange([...selectedColors, cleanName]);
+                    }
+                    setNewColorName('');
+                    setIsCreatingColor(false);
+                },
+                onError: (errs) => {
+                    setCreateError(
+                        errs.name ||
+                            errs.hex_code ||
+                            'ไม่สามารถสร้างสีใหม่ได้ กรุณาลองใหม่อีกครั้ง',
+                    );
+                },
+                onFinish: () => {
+                    setIsSubmittingColor(false);
+                },
+            },
+        );
+    };
+
+    return (
+        <div className="space-y-3">
+            {/* Selected Colors Box (Multi-select display) */}
+            <div className="min-h-12 rounded-xl border border-[var(--border)] bg-[var(--cream)] p-2.5">
+                <div className="mb-1.5 flex items-center justify-between gap-2 px-1">
+                    <span className="text-[11px] text-[var(--muted)]">
+                        สีที่เลือกสำหรับช่อนี้ ({selectedColors.length} สี)
+                    </span>
+                    {selectedColors.length > 0 && (
+                        <button
+                            type="button"
+                            onClick={() => onChange([])}
+                            className="text-[11px] text-[var(--muted)] hover:text-[#9a3b50] hover:underline"
+                        >
+                            ล้างที่เลือก
+                        </button>
+                    )}
+                </div>
+
+                {selectedColors.length === 0 ? (
+                    <p className="px-1 py-1 text-xs text-[var(--muted)]">
+                        ยังไม่ได้เลือกสี — คลิกเลือกสีจากรายการด้านล่างได้หลายสี หรือกด &ldquo;+ สร้างสีใหม่เข้าระบบ&rdquo;
+                    </p>
+                ) : (
+                    <div className="flex flex-wrap gap-1.5">
+                        {selectedColors.map((colorName) => {
+                            const swatch =
+                                getSwatchColor(colorName, hexLookup) ??
+                                '#dbc3ca';
+                            return (
+                                <span
+                                    key={colorName}
+                                    className="inline-flex items-center gap-1.5 rounded-full border border-[var(--accent)]/30 bg-[var(--rose-soft)] py-1 pr-2 pl-2.5 text-xs font-medium text-[var(--ink)]"
+                                >
+                                    <span
+                                        className="size-3 shrink-0 rounded-full border border-[#ba9ea6]"
+                                        style={{ backgroundColor: swatch }}
+                                    />
+                                    <span>
+                                        {colorLabels[colorName.toLowerCase()] ??
+                                            colorName}
+                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={() => toggleColor(colorName)}
+                                        aria-label={`เอาสี ${colorName} ออก`}
+                                        className="ml-0.5 grid size-4 place-items-center rounded-full text-[var(--muted)] transition-colors hover:bg-[var(--rose)] hover:text-[#9a3b50]"
+                                    >
+                                        <X size={11} />
+                                    </button>
+                                </span>
+                            );
+                        })}
+                    </div>
+                )}
+            </div>
+
+            {/* Multi-select Toggle List + Create Color Trigger */}
+            <div>
+                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                    <span className="text-xs text-[var(--muted)]">
+                        คลิกเพื่อเลือกสีที่มีในระบบ (เลือกได้หลายสี):
+                    </span>
+                    <button
+                        type="button"
+                        onClick={() => {
+                            setIsCreatingColor((prev) => !prev);
+                            setCreateError(null);
+                        }}
+                        className="inline-flex items-center gap-1 rounded-full border border-[var(--accent)]/40 bg-[var(--rose-soft)] px-3 py-1 text-xs font-medium text-[var(--accent)] transition-colors hover:bg-[var(--rose)]"
+                    >
+                        {isCreatingColor ? (
+                            <>
+                                <X size={13} /> ปิดหน้าต่างสร้างสี
+                            </>
+                        ) : (
+                            <>
+                                <Plus size={13} /> สร้างสีใหม่เข้าระบบ
+                            </>
+                        )}
+                    </button>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                    {catalogColors.map((item) => {
+                        const active = isSelected(item.name);
+                        const swatch =
+                            getSwatchColor(item.name, hexLookup) ??
+                            item.hex_code ??
+                            '#dbc3ca';
+                        return (
+                            <button
+                                key={item.name}
+                                type="button"
+                                onClick={() => toggleColor(item.name)}
+                                aria-pressed={active}
+                                className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs transition-all ${
+                                    active
+                                        ? 'border-[var(--accent)] bg-[var(--accent)] text-[var(--on-accent)] shadow-2xs'
+                                        : 'border-[var(--border)] bg-[var(--cream)] text-[var(--ink)] hover:bg-[var(--rose-soft)]'
+                                }`}
+                            >
+                                <span
+                                    className="size-3.5 shrink-0 rounded-full border border-[#ba9ea6]"
+                                    style={{ backgroundColor: swatch }}
+                                />
+                                <span>
+                                    {colorLabels[item.name.toLowerCase()] ??
+                                        item.name}
+                                </span>
+                                {active && <Check size={13} />}
+                            </button>
+                        );
+                    })}
+                </div>
+            </div>
+
+            {/* Inline Create New Color Box */}
+            {isCreatingColor && (
+                <div className="rounded-xl border border-[var(--border)] bg-[var(--rose-soft)]/70 p-4">
+                    <div className="mb-3 flex items-center justify-between">
+                        <p className="text-xs font-bold text-[var(--ink)]">
+                            สร้างโทนสีใหม่เข้าสู่ระบบ (บันทึกลงตาราง Color)
+                        </p>
+                        <span className="text-[11px] text-[var(--muted)]">
+                            สร้างแล้วจะถูกเลือกให้ช่อนี้ทันที
+                        </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto]">
+                        <div>
+                            <label className="block text-[11px] text-[var(--muted)]">
+                                ชื่อสีใหม่ *
+                            </label>
+                            <input
+                                type="text"
+                                maxLength={100}
+                                value={newColorName}
+                                onChange={(e) => {
+                                    setNewColorName(e.target.value);
+                                    if (createError) setCreateError(null);
+                                }}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        e.preventDefault();
+                                        handleCreateNewColor();
+                                    }
+                                }}
+                                placeholder="เช่น lavender, พีชพาสเทล, ฟ้าคราม..."
+                                className="mt-1 h-10 w-full rounded-lg border border-[var(--border)] bg-[var(--cream)] px-3 text-xs text-[var(--ink)] focus:border-[var(--accent)] focus:outline-none"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-[11px] text-[var(--muted)]">
+                                เลือกค่าสี (Hex Code) *
+                            </label>
+                            <div className="mt-1 flex items-center gap-2">
+                                <label className="relative flex h-10 cursor-pointer items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--cream)] px-3 text-xs text-[var(--ink)] hover:bg-[var(--rose-soft)]">
+                                    <input
+                                        type="color"
+                                        value={newColorHex}
+                                        onChange={(e) =>
+                                            setNewColorHex(e.target.value)
+                                        }
+                                        className="size-6 cursor-pointer rounded border-0 bg-transparent p-0"
+                                    />
+                                    <span className="font-mono text-xs uppercase">
+                                        {newColorHex}
+                                    </span>
+                                </label>
+
+                                <button
+                                    type="button"
+                                    disabled={isSubmittingColor}
+                                    onClick={handleCreateNewColor}
+                                    className="inline-flex h-10 items-center gap-1.5 rounded-full bg-[var(--accent)] px-4 text-xs text-[var(--on-accent)] transition-colors hover:bg-[var(--accent-hover)] disabled:opacity-50"
+                                >
+                                    <Plus size={14} />
+                                    <span>
+                                        {isSubmittingColor
+                                            ? 'กำลังบันทึก...'
+                                            : 'บันทึกสีใหม่'}
+                                    </span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Quick Preset Swatches */}
+                    <div className="mt-3 flex flex-wrap items-center gap-1.5">
+                        <span className="mr-1 text-[11px] text-[var(--muted)]">
+                            โทนสีแนะนำ:
+                        </span>
+                        {presetPaletteSwatches.map((preset) => (
+                            <button
+                                key={preset.hex}
+                                type="button"
+                                onClick={() => {
+                                    setNewColorHex(preset.hex);
+                                    if (!newColorName.trim()) {
+                                        setNewColorName(preset.label);
+                                    }
+                                }}
+                                title={`${preset.label} (${preset.hex})`}
+                                className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] transition-colors ${
+                                    newColorHex.toLowerCase() ===
+                                    preset.hex.toLowerCase()
+                                        ? 'border-[var(--accent)] bg-[var(--cream)] font-bold text-[var(--accent)]'
+                                        : 'border-[var(--border)] bg-[var(--cream)]/80 text-[var(--muted)] hover:text-[var(--ink)]'
+                                }`}
+                            >
+                                <span
+                                    className="size-2.5 rounded-full border border-[#ba9ea6]"
+                                    style={{ backgroundColor: preset.hex }}
+                                />
+                                <span>{preset.label}</span>
+                            </button>
+                        ))}
+                    </div>
+
+                    {createError && (
+                        <p className="mt-2 text-xs text-[#9a3b50]">
+                            {createError}
+                        </p>
+                    )}
+                </div>
+            )}
+        </div>
+    );
+}
+
 const mapDbProducts = (list: any[]): ProductItem[] =>
-    list.map((p) => ({
-        id: p.id,
-        name: p.name,
-        description: p.description || '',
-        thai: p.name,
-        price: Number(p.price),
-        color: p.color || 'pink',
-        rating: Number(p.rating || 5.0),
-        stock: Number(p.stock),
-        position: 'center',
-        image: p.picture_path || '/images/homepage/bouquets.png',
-        is_deleted: !!p.is_deleted,
-    }));
+    list.map((p) => {
+        const colorObjects: { name: string; hex_code?: string }[] =
+            Array.isArray(p.colors)
+                ? p.colors
+                      .map((c: any) =>
+                          typeof c === 'string'
+                              ? { name: c.trim() }
+                              : {
+                                    name: (c?.name ?? '').trim(),
+                                    hex_code: c?.hex_code,
+                                },
+                      )
+                      .filter((c: { name: string }) => c.name !== '')
+                : [];
+
+        const fallbackColors = (p.color ?? '')
+            .split(',')
+            .map((c: string) => c.trim())
+            .filter(Boolean);
+
+        const colors: string[] =
+            colorObjects.length > 0
+                ? colorObjects.map((c) => c.name)
+                : fallbackColors;
+
+        return {
+            id: p.id,
+            name: p.name,
+            description: p.description || '',
+            thai: p.description || p.name,
+            price: Number(p.price),
+            color: colors[0] ?? (p.color ?? '').trim(),
+            colors,
+            colorObjects,
+            rating: Number(p.rating ?? 0),
+            ratingCount: Number(p.rating_count ?? 0),
+            stock: Number(p.stock),
+            position: 'center',
+            image: productImage(
+                p.picture_path || '/images/homepage/bouquets.png',
+            ),
+            is_deleted: !!p.is_deleted,
+        };
+    });
 
 const mapDbOrders = (list: any[]): Order[] =>
     list.map((o) => {
@@ -379,19 +578,27 @@ const mapDbOrders = (list: any[]): Order[] =>
             }
         }
 
-        const customerName = o.customer_name || o.username || recipientName || 'Customer';
+        const customerName =
+            o.customer_name || o.username || recipientName || 'Customer';
 
         return {
             id: String(o.id),
             date: o.created_at
-                ? new Date(o.created_at).toLocaleDateString('en-US', {
-                      month: 'long',
+                ? new Date(o.created_at).toLocaleDateString('th-TH', {
                       day: 'numeric',
+                      month: 'short',
                       year: 'numeric',
                   })
-                : 'Recent',
+                : 'ล่าสุด',
             total: Number(o.total_price),
-            status: ['delivered', 'success'].includes(o.status) ? 'success' : 'delivery',
+            rawStatus: o.status || 'pending',
+            status: ['delivered', 'success'].includes(o.status)
+                ? 'success'
+                : ['cancelled', 'canceled'].includes(o.status)
+                  ? 'cancelled'
+                  : o.status === 'pending'
+                    ? 'pending'
+                    : 'delivery',
             customerName,
             customerEmail: o.customer_email || '',
             customerRole: o.customer_role || 'customer',
@@ -404,22 +611,16 @@ const mapDbOrders = (list: any[]): Order[] =>
                 Array.isArray(o.items) && o.items.length > 0
                     ? o.items.map((item: any) => ({
                           id: item.product_id || item.id,
-                          name: item.product_name || 'Bouquet',
-                          variant: `Qty: ${item.quantity}`,
-                          price: Number(item.purchase_price || 999),
+                          name: item.product_name || 'ช่อดอกไม้',
+                          variant: `จำนวน ${item.quantity} ช่อ`,
+                          price: Number(item.purchase_price ?? 0),
                           quantity: item.quantity,
-                          image: item.picture_path || '/images/homepage/bouquets.png',
+                          image: productImage(
+                              item.picture_path ||
+                                  '/images/homepage/bouquets.png',
+                          ),
                       }))
-                    : [
-                          {
-                              id: 1,
-                              name: 'Flower Bouquet',
-                              variant: 'Standard',
-                              price: Number(o.total_price),
-                              quantity: 1,
-                              image: '/images/homepage/bouquets.png',
-                          },
-                      ],
+                    : [],
         };
     });
 
@@ -434,15 +635,18 @@ const mapDbUsers = (list: any[]): UserAccount[] =>
             role: u.role || 'customer',
             status: u.is_banned ? 'blocked' : 'active',
             joined: u.created_at
-                ? new Date(u.created_at).toLocaleDateString('en-US', {
-                      month: 'long',
+                ? new Date(u.created_at).toLocaleDateString('th-TH', {
                       day: 'numeric',
+                      month: 'short',
                       year: 'numeric',
                   })
-                : 'Member',
+                : 'สมาชิก',
             ordersCount: Number(u.orders_count || 0),
         };
     });
+
+const primaryBtn =
+    'inline-flex h-11 items-center justify-center gap-2 rounded-full bg-[var(--accent)] px-6 text-sm text-[var(--on-accent)] transition-colors hover:bg-[var(--accent-hover)] disabled:opacity-50';
 
 export default function AdminPage({
     initialTab = 'products',
@@ -451,93 +655,197 @@ export default function AdminPage({
     dbOrders,
     dbUsers,
     dbColors,
+    dbColorCatalog,
+    navCounts,
 }: AdminProps) {
-    const [activeNav, setActiveNav] = useState<'orders' | 'users' | 'products'>(initialTab);
-    const [orders, setOrders] = useState<Order[]>(() =>
-        dbOrders && dbOrders.length > 0 ? mapDbOrders(dbOrders) : initialOrders
-    );
-    const [users, setUsers] = useState<UserAccount[]>(() =>
-        dbUsers && dbUsers.length > 0 ? mapDbUsers(dbUsers) : initialUsers
-    );
-    const [products, setProducts] = useState<ProductItem[]>(() =>
-        dbProducts && dbProducts.length > 0 ? mapDbProducts(dbProducts) : initialProducts
-    );
+    useFlashToast();
+    const activeNav = initialTab;
+    const orders = mapDbOrders(dbOrders ?? []);
+    const users = mapDbUsers(dbUsers ?? []);
+    const products = mapDbProducts(dbProducts ?? []);
+    const totalProductsCount = navCounts?.products ?? products.length;
+    const totalOrdersCount = navCounts?.orders ?? orders.length;
+    const totalUsersCount = navCounts?.users ?? users.length;
+    const { errors, auth } = usePage().props;
+    const [mobileMenu, setMobileMenu] = useState(false);
 
-    // Editing State (From Wireframe Edit Product Page)
-    const [editingProduct, setEditingProduct] = useState<ProductItem | null>(() => {
-        const pool = dbProducts && dbProducts.length > 0 ? mapDbProducts(dbProducts) : initialProducts;
-        if (initialEditId) {
-            return pool.find((p) => p.id === initialEditId) || pool[0];
-        }
-        return null;
-    });
+    // Custom colors added in current session (merged with dbColorCatalog)
+    const [customColors, setCustomColors] = useState<ColorCatalogItem[]>([]);
+
+    // Editing State
+    const [editingProduct, setEditingProduct] = useState<ProductItem | null>(
+        () => {
+            const pool = mapDbProducts(dbProducts ?? []);
+            if (initialEditId) {
+                return pool.find((p) => p.id === initialEditId) || null;
+            }
+            return null;
+        },
+    );
 
     // Form fields for editing
     const [editName, setEditName] = useState(editingProduct?.name || '');
-    const [editPrice, setEditPrice] = useState(editingProduct?.price || 690);
-    const [editDesc, setEditDesc] = useState(
-        editingProduct?.description || 'descriptions descriptions \ndescriptions'
+    const [editPrice, setEditPrice] = useState(editingProduct?.price ?? 0);
+    const [editDesc, setEditDesc] = useState(editingProduct?.description || '');
+    const [editColors, setEditColors] = useState<string[]>(
+        editingProduct?.colors && editingProduct.colors.length > 0
+            ? editingProduct.colors
+            : editingProduct?.color
+              ? [editingProduct.color]
+              : [],
     );
-    const [editColor, setEditColor] = useState<string>(editingProduct?.color || 'pink');
-    const [editStock, setEditStock] = useState<number>(editingProduct?.stock || 1);
+    const [editStock, setEditStock] = useState<number>(
+        editingProduct?.stock ?? 0,
+    );
     const [editPhotoFile, setEditPhotoFile] = useState<File | null>(null);
-    const [editPhotoPreview, setEditPhotoPreview] = useState<string | null>(null);
+    const [editPhotoPreview, setEditPhotoPreview] = useState<string | null>(
+        null,
+    );
     const [showSaveToast, setShowSaveToast] = useState(false);
 
-    // Available Colors in DB
-    const availableColors = Array.from(
-        new Set([
-            ...(dbColors || []),
-            ...products.map((p) => p.color?.trim()).filter(Boolean),
-        ])
-    ) as string[];
+    // Build unified Color Catalog from dbColorCatalog, dbColors, products, and customColors
+    const catalogColors: ColorCatalogItem[] = (() => {
+        const map = new Map<string, ColorCatalogItem>();
+        const addColor = (name?: string, hex?: string) => {
+            const clean = (name ?? '').trim();
+            if (!clean) return;
+            const key = clean.toLowerCase();
+            const existing = map.get(key);
+            const resolvedHex =
+                hex ||
+                existing?.hex_code ||
+                getSwatchColor(clean) ||
+                '#dbc3ca';
+            map.set(key, {
+                name: existing?.name || clean,
+                hex_code: resolvedHex,
+            });
+        };
+
+        for (const item of dbColorCatalog ?? []) {
+            addColor(item.name, item.hex_code);
+        }
+        for (const name of dbColors ?? []) {
+            addColor(name);
+        }
+        for (const p of products) {
+            for (const obj of p.colorObjects ?? []) {
+                addColor(obj.name, obj.hex_code);
+            }
+            for (const c of p.colors ?? []) {
+                addColor(c);
+            }
+            if (p.color) addColor(p.color);
+        }
+        for (const item of customColors) {
+            addColor(item.name, item.hex_code);
+        }
+
+        // Default base colors if catalog is completely empty
+        if (map.size === 0) {
+            addColor('pink', '#dca3b2');
+            addColor('white', '#fff9e9');
+            addColor('red', '#9a3b50');
+        }
+
+        return Array.from(map.values()).sort((a, b) =>
+            a.name.localeCompare(b.name, 'th'),
+        );
+    })();
+
+    const catalogHexLookup: Record<string, string> = {};
+    for (const item of catalogColors) {
+        catalogHexLookup[item.name.toLowerCase()] = item.hex_code;
+    }
+
+    const colorFilterOptions = productColors([
+        ...products,
+        ...catalogColors.map((c) => ({
+            color: c.name,
+            colorObjects: [c],
+        })),
+    ]);
 
     // Global Search
     const [searchQuery, setSearchQuery] = useState('');
 
     // Orders Filter State
-    const [orderStatusFilter, setOrderStatusFilter] = useState<'all' | 'delivery' | 'success'>('all');
+    const [orderStatusFilter, setOrderStatusFilter] = useState<
+        'all' | 'pending' | 'delivery' | 'success' | 'cancelled'
+    >('all');
 
     // Users Filter State
-    const [userStatusFilter, setUserStatusFilter] = useState<'all' | 'active' | 'blocked'>('all');
+    const [userStatusFilter, setUserStatusFilter] = useState<
+        'all' | 'active' | 'blocked'
+    >('all');
     const [isUserGuideOpen, setIsUserGuideOpen] = useState(false);
 
-    // Products Filter State
+    // Products Filter State (aligned with products.tsx)
     const [selectedColors, setSelectedColors] = useState<string[]>([]);
-    const [selectedCostRanges, setSelectedCostRanges] = useState<string[]>([]);
-    const [selectedRatings, setSelectedRatings] = useState<number[]>([]);
+    const [priceRange, setPriceRange] = useState('all');
+    const [minRating, setMinRating] = useState('0');
+    const [sortBy, setSortBy] = useState('recommended');
 
     // Modal Add Product State
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [newProductName, setNewProductName] = useState('');
-    const [newProductPrice, setNewProductPrice] = useState('690');
-    const [newProductColor, setNewProductColor] = useState('pink');
-    const [newProductStock, setNewProductStock] = useState('10');
+    const [newProductPrice, setNewProductPrice] = useState('');
+    const [newProductColors, setNewProductColors] = useState<string[]>([]);
+    const [newProductStock, setNewProductStock] = useState('');
     const [newProductDescription, setNewProductDescription] = useState('');
     const [newProductFile, setNewProductFile] = useState<File | null>(null);
-    const [newProductFilePreview, setNewProductFilePreview] = useState<string | null>(null);
+    const [newProductFilePreview, setNewProductFilePreview] = useState<
+        string | null
+    >(null);
+    const [addColorError, setAddColorError] = useState<string | null>(null);
+    const [editColorError, setEditColorError] = useState<string | null>(null);
 
     // Role Confirmation Modal State
-    const [roleConfirmUser, setRoleConfirmUser] = useState<UserAccount | null>(null);
+    const [roleConfirmUser, setRoleConfirmUser] = useState<UserAccount | null>(
+        null,
+    );
     const [targetRole, setTargetRole] = useState<'customer' | 'admin'>('admin');
+
+    const handleColorCreated = (item: ColorCatalogItem) => {
+        setCustomColors((prev) => [
+            ...prev.filter(
+                (c) => c.name.toLowerCase() !== item.name.toLowerCase(),
+            ),
+            item,
+        ]);
+    };
 
     // Start editing a product
     const handleStartEdit = (product: ProductItem) => {
         setEditingProduct(product);
         setEditName(product.name);
         setEditPrice(product.price);
-        setEditDesc(product.description || 'descriptions descriptions \ndescriptions');
-        setEditColor(product.color || 'pink');
-        setEditStock(product.stock || 1);
+        setEditDesc(product.description || '');
+        setEditColors(
+            product.colors && product.colors.length > 0
+                ? product.colors
+                : product.color
+                  ? [product.color]
+                  : [],
+        );
+        setEditColorError(null);
+        setEditStock(product.stock ?? 0);
         setEditPhotoFile(null);
         setEditPhotoPreview(null);
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
-    // Save edited product to backend (Supports both photo upload and text update)
+    // Save edited product to backend
     const handleSaveEdit = (e: React.FormEvent) => {
         e.preventDefault();
         if (!editingProduct) return;
+        if (editColors.length === 0) {
+            setEditColorError('กรุณาเลือกสีดอกไม้อย่างน้อย 1 สี');
+            return;
+        }
+        setEditColorError(null);
+
+        const joinedColors = editColors.join(', ');
 
         if (editPhotoFile) {
             const formData = new FormData();
@@ -545,7 +853,8 @@ export default function AdminPage({
             formData.append('name', editName);
             formData.append('price', String(editPrice));
             formData.append('description', editDesc);
-            formData.append('color', editColor);
+            formData.append('color', joinedColors);
+            editColors.forEach((c) => formData.append('colors[]', c));
             formData.append('stock', String(editStock));
             formData.append('picture', editPhotoFile);
 
@@ -565,7 +874,8 @@ export default function AdminPage({
                     name: editName,
                     price: editPrice,
                     description: editDesc,
-                    color: editColor,
+                    color: joinedColors,
+                    colors: editColors,
                     stock: editStock,
                 },
                 {
@@ -574,39 +884,20 @@ export default function AdminPage({
                         setShowSaveToast(true);
                         setTimeout(() => setShowSaveToast(false), 3000);
                     },
-                }
+                },
             );
         }
-
-        setProducts((prev) =>
-            prev.map((p) =>
-                p.id === editingProduct.id
-                    ? {
-                          ...p,
-                          name: editName,
-                          price: editPrice,
-                          description: editDesc,
-                          color: editColor,
-                          stock: editStock,
-                          image: editPhotoPreview || p.image,
-                      }
-                    : p
-            )
-        );
     };
 
-    // Toggle Order Status on backend
-    const handleConfirmSuccess = (orderId: string) => {
+    // Update Order Status on backend
+    const handleUpdateOrderStatus = (
+        orderId: string,
+        nextStatus: 'shipping' | 'delivered' | 'cancelled',
+    ) => {
         router.patch(
             `/admin/orders/${orderId}/status`,
-            { status: 'delivered' },
-            { preserveScroll: true }
-        );
-
-        setOrders((prev) =>
-            prev.map((order) =>
-                order.id === orderId ? { ...order, status: 'success' } : order
-            )
+            { status: nextStatus },
+            { preserveScroll: true },
         );
     };
 
@@ -615,19 +906,7 @@ export default function AdminPage({
         router.patch(
             `/admin/users/${userId}/ban`,
             {},
-            { preserveScroll: true }
-        );
-
-        setUsers((prev) =>
-            prev.map((user) => {
-                if (user.id === userId) {
-                    return {
-                        ...user,
-                        status: user.status === 'active' ? 'blocked' : 'active',
-                    };
-                }
-                return user;
-            })
+            { preserveScroll: true },
         );
     };
 
@@ -652,19 +931,14 @@ export default function AdminPage({
                 onSuccess: () => {
                     setRoleConfirmUser(null);
                 },
-            }
+            },
         );
-
-        setUsers((prev) =>
-            prev.map((user) => (user.id === userId ? { ...user, role } : user))
-        );
-        setRoleConfirmUser(null);
     };
 
     // Delete Product on backend
     const handleDeleteProduct = (productId: number) => {
         router.delete(`/admin/products/${productId}`, { preserveScroll: true });
-        setProducts((prev) => prev.filter((p) => p.id !== productId));
+
         if (editingProduct?.id === productId) {
             setEditingProduct(null);
         }
@@ -672,9 +946,10 @@ export default function AdminPage({
 
     // Toggle sell on backend
     const handleToggleSell = (productId: number) => {
-        router.patch(`/admin/products/${productId}/toggle`, {}, { preserveScroll: true });
-        setProducts((prev) =>
-            prev.map((p) => (p.id === productId ? { ...p, is_deleted: !p.is_deleted } : p))
+        router.patch(
+            `/admin/products/${productId}/toggle`,
+            {},
+            { preserveScroll: true },
         );
     };
 
@@ -682,12 +957,18 @@ export default function AdminPage({
     const handleAddProduct = (e: React.FormEvent) => {
         e.preventDefault();
         if (!newProductName.trim()) return;
+        if (newProductColors.length === 0) {
+            setAddColorError('กรุณาเลือกสีดอกไม้อย่างน้อย 1 สี');
+            return;
+        }
+        setAddColorError(null);
 
         const formData = new FormData();
         formData.append('name', newProductName.trim());
         formData.append('price', String(newProductPrice));
         formData.append('stock', String(newProductStock));
-        formData.append('color', newProductColor.trim());
+        formData.append('color', newProductColors.join(', '));
+        newProductColors.forEach((c) => formData.append('colors[]', c));
         if (newProductDescription.trim()) {
             formData.append('description', newProductDescription.trim());
         }
@@ -701,89 +982,77 @@ export default function AdminPage({
             onSuccess: () => {
                 setIsAddModalOpen(false);
                 setNewProductName('');
-                setNewProductPrice('690');
-                setNewProductColor('pink');
-                setNewProductStock('10');
+                setNewProductPrice('');
+                setNewProductColors([]);
+                setNewProductStock('');
                 setNewProductDescription('');
                 setNewProductFile(null);
                 setNewProductFilePreview(null);
             },
         });
-
-        const newId = Date.now();
-        const created: ProductItem = {
-            id: newId,
-            name: newProductName.trim(),
-            description: newProductDescription.trim() || 'ช่อดอกไม้สดใหม่ บรรจงจัดด้วยความประณีต',
-            thai: '',
-            price: Number(newProductPrice) || 690,
-            color: newProductColor.trim(),
-            rating: 5.0,
-            stock: Number(newProductStock) || 10,
-            image: newProductFilePreview || '/images/homepage/bouquets.png',
-            position: '50% 50%',
-        };
-
-        setProducts([created, ...products]);
-        setIsAddModalOpen(false);
     };
 
     // Color Filter Toggle
     const toggleColorFilter = (color: string) => {
         setSelectedColors((prev) =>
-            prev.includes(color) ? prev.filter((c) => c !== color) : [...prev, color]
-        );
-    };
-
-    // Cost Filter Toggle
-    const toggleCostRange = (range: string) => {
-        setSelectedCostRanges((prev) =>
-            prev.includes(range) ? prev.filter((r) => r !== range) : [...prev, range]
-        );
-    };
-
-    // Rating Filter Toggle
-    const toggleRatingFilter = (rating: number) => {
-        setSelectedRatings((prev) =>
-            prev.includes(rating) ? prev.filter((r) => r !== rating) : [...prev, rating]
+            prev.includes(color)
+                ? prev.filter((c) => c !== color)
+                : [...prev, color],
         );
     };
 
     const resetProductFilters = () => {
         setSelectedColors([]);
-        setSelectedCostRanges([]);
-        setSelectedRatings([]);
+        setPriceRange('all');
+        setMinRating('0');
         setSearchQuery('');
     };
 
-    // Filtered Products
-    const filteredProducts = products.filter((p) => {
-        const matchesSearch =
-            searchQuery.trim() === '' ||
-            p.name.toLowerCase().includes(searchQuery.toLowerCase());
+    // Filtered & Sorted Products (Matching products.tsx)
+    const activePriceObj =
+        prices.find((item) => item.value === priceRange) ?? prices[0];
+    const filteredProducts = products
+        .filter((p) => {
+            const matchesSearch =
+                searchQuery.trim() === '' ||
+                `${p.name} ${p.description}`
+                    .toLowerCase()
+                    .includes(searchQuery.trim().toLowerCase());
 
-        const matchesColor =
-            selectedColors.length === 0 ||
-            selectedColors.some(
-                (c) => (p.color || '').trim().toLowerCase() === c.trim().toLowerCase()
+            const matchesColor =
+                selectedColors.length === 0 ||
+                selectedColors.some((c) => {
+                    const target = c.trim().toLowerCase();
+                    return (
+                        (p.colors ?? []).some(
+                            (pc) => pc.trim().toLowerCase() === target,
+                        ) || (p.color || '').trim().toLowerCase() === target
+                    );
+                });
+
+            const matchesPrice =
+                p.price >= activePriceObj.min && p.price < activePriceObj.max;
+
+            const matchesRating = p.rating >= Number(minRating);
+
+            return (
+                matchesSearch && matchesColor && matchesPrice && matchesRating
             );
+        })
+        .sort((a, b) =>
+            sortBy === 'price-asc'
+                ? a.price - b.price
+                : sortBy === 'price-desc'
+                  ? b.price - a.price
+                  : sortBy === 'rating'
+                    ? b.rating - a.rating
+                    : a.id - b.id,
+        );
 
-        const matchesCost =
-            selectedCostRanges.length === 0 ||
-            selectedCostRanges.some((range) => {
-                if (range === '0-100') return p.price <= 100;
-                if (range === '100-200') return p.price > 100 && p.price <= 200;
-                if (range === '200-300') return p.price > 200 && p.price <= 300;
-                if (range === '500-1000') return p.price >= 500 && p.price <= 1000;
-                return true;
-            });
-
-        const matchesRating =
-            selectedRatings.length === 0 ||
-            selectedRatings.some((r) => Math.floor(p.rating) === r);
-
-        return matchesSearch && matchesColor && matchesCost && matchesRating;
-    });
+    const activeFilterCount =
+        selectedColors.length +
+        Number(priceRange !== 'all') +
+        Number(minRating !== '0');
 
     // Filtered Users
     const filteredUsers = users.filter((u) => {
@@ -805,1567 +1074,1848 @@ export default function AdminPage({
             searchQuery.trim() === '' ||
             o.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
             o.date.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            (o.customerName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-            (o.customerEmail || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-            (o.phoneNumber || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-            (o.recipientName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (o.customerName || '')
+                .toLowerCase()
+                .includes(searchQuery.toLowerCase()) ||
+            (o.customerEmail || '')
+                .toLowerCase()
+                .includes(searchQuery.toLowerCase()) ||
+            (o.phoneNumber || '')
+                .toLowerCase()
+                .includes(searchQuery.toLowerCase()) ||
+            (o.recipientName || '')
+                .toLowerCase()
+                .includes(searchQuery.toLowerCase()) ||
             o.items.some((item) =>
-                item.name.toLowerCase().includes(searchQuery.toLowerCase())
+                item.name.toLowerCase().includes(searchQuery.toLowerCase()),
             );
         return matchesStatus && matchesSearch;
     });
 
     const activeUsersCount = users.filter((u) => u.status === 'active').length;
-    const blockedUsersCount = users.filter((u) => u.status === 'blocked').length;
-    const deliveryOrdersCount = orders.filter((o) => o.status === 'delivery').length;
-    const successOrdersCount = orders.filter((o) => o.status === 'success').length;
+    const blockedUsersCount = users.filter(
+        (u) => u.status === 'blocked',
+    ).length;
+    const pendingOrdersCount = orders.filter(
+        (o) => o.status === 'pending',
+    ).length;
+    const deliveryOrdersCount = orders.filter(
+        (o) => o.status === 'delivery',
+    ).length;
+    const successOrdersCount = orders.filter(
+        (o) => o.status === 'success',
+    ).length;
+    const cancelledOrdersCount = orders.filter(
+        (o) => o.status === 'cancelled',
+    ).length;
 
-    // Related / Other products for the bottom section of Edit Page (Wireframe: 3 cards at bottom)
-    const otherProducts = products.filter((p) => p.id !== editingProduct?.id).slice(0, 3);
+    // Related / Other products for bottom of Edit Page
+    const otherProducts = products
+        .filter((p) => p.id !== editingProduct?.id)
+        .slice(0, 3);
 
     return (
-        <div className="flower-home min-h-screen bg-[var(--cream)] text-[var(--ink)] antialiased">
+        <div className="flower-home min-h-screen">
             <Head
                 title={
                     editingProduct
-                        ? `Edit: ${editingProduct.name} — My Flower Shop Admin`
+                        ? `แก้ไข ${editingProduct.name} — จัดการร้านค้า`
                         : activeNav === 'products'
-                        ? 'Admin Products Management — My Flower Shop'
-                        : activeNav === 'users'
-                        ? 'Admin User Management — My Flower Shop'
-                        : 'Admin Order Management — My Flower Shop'
+                          ? 'จัดการช่อดอกไม้ — My Flower Shop'
+                          : activeNav === 'users'
+                            ? 'จัดการสมาชิก — My Flower Shop'
+                            : 'จัดการคำสั่งซื้อ — My Flower Shop'
                 }
             />
 
-            {/* Announcement Banner */}
-            <div className="flower-announcement">
-                <ShieldCheck size={15} /> Admin Control Center
-                <span>FLOWER SHOP MANAGEMENT CONSOLE</span>
-            </div>
+            {Object.keys(errors).length > 0 && (
+                <div
+                    role="alert"
+                    className="fixed top-4 right-4 z-50 max-w-sm rounded-xl border border-[#9a3b50]/30 bg-[var(--rose)] p-4 text-sm text-[#9a3b50] shadow-md"
+                >
+                    {Object.values(errors).map((error, index) => (
+                        <p key={index}>{error}</p>
+                    ))}
+                </div>
+            )}
 
-            {/* Top Navigation Bar */}
-            <header className="sticky top-0 z-30 border-b border-[var(--border)]/70 bg-[var(--cream)]/95 backdrop-blur-md">
-                <div className="flower-container flex h-24 items-center justify-between gap-6">
-                    {/* Brand */}
+            {/* Announcement Banner (Same style as StoreHeader) */}
+            {/* <div className="flower-announcement">
+                <ShieldCheck size={15} /> ระบบจัดการร้านค้าสำหรับผู้ดูแล{' '}
+                <span>MY FLOWER SHOP · ADMIN PORTAL</span>
+            </div> */}
+
+            {/* Storefront-matched Header */}
+            <header className="flower-header">
+                <div className="flower-header-main flower-container">
                     <Link
                         href="/"
-                        className="flower-brand group transition-transform duration-200 hover:scale-[1.02]"
-                        title="Return to Main Store"
+                        className="flower-brand"
+                        aria-label="กลับไปหน้าร้าน Bloomie Flower Shop"
                     >
-                        <Flower2
-                            size={34}
-                            strokeWidth={1.3}
-                            className="text-[var(--accent)] transition-transform duration-300 group-hover:rotate-12"
+                        <img
+                            src="/logo.png"
+                            alt="Bloomie Flower Shop"
+                            className="flower-brand-logo"
                         />
-                        <span className="flex flex-col">
-                            <span className="font-bold tracking-tight">MY FLOWER SHOP</span>
-                            <span className="flower-brand-bottom text-xs tracking-widest text-[var(--muted)]">
-                                ADMIN <i>·</i> portal
-                            </span>
-                        </span>
                     </Link>
 
-                    {/* Search Bar */}
-                    <div className="relative mx-4 flex max-w-md flex-1 items-center">
-                        <div className="relative w-full">
-                            <input
-                                type="text"
-                                placeholder={
-                                    activeNav === 'products'
-                                        ? 'Search bouquet catalog...'
-                                        : activeNav === 'users'
-                                        ? 'Search users by name or email...'
-                                        : 'Search orders, items, date...'
-                                }
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="h-12 w-full rounded-full border border-[var(--border)] bg-white px-5 pr-14 text-sm text-[var(--ink)] placeholder:text-[var(--muted)] transition-all focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20 focus:outline-none"
-                            />
+                    <div className="flower-search" role="search">
+                        <Search size={19} />
+                        <input
+                            type="text"
+                            aria-label="ค้นหาในระบบจัดการร้าน"
+                            placeholder={
+                                activeNav === 'products'
+                                    ? 'ค้นหาชื่อช่อดอกไม้หรือคำอธิบาย...'
+                                    : activeNav === 'users'
+                                      ? 'ค้นหาชื่อสมาชิกหรืออีเมล...'
+                                      : 'ค้นหารหัสคำสั่งซื้อ ชื่อลูกค้า หรือเบอร์โทร...'
+                            }
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                        {searchQuery ? (
                             <button
                                 type="button"
-                                aria-label="Search"
-                                className="absolute right-1.5 top-1.5 grid size-9 place-items-center rounded-full bg-[var(--accent)] text-white transition-all hover:bg-[var(--accent-hover)] active:scale-95"
+                                aria-label="ล้างคำค้นหา"
+                                onClick={() => setSearchQuery('')}
                             >
-                                <Search size={18} strokeWidth={2} />
+                                <X size={16} />
                             </button>
-                        </div>
-                    </div>
-
-                    {/* Admin User Profile & Logout */}
-                    <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-3 rounded-full border border-[var(--border)] bg-white/80 py-1.5 pr-4 pl-2 shadow-xs backdrop-blur-xs">
-                            <div className="grid size-9 place-items-center rounded-full bg-[var(--rose)] text-[var(--accent)]">
-                                <UserRound size={18} strokeWidth={2} />
-                            </div>
-                            <div className="text-left">
-                                <span className="block text-sm font-bold text-[var(--ink)]">
-                                    Admin
-                                </span>
-                                <span className="block text-[10px] tracking-wider text-[var(--muted)] uppercase">
-                                    Store Manager
-                                </span>
-                            </div>
-                        </div>
-
-                        {/* Log Out Button */}
-                        <Link
-                            href={logout()}
-                            as="button"
-                            className="inline-flex h-11 items-center gap-2 rounded-full border border-[var(--border)] bg-white/90 px-4 text-xs font-semibold text-[var(--muted)] shadow-xs transition-all hover:border-red-200 hover:bg-red-50 hover:text-red-600 active:scale-95"
-                            title="ออกจากระบบ (Log Out)"
-                        >
-                            <LogOut size={16} />
-                            <span>Log out</span>
-                        </Link>
-                    </div>
-                </div>
-
-                {/* Subnavigation Bar (Order History | User | Products) */}
-                <div className="border-t border-[var(--border)]/60 bg-[var(--rose-soft)]/50">
-                    <div className="flower-container flex items-center gap-3 py-2.5">
-                        {/* Order History Tab */}
-                        <Link
-                            href="/admin/orders"
-                            className={`flex items-center gap-2 rounded-full px-5 py-2 text-sm font-semibold transition-all ${
-                                activeNav === 'orders' && !editingProduct
-                                    ? 'bg-[var(--accent)] text-white shadow-xs'
-                                    : 'text-[var(--muted)] hover:bg-white/60 hover:text-[var(--ink)]'
-                            }`}
-                        >
-                            <Package size={16} />
-                            Order History
-                        </Link>
-
-                        {/* User Tab */}
-                        <Link
-                            href="/admin/users"
-                            className={`flex items-center gap-2 rounded-full px-5 py-2 text-sm font-semibold transition-all ${
-                                activeNav === 'users'
-                                    ? 'bg-[var(--accent)] text-white shadow-xs'
-                                    : 'text-[var(--muted)] hover:bg-white/60 hover:text-[var(--ink)]'
-                            }`}
-                        >
-                            <Users size={16} />
-                            User
-                        </Link>
-
-                        {/* Products Tab */}
-                        <Link
-                            href="/admin/products"
-                            className={`flex items-center gap-2 rounded-full px-5 py-2 text-sm font-semibold transition-all ${
-                                activeNav === 'products' && !editingProduct
-                                    ? 'bg-[var(--accent)] text-white shadow-xs'
-                                    : 'text-[var(--muted)] hover:bg-white/60 hover:text-[var(--ink)]'
-                            }`}
-                        >
-                            <ShoppingBag size={16} />
-                            Products
-                        </Link>
-                    </div>
-                </div>
-            </header>
-
-            {/* ========================================================= */}
-            {/* VIEW: EDIT PRODUCT PAGE (From Wireframe Snippet)          */}
-            {/* ========================================================= */}
-            {editingProduct && activeNav === 'products' ? (
-                <main className="flower-container py-8 md:py-12">
-                    {/* Top Back and Notification */}
-                    <div className="mb-6 flex items-center justify-between">
-                        <button
-                            type="button"
-                            onClick={() => setEditingProduct(null)}
-                            className="inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-white px-4 py-2 text-xs font-semibold text-[var(--ink)] shadow-2xs transition-all hover:bg-[var(--rose-soft)]"
-                        >
-                            <ArrowLeft size={14} /> Back to Products Catalog
-                        </button>
-
-                        {showSaveToast && (
-                            <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-1.5 text-xs font-semibold text-emerald-800 shadow-xs animate-in fade-in duration-300">
-                                <CheckCircle2 size={16} className="text-emerald-600" />
-                                Product updated successfully!
-                            </div>
+                        ) : (
+                            <button type="button" aria-label="ค้นหา">
+                                <ArrowRight size={18} />
+                            </button>
                         )}
                     </div>
 
-                    {/* Main Edit Product Card */}
-                    <form
-                        onSubmit={handleSaveEdit}
-                        className="overflow-hidden rounded-3xl border border-[var(--border)] bg-white shadow-sm"
+                    <div className="flower-account-actions">
+                        <Link className="flower-account" href="/settings/profile">
+                            <UserRound size={20} />
+                            <span>{auth.user?.username ?? 'Admin'}</span>
+                        </Link>
+                        <Link
+                            href={logout()}
+                            as="button"
+                            className="flower-account text-[var(--muted)] transition-colors hover:bg-[var(--rose-soft)] hover:text-[var(--ink)]"
+                            title="ออกจากระบบ"
+                        >
+                            <LogOut size={17} />
+                            <span>ออกจากระบบ</span>
+                        </Link>
+                        <button
+                            type="button"
+                            className="flower-icon flower-menu"
+                            aria-label="เปิดเมนู"
+                            aria-expanded={mobileMenu}
+                            onClick={() => setMobileMenu(!mobileMenu)}
+                        >
+                            {mobileMenu ? <X /> : <Menu />}
+                        </button>
+                    </div>
+                </div>
+
+                {/* Storefront-matched Navigation Bar (.flower-nav) */}
+                <nav
+                    className={`flower-nav ${mobileMenu ? 'is-open' : ''}`}
+                    aria-label="เมนูจัดการร้านค้า"
+                >
+                    <Link
+                        href="/admin/products"
+                        onClick={() => setEditingProduct(null)}
+                        className={activeNav === 'products' ? 'active' : ''}
+                        aria-current={
+                            activeNav === 'products' ? 'page' : undefined
+                        }
                     >
-                        <div className="grid grid-cols-1 gap-8 p-6 lg:grid-cols-[515px_1fr] lg:p-12">
-                            {/* LEFT: Product Image Box (515 x 621 in wireframe) */}
-                            <div className="flex flex-col items-center">
-                                <div className="relative aspect-5/6 w-full max-w-[515px] overflow-hidden rounded-3xl border border-[var(--border)] bg-[var(--rose-soft)] shadow-xs group">
-                                    <img
-                                        src={editPhotoPreview || editingProduct.image}
-                                        alt={editName}
-                                        className="size-full object-cover"
-                                        style={{
-                                            objectPosition: editingProduct.position || 'center',
-                                        }}
-                                    />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-90 sm:opacity-0 transition-opacity group-hover:opacity-100 flex items-end justify-center p-6">
-                                        <label
-                                            htmlFor="edit-product-photo"
-                                            className="inline-flex cursor-pointer items-center gap-2 rounded-full bg-white/95 px-5 py-2.5 text-xs font-bold text-[var(--ink)] shadow-md backdrop-blur-xs transition-transform hover:scale-105"
-                                        >
-                                            <Upload size={14} /> Replace Photo
-                                        </label>
-                                        <input
-                                            id="edit-product-photo"
-                                            type="file"
-                                            accept="image/*"
-                                            className="hidden"
-                                            onChange={(e) => {
-                                                const file = e.target.files?.[0];
-                                                if (file) {
-                                                    setEditPhotoFile(file);
-                                                    setEditPhotoPreview(URL.createObjectURL(file));
-                                                }
-                                            }}
-                                        />
-                                    </div>
-                                </div>
-                                <span className="mt-3 text-xs tracking-wider text-[var(--muted)] uppercase">
-                                    {editPhotoFile ? `Selected: ${editPhotoFile.name}` : 'Product Photo (515 × 621 px)'}
-                                </span>
-                            </div>
+                        จัดการช่อดอกไม้ ({totalProductsCount})
+                    </Link>
+                    <Link
+                        href="/admin/orders"
+                        className={activeNav === 'orders' ? 'active' : ''}
+                        aria-current={
+                            activeNav === 'orders' ? 'page' : undefined
+                        }
+                    >
+                        รายการคำสั่งซื้อ ({totalOrdersCount})
+                    </Link>
+                    <Link
+                        href="/admin/users"
+                        className={activeNav === 'users' ? 'active' : ''}
+                        aria-current={
+                            activeNav === 'users' ? 'page' : undefined
+                        }
+                    >
+                        จัดการสมาชิก ({totalUsersCount})
+                    </Link>
+                    {/* <Link href="/">ดูหน้าร้านค้า</Link> */}
+                </nav>
+            </header>
 
-                            {/* RIGHT: Product Details & Controls (Matching Wireframe Coordinates) */}
-                            <div className="flex flex-col justify-between space-y-6">
-                                <div className="space-y-6">
-                                    {/* 1. PRICE (Large Red text in wireframe: ฿ 999) */}
-                                    <div>
-                                        <span className="text-xs uppercase tracking-wider text-[var(--muted)]">
-                                            Product Price
-                                        </span>
-                                        <div className="mt-1 flex items-center gap-2">
-                                            <span className="font-serif text-4xl font-extrabold text-[#FF4747] md:text-5xl">
-                                                ฿
-                                            </span>
-                                            <input
-                                                type="number"
-                                                value={editPrice}
-                                                onChange={(e) => setEditPrice(Number(e.target.value))}
-                                                className="w-48 font-serif text-4xl font-extrabold text-[#FF4747] border-b-2 border-[#FF4747]/40 bg-transparent focus:border-[#FF4747] focus:outline-none md:text-5xl"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    {/* 2. PRODUCT NAME (Large Bold: 40px in wireframe) */}
-                                    <div>
-                                        <label className="block text-xs uppercase tracking-wider text-[var(--muted)]">
-                                            Product Name
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={editName}
-                                            onChange={(e) => setEditName(e.target.value)}
-                                            className="mt-1 w-full font-serif text-2xl font-bold text-[var(--ink)] border-b-2 border-[var(--border)] bg-transparent pb-1 transition-colors focus:border-[var(--accent)] focus:outline-none md:text-3xl"
-                                        />
-                                    </div>
-
-                                    {/* 3. DESCRIPTIONS (Multi-line text: 36px in wireframe) */}
-                                    <div>
-                                        <label className="block text-xs uppercase tracking-wider text-[var(--muted)]">
-                                            Descriptions
-                                        </label>
-                                        <textarea
-                                            rows={3}
-                                            value={editDesc}
-                                            onChange={(e) => setEditDesc(e.target.value)}
-                                            className="mt-1.5 w-full rounded-2xl border border-[var(--border)] bg-[var(--cream)]/60 p-4 text-base font-medium text-[var(--ink)] transition-all focus:border-[var(--accent)] focus:bg-white focus:outline-none"
-                                        />
-                                    </div>
-
-                                    {/* 4. COLOR (Free text input with live preview dot and available color pills) */}
-                                    <div>
-                                        <label className="block text-sm font-semibold uppercase tracking-wider text-[var(--ink)]">
-                                            Color
-                                        </label>
-                                        <div className="mt-2 flex items-center gap-3">
-                                            <div className="relative flex-1 max-w-sm">
-                                                <input
-                                                    type="text"
-                                                    value={editColor}
-                                                    onChange={(e) => setEditColor(e.target.value)}
-                                                    placeholder="e.g. pink, red, lavender, #e11d48..."
-                                                    className="h-11 w-full rounded-xl border border-[var(--border)] bg-white pl-10 pr-3.5 text-sm font-medium text-[var(--ink)] focus:border-[var(--accent)] focus:outline-none"
-                                                />
-                                                <div className="absolute left-3 top-1/2 -translate-y-1/2">
-                                                    {getValidCssColor(editColor) ? (
-                                                        <span
-                                                            className="block size-5 rounded-full border border-black/10 shadow-2xs"
-                                                            style={{ backgroundColor: getValidCssColor(editColor)! }}
-                                                        />
-                                                    ) : (
-                                                        <span className="block size-5 rounded-full border border-dashed border-[var(--border)] bg-[var(--rose-soft)]" />
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-                                        {availableColors.length > 0 && (
-                                            <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
-                                                <span className="text-xs text-[var(--muted)] mr-1">Quick pick:</span>
-                                                {availableColors.map((c) => {
-                                                    const swatch = getValidCssColor(c);
-                                                    const isActive = editColor.toLowerCase() === c.toLowerCase();
-                                                    return (
-                                                        <button
-                                                            key={c}
-                                                            type="button"
-                                                            onClick={() => setEditColor(c)}
-                                                            className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition-all ${
-                                                                isActive
-                                                                    ? 'border-[var(--accent)] bg-[var(--accent)] text-white'
-                                                                    : 'border-[var(--border)] bg-white text-[var(--ink)] hover:bg-[var(--rose-soft)]'
-                                                            }`}
-                                                        >
-                                                            {swatch ? (
-                                                                <span
-                                                                    className="size-2.5 rounded-full border border-black/10 shrink-0"
-                                                                    style={{ backgroundColor: swatch }}
-                                                                />
-                                                            ) : null}
-                                                            <span className="capitalize">{c}</span>
-                                                        </button>
-                                                    );
-                                                })}
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    {/* 6. STOCK (Quantity Stepper from wireframe: -, 1, +) */}
-                                    <div>
-                                        <label className="block text-sm font-semibold uppercase tracking-wider text-[var(--ink)]">
-                                            Stock Quantity
-                                        </label>
-                                        <div className="mt-2.5 flex items-center gap-2">
-                                            <button
-                                                type="button"
-                                                onClick={() => setEditStock((prev) => Math.max(0, prev - 1))}
-                                                className="grid size-11 place-items-center rounded-xl border border-[var(--border)] bg-white text-lg font-bold text-[var(--ink)] shadow-2xs hover:bg-[var(--rose-soft)] active:scale-95"
-                                            >
-                                                <Minus size={16} />
-                                            </button>
-
-                                            <div className="grid h-11 min-w-[70px] place-items-center rounded-xl border border-[var(--border)] bg-[var(--cream)] px-4 font-serif text-lg font-bold text-[var(--ink)] shadow-2xs">
-                                                {editStock}
-                                            </div>
-
-                                            <button
-                                                type="button"
-                                                onClick={() => setEditStock((prev) => prev + 1)}
-                                                className="grid size-11 place-items-center rounded-xl border border-[var(--border)] bg-white text-lg font-bold text-[var(--ink)] shadow-2xs hover:bg-[var(--rose-soft)] active:scale-95"
-                                            >
-                                                <Plus size={16} />
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* 7. SAVE BUTTON (Big pill at top 844: width 249 in wireframe) */}
-                                <div className="pt-6 border-t border-[var(--border)]/60">
-                                    <button
-                                        type="submit"
-                                        className="inline-flex w-full items-center justify-center gap-3 rounded-2xl bg-[var(--accent)] px-8 py-3.5 text-base font-bold text-white shadow-md transition-all duration-200 hover:bg-[var(--accent-hover)] hover:shadow-lg active:scale-98 sm:w-64"
-                                    >
-                                        <Save size={18} />
-                                        <span className="uppercase tracking-wider">Save Changes</span>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </form>
-
-                    {/* ========================================================= */}
-                    {/* BOTTOM SECTION: RELATED / OTHER CATALOG ITEMS (From wireframe top 1039) */}
-                    {/* ========================================================= */}
-                    <div className="mt-16">
-                        <div className="mb-6 flex items-center justify-between border-b border-[var(--border)] pb-3">
-                            <h2 className="font-serif text-2xl font-bold text-[var(--ink)]">
-                                Other Catalog Items
-                            </h2>
-                            <span className="text-xs text-[var(--muted)]">
-                                Click any bouquet to quickly switch and edit
+            {/* ========================================================= */}
+            {/* VIEW 1: EDIT PRODUCT PAGE (Matched with product-detail.tsx) */}
+            {/* ========================================================= */}
+            {editingProduct && activeNav === 'products' ? (
+                <main className="flower-container py-6 md:py-9">
+                    {/* Breadcrumb matching product-detail.tsx */}
+                    <nav
+                        aria-label="เส้นทางหน้า"
+                        className="mb-7 flex flex-wrap items-center justify-between gap-3 text-xs text-[var(--muted)]"
+                    >
+                        <div className="flex flex-wrap items-center gap-2">
+                            <Link href="/">หน้าแรก</Link>
+                            <span>/</span>
+                            <button
+                                type="button"
+                                onClick={() => setEditingProduct(null)}
+                                className="hover:underline"
+                            >
+                                จัดการช่อดอกไม้
+                            </button>
+                            <span>/</span>
+                            <span
+                                aria-current="page"
+                                className="text-[var(--ink)]"
+                            >
+                                แก้ไข {editingProduct.name}
                             </span>
                         </div>
 
-                        {/* 3 CARDS AT BOTTOM (Matching wireframe width: 293, height: 352 at left 344, 677, 1010) */}
-                        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                            {otherProducts.map((item) => (
-                                <div
-                                    key={item.id}
-                                    onClick={() => handleStartEdit(item)}
-                                    className="group cursor-pointer rounded-3xl border border-[var(--border)] bg-white p-5 shadow-xs transition-all duration-300 hover:border-[var(--accent)] hover:shadow-md"
+                        {showSaveToast && (
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--rose-soft)] px-3.5 py-1 text-xs text-[var(--accent)]">
+                                <Check size={14} /> บันทึกการแก้ไขเรียบร้อยแล้ว
+                            </span>
+                        )}
+                    </nav>
+
+                    {/* 2-Column Layout matching product-detail.tsx */}
+                    <form
+                        onSubmit={handleSaveEdit}
+                        className="grid min-w-0 gap-8 lg:grid-cols-2 lg:gap-16"
+                    >
+                        {/* LEFT: Product Image (aspect-[4/5] rounded-xl bg-[var(--rose-soft)]) */}
+                        <section aria-label="ภาพสินค้า" className="min-w-0">
+                            <div className="group relative aspect-[4/5] w-full overflow-hidden rounded-xl bg-[var(--rose-soft)]">
+                                <img
+                                    src={
+                                        editPhotoPreview || editingProduct.image
+                                    }
+                                    alt={editName}
+                                    style={{
+                                        objectPosition:
+                                            editingProduct.position || 'center',
+                                    }}
+                                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                />
+                                <span className="absolute top-4 left-4 rounded-full bg-[var(--cream)] px-3 py-1 text-xs text-[var(--ink)]">
+                                    {editingProduct.is_deleted
+                                        ? 'ปิดการขายชั่วคราว'
+                                        : 'ช่อดอกไม้ปลอม'}
+                                </span>
+                                <label
+                                    htmlFor="edit-product-photo"
+                                    className="absolute right-4 bottom-4 flex cursor-pointer items-center gap-2 rounded-full bg-[var(--cream)] px-4 py-2 text-xs text-[var(--ink)] shadow-xs transition-colors hover:bg-[var(--rose)]"
                                 >
-                                    <div className="relative aspect-4/3 w-full overflow-hidden rounded-2xl bg-[var(--rose-soft)]">
-                                        <img
-                                            src={item.image}
-                                            alt={item.name}
-                                            className="size-full object-cover transition-transform duration-500 group-hover:scale-105"
-                                            style={{
-                                                objectPosition: item.position || 'center',
-                                            }}
+                                    <Upload size={15} /> เปลี่ยนรูปภาพสินค้า
+                                    <input
+                                        id="edit-product-photo"
+                                        type="file"
+                                        accept="image/*"
+                                        className="hidden"
+                                        onChange={(e) => {
+                                            const file = e.target.files?.[0];
+                                            if (file) {
+                                                setEditPhotoFile(file);
+                                                setEditPhotoPreview(
+                                                    URL.createObjectURL(file),
+                                                );
+                                            }
+                                        }}
+                                    />
+                                </label>
+                            </div>
+                            <p className="mt-3 text-xs text-[var(--muted)]">
+                                {editPhotoFile
+                                    ? `ไฟล์ที่เลือกใหม่: ${editPhotoFile.name}`
+                                    : 'คลิกปุ่ม "เปลี่ยนรูปภาพสินค้า" บนมุมขวาล่างของภาพเพื่ออัปโหลดภาพใหม่'}
+                            </p>
+                        </section>
+
+                        {/* RIGHT: Product Details Form matching product-detail.tsx */}
+                        <section
+                            aria-labelledby="edit-product-heading"
+                            className="min-w-0 py-2"
+                        >
+                            <p className="flower-eyebrow">
+                                A LITTLE BOUQUET. A LOT OF LOVE.
+                            </p>
+                            <p className="mt-5 text-xs text-[var(--muted)]">
+                                รหัสสินค้า FL
+                                {String(editingProduct.id).padStart(3, '0')}
+                            </p>
+
+                            {/* Product Name Input */}
+                            <div className="mt-3">
+                                <label
+                                    htmlFor="edit-name"
+                                    className="block text-xs text-[var(--muted)]"
+                                >
+                                    ชื่อช่อดอกไม้
+                                </label>
+                                <input
+                                    id="edit-name"
+                                    type="text"
+                                    required
+                                    value={editName}
+                                    onChange={(e) =>
+                                        setEditName(e.target.value)
+                                    }
+                                    className="mt-1 w-full border-b border-[var(--border)] bg-transparent pb-2 text-3xl font-bold text-[var(--ink)] focus:border-[var(--accent)] focus:outline-none md:text-4xl"
+                                />
+                            </div>
+
+                            {/* Rating Display */}
+                            <div className="mt-4 inline-flex items-center gap-2 text-sm text-[var(--accent)]">
+                                <Star
+                                    size={17}
+                                    fill={
+                                        editingProduct.ratingCount
+                                            ? 'currentColor'
+                                            : 'none'
+                                    }
+                                />
+                                {editingProduct.ratingCount
+                                    ? `${editingProduct.rating.toFixed(1)} / 5 · ${editingProduct.ratingCount} คนให้คะแนน`
+                                    : `${editingProduct.rating.toFixed(1)} / 5 คะแนนเฉลี่ย`}
+                            </div>
+
+                            {/* Price Input (Using --accent instead of #FF4747) */}
+                            <div className="my-6">
+                                <label
+                                    htmlFor="edit-price"
+                                    className="block text-xs text-[var(--muted)]"
+                                >
+                                    ราคาจำหน่าย
+                                </label>
+                                <div className="mt-1 flex items-baseline gap-2">
+                                    <strong className="text-3xl text-[var(--accent)]">
+                                        ฿
+                                    </strong>
+                                    <input
+                                        id="edit-price"
+                                        type="number"
+                                        required
+                                        min={0}
+                                        step="0.01"
+                                        value={editPrice}
+                                        onChange={(e) =>
+                                            setEditPrice(Number(e.target.value))
+                                        }
+                                        className="w-44 border-b border-[var(--border)] bg-transparent pb-1 text-3xl font-bold text-[var(--accent)] focus:border-[var(--accent)] focus:outline-none"
+                                    />
+                                    <span className="text-sm text-[var(--muted)]">
+                                        ต่อช่อ · ส่งฟรีทั่วประเทศ
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Description Input */}
+                            <div className="border-t border-[var(--border)] pt-6">
+                                <label
+                                    htmlFor="edit-description"
+                                    className="block text-xs text-[var(--muted)]"
+                                >
+                                    คำอธิบายช่อดอกไม้
+                                </label>
+                                <textarea
+                                    id="edit-description"
+                                    rows={3}
+                                    value={editDesc}
+                                    onChange={(e) =>
+                                        setEditDesc(e.target.value)
+                                    }
+                                    className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--rose-soft)]/50 p-3.5 text-sm leading-7 text-[var(--ink)] focus:border-[var(--accent)] focus:bg-[var(--cream)] focus:outline-none"
+                                />
+                            </div>
+
+                            {/* Specs Grid (Multi-Color Selector & Create New Color) */}
+                            <div className="my-6 space-y-4 border-t border-[var(--border)] pt-6 text-sm">
+                                <div>
+                                    <label className="mb-2 block text-xs font-medium text-[var(--muted)]">
+                                        โทนสีดอกไม้ (เลือกได้หลายสี หรือสร้างสีใหม่เข้าระบบ) *
+                                    </label>
+                                    <ColorMultiSelect
+                                        selectedColors={editColors}
+                                        onChange={(next) => {
+                                            setEditColors(next);
+                                            if (
+                                                next.length > 0 &&
+                                                editColorError
+                                            ) {
+                                                setEditColorError(null);
+                                            }
+                                        }}
+                                        catalogColors={catalogColors}
+                                        onColorCreated={handleColorCreated}
+                                    />
+                                    {editColorError && (
+                                        <p className="mt-2 text-xs text-[#9a3b50]">
+                                            {editColorError}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Stock Stepper (Matched with quantity stepper in product-detail.tsx) */}
+                            <div className="border-t border-[var(--border)] pt-6">
+                                <div className="flex flex-wrap items-center justify-between gap-3">
+                                    <label
+                                        htmlFor="edit-stock"
+                                        className="text-sm"
+                                    >
+                                        จำนวนสินค้าคงเหลือในสต็อก (ช่อ)
+                                    </label>
+                                    <div className="flex items-center gap-1 rounded-lg border border-[var(--border)] p-1">
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="icon"
+                                            disabled={editStock <= 0}
+                                            onClick={() =>
+                                                setEditStock((prev) =>
+                                                    Math.max(0, prev - 1),
+                                                )
+                                            }
+                                            aria-label="ลดจำนวนสต็อก"
+                                        >
+                                            <Minus size={16} />
+                                        </Button>
+                                        <Input
+                                            id="edit-stock"
+                                            type="number"
+                                            inputMode="numeric"
+                                            min={0}
+                                            max={1000000}
+                                            step={1}
+                                            value={editStock}
+                                            onChange={(e) =>
+                                                setEditStock(
+                                                    Math.max(
+                                                        0,
+                                                        Number(
+                                                            e.target.value,
+                                                        ) || 0,
+                                                    ),
+                                                )
+                                            }
+                                            className="h-10 w-20 border-0 bg-transparent text-center text-[var(--ink)] shadow-none dark:bg-transparent"
                                         />
-                                        <div className="absolute top-2.5 right-2.5 grid size-8 place-items-center rounded-full bg-white/90 text-[var(--accent)] shadow-2xs backdrop-blur-xs">
-                                            <Edit3 size={14} />
-                                        </div>
-                                    </div>
-
-                                    <div className="mt-4 flex items-start justify-between">
-                                        <div>
-                                            <h3 className="font-serif text-lg font-bold text-[var(--ink)] group-hover:text-[var(--accent)] transition-colors">
-                                                {item.name}
-                                            </h3>
-                                            <div className="mt-1 font-serif text-2xl font-bold text-[var(--ink)]">
-                                                ฿{item.price.toLocaleString()}
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-center gap-1 rounded-full bg-[var(--rose-soft)] px-2.5 py-1 text-xs font-bold text-[var(--ink)]">
-                                            <Star size={13} className="fill-amber-400 text-amber-400" />
-                                            <span>{item.rating.toFixed(1)}</span>
-                                        </div>
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() =>
+                                                setEditStock((prev) => prev + 1)
+                                            }
+                                            aria-label="เพิ่มจำนวนสต็อก"
+                                        >
+                                            <Plus size={16} />
+                                        </Button>
                                     </div>
                                 </div>
+
+                                {/* Save & Action Buttons */}
+                                <div className="mt-6 flex flex-wrap items-center gap-3">
+                                    <button
+                                        type="submit"
+                                        className="flower-cta flex-1"
+                                    >
+                                        <Save size={18} /> บันทึกการแก้ไขสินค้า
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            handleToggleSell(editingProduct.id)
+                                        }
+                                        className="inline-flex min-h-12 items-center gap-2 rounded-full border border-[var(--border)] px-5 text-xs text-[var(--ink)] hover:bg-[var(--rose-soft)]"
+                                    >
+                                        <Ban size={15} />
+                                        {editingProduct.is_deleted
+                                            ? 'เปิดการขาย'
+                                            : 'ปิดการขายชั่วคราว'}
+                                    </button>
+                                </div>
+                            </div>
+
+                            <button
+                                type="button"
+                                onClick={() => setEditingProduct(null)}
+                                className="flower-text-link mt-6"
+                            >
+                                <ArrowLeft size={16} /> กลับไปหน้าจัดการช่อดอกไม้
+                            </button>
+                        </section>
+                    </form>
+
+                    {/* Bottom Section: Related / Other Catalog Items matching product-detail.tsx */}
+                    <section className="mt-12 border-t border-[var(--border)] pt-10 pb-12">
+                        <div className="mb-6 flex items-center justify-between gap-4">
+                            <h2 className="text-xl font-bold">
+                                ช่อดอกไม้อื่นในร้าน (คลิกเพื่อสลับแก้ไข)
+                            </h2>
+                            <button
+                                type="button"
+                                onClick={() => setEditingProduct(null)}
+                                className="flower-text-link"
+                            >
+                                ดูทั้งหมด <ArrowRight size={16} />
+                            </button>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-6">
+                            {otherProducts.map((item) => (
+                                <button
+                                    key={item.id}
+                                    type="button"
+                                    onClick={() => handleStartEdit(item)}
+                                    className="group min-w-0 text-left"
+                                >
+                                    <div className="relative aspect-[4/3] overflow-hidden rounded-lg bg-[var(--rose-soft)]">
+                                        <img
+                                            loading="lazy"
+                                            src={item.image}
+                                            alt={item.name}
+                                            style={{
+                                                objectPosition:
+                                                    item.position || 'center',
+                                            }}
+                                            className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                                        />
+                                        <span className="absolute top-3 right-3 grid size-8 place-items-center rounded-full bg-[var(--cream)]/90 text-[var(--accent)]">
+                                            <Edit3 size={14} />
+                                        </span>
+                                    </div>
+                                    <h3 className="mt-3 text-sm font-bold md:text-base">
+                                        {item.name}
+                                    </h3>
+                                    <p className="line-clamp-1 text-xs text-[var(--muted)]">
+                                        {item.description}
+                                    </p>
+                                    <p className="mt-2 font-bold text-[var(--accent)]">
+                                        ฿{item.price.toLocaleString('th-TH')}
+                                    </p>
+                                </button>
                             ))}
                         </div>
-                    </div>
+                    </section>
                 </main>
             ) : null}
 
             {/* ========================================================= */}
-            {/* VIEW: PRODUCTS CATALOGUE LIST (When not editing)          */}
+            {/* VIEW 2: PRODUCTS CATALOG MANAGEMENT (Matched with products.tsx) */}
             {/* ========================================================= */}
             {activeNav === 'products' && !editingProduct && (
-                <main className="flower-container py-8 md:py-12">
-                    <div className="mb-8 flex flex-col justify-between gap-4 border-b border-[var(--border)] pb-6 sm:flex-row sm:items-end">
-                        <div>
-                            <p className="flower-eyebrow text-xs tracking-wider text-[var(--muted)] uppercase">
-                                INVENTORY & CATALOG OVERVIEW
-                            </p>
-                            <h1 className="mt-1 font-serif text-3xl font-bold tracking-tight text-[var(--ink)] md:text-4xl">
-                                Products Management
-                            </h1>
-                            <p className="mt-1 text-sm text-[var(--muted)]">
-                                Curate flower arrangements, configure colors, prices, ratings, and edit existing listings.
-                            </p>
-                        </div>
-
-                        <button
-                            type="button"
-                            onClick={() => setIsAddModalOpen(true)}
-                            className="inline-flex items-center gap-2 rounded-xl bg-[var(--accent)] px-5 py-2.5 text-sm font-semibold text-white shadow-xs transition-all hover:bg-[var(--accent-hover)] hover:shadow-md active:scale-95"
-                        >
-                            <Plus size={18} />
-                            <span>Add New Product</span>
-                        </button>
-                    </div>
-
-                    <div className="grid grid-cols-1 gap-8 lg:grid-cols-[280px_1fr]">
-                        {/* LEFT SIDEBAR: FILTER PANEL */}
-                        <aside className="h-fit rounded-3xl border border-[var(--border)] bg-white p-6 shadow-xs">
-                            <div className="flex items-center justify-between border-b border-[var(--border)]/70 pb-4">
-                                <div className="flex items-center gap-2 font-serif text-xl font-bold text-[var(--ink)]">
-                                    <Filter size={18} className="text-[var(--accent)]" />
-                                    <span>Filter</span>
+                <main>
+                    {/* Intro Banner matching products.tsx (.catalog-intro) */}
+                    <section className="catalog-intro">
+                        <div className="flower-container">
+                            {/* <nav
+                                aria-label="เส้นทางหน้า"
+                                className="catalog-breadcrumb"
+                            >
+                                <Link href="/">หน้าแรก</Link>
+                                <ChevronRight size={12} />
+                                <span aria-current="page">
+                                    จัดการช่อดอกไม้ทั้งหมด
+                                </span>
+                            </nav> */}
+                            <div className="flex flex-wrap items-end justify-between gap-4">
+                                <div>
+                                    {/* <p className="flower-eyebrow">
+                                        INVENTORY & CATALOG OVERVIEW
+                                    </p> */}
+                                    <h1>จัดการคลังช่อดอกไม้</h1>
+                                    <p>
+                                        เพิ่มช่อดอกไม้ใหม่ ปรับปรุงราคา โทนสี
+                                        และจัดการจำนวนสต็อกคงเหลือในร้าน
+                                    </p>
                                 </div>
-                                {(selectedColors.length > 0 ||
-                                    selectedCostRanges.length > 0 ||
-                                    selectedRatings.length > 0) && (
-                                    <button
-                                        type="button"
-                                        onClick={resetProductFilters}
-                                        className="flex items-center gap-1 text-xs font-semibold text-[var(--accent)] hover:underline"
-                                    >
-                                        <RotateCcw size={12} /> Reset
-                                    </button>
-                                )}
-                            </div>
-
-                            {/* Color Section (Dynamically fetched from DB products.color) */}
-                            <div className="border-b border-[var(--border)]/60 py-5">
-                                <h3 className="mb-3.5 text-sm font-bold uppercase tracking-wider text-[var(--ink)]">
-                                    Color
-                                </h3>
-                                <div className="space-y-3">
-                                    {availableColors.length === 0 ? (
-                                        <p className="text-xs text-[var(--muted)]">No colors available</p>
-                                    ) : (
-                                        availableColors.map((col) => {
-                                            const validCssColor = getValidCssColor(col);
-                                            const isSelected = selectedColors.includes(col.toLowerCase());
-                                            return (
-                                                <label
-                                                    key={col}
-                                                    onClick={() => toggleColorFilter(col.toLowerCase())}
-                                                    className="flex cursor-pointer items-center justify-between text-sm text-[var(--ink)]"
-                                                >
-                                                    <div className="flex items-center gap-3">
-                                                        {validCssColor ? (
-                                                            <span
-                                                                className="size-5 rounded-full border border-black/10 shadow-2xs shrink-0"
-                                                                style={{ backgroundColor: validCssColor }}
-                                                            />
-                                                        ) : null}
-                                                        <span className="font-medium capitalize">{col}</span>
-                                                    </div>
-                                                    <div
-                                                        className={`grid size-5 shrink-0 place-items-center rounded-full border transition-colors ${
-                                                            isSelected
-                                                                ? 'border-[var(--accent)] bg-[var(--accent)] text-white'
-                                                                : 'border-[var(--border)] bg-[var(--rose-soft)]/50'
-                                                        }`}
-                                                    >
-                                                        {isSelected && <Check size={12} strokeWidth={3} />}
-                                                    </div>
-                                                </label>
-                                            );
-                                        })
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Cost Section */}
-                            <div className="border-b border-[var(--border)]/60 py-5">
-                                <h3 className="mb-3.5 text-sm font-bold uppercase tracking-wider text-[var(--ink)]">
-                                    Cost
-                                </h3>
-                                <div className="space-y-3">
-                                    {['0-100', '100-200', '200-300', '500-1000'].map((range) => (
-                                        <label
-                                            key={range}
-                                            onClick={() => toggleCostRange(range)}
-                                            className="flex cursor-pointer items-center justify-between text-sm text-[var(--ink)]"
-                                        >
-                                            <span className="font-medium">฿{range}</span>
-                                            <div
-                                                className={`grid size-5 place-items-center rounded-full border transition-colors ${
-                                                    selectedCostRanges.includes(range)
-                                                        ? 'border-[var(--accent)] bg-[var(--accent)] text-white'
-                                                        : 'border-[var(--border)] bg-[var(--rose-soft)]/50'
-                                                }`}
-                                            >
-                                                {selectedCostRanges.includes(range) && <Check size={12} strokeWidth={3} />}
-                                            </div>
-                                        </label>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Rating Section */}
-                            <div className="pt-5">
-                                <h3 className="mb-3.5 text-sm font-bold uppercase tracking-wider text-[var(--ink)]">
-                                    Rating
-                                </h3>
-                                <div className="space-y-2.5">
-                                    {[5, 4, 3, 2, 1].map((stars) => (
-                                        <label
-                                            key={stars}
-                                            onClick={() => toggleRatingFilter(stars)}
-                                            className="flex cursor-pointer items-center justify-between text-sm text-[var(--ink)]"
-                                        >
-                                            <div className="flex items-center gap-1.5">
-                                                <div className="flex text-amber-400">
-                                                    {Array.from({ length: stars }).map((_, i) => (
-                                                        <Star
-                                                            key={i}
-                                                            size={14}
-                                                            className="fill-amber-400 text-amber-400"
-                                                        />
-                                                    ))}
-                                                </div>
-                                                <span className="text-xs text-[var(--muted)]">({stars})</span>
-                                            </div>
-                                            <div
-                                                className={`grid size-5 place-items-center rounded-full border transition-colors ${
-                                                    selectedRatings.includes(stars)
-                                                        ? 'border-[var(--accent)] bg-[var(--accent)] text-white'
-                                                        : 'border-[var(--border)] bg-[var(--rose-soft)]/50'
-                                                }`}
-                                            >
-                                                {selectedRatings.includes(stars) && <Check size={12} strokeWidth={3} />}
-                                            </div>
-                                        </label>
-                                    ))}
-                                </div>
-                            </div>
-                        </aside>
-
-                        {/* PRODUCT CATALOG GRID */}
-                        <div>
-                            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
-                                {/* CARD 1: BIG '+' ADD PRODUCT CARD */}
                                 <button
                                     type="button"
                                     onClick={() => setIsAddModalOpen(true)}
-                                    className="group flex min-h-[380px] flex-col items-center justify-center rounded-3xl border-2 border-dashed border-[var(--border)] bg-white/70 p-8 text-center transition-all duration-300 hover:border-[var(--accent)] hover:bg-[var(--rose-soft)]/40 hover:shadow-md"
+                                    className="flower-cta relative z-10"
                                 >
-                                    <div className="grid size-24 place-items-center rounded-full bg-[var(--rose-soft)] text-[var(--accent)] transition-transform duration-300 group-hover:scale-110 group-hover:bg-[var(--accent)] group-hover:text-white">
-                                        <Plus size={52} strokeWidth={1.8} />
-                                    </div>
-                                    <h3 className="mt-6 font-serif text-xl font-bold text-[var(--ink)]">
-                                        Add New Bouquet
-                                    </h3>
-                                    <p className="mt-1 max-w-[200px] text-xs text-[var(--muted)]">
-                                        Expand your flower assortment with fresh bouquet listings
-                                    </p>
+                                    <Plus size={18} /> เพิ่มช่อดอกไม้ใหม่
                                 </button>
+                            </div>
+                            <Flower2
+                                className="catalog-intro-flower"
+                                size={125}
+                                strokeWidth={0.6}
+                            />
+                        </div>
+                    </section>
 
-                                {/* LIST OF PRODUCT CARDS */}
-                                {filteredProducts.map((product) => (
-                                    <div
-                                        key={product.id}
-                                        className="group relative flex flex-col justify-between overflow-hidden rounded-3xl border border-[var(--border)] bg-white p-5 shadow-xs transition-all duration-300 hover:shadow-md hover:border-[var(--accent)]/40"
+                    {/* 2-Column Catalog Layout (.catalog-layout) */}
+                    <div className="flower-container catalog-layout">
+                        {/* LEFT SIDEBAR: Filter matching products.tsx */}
+                        <aside
+                            className="catalog-sidebar"
+                            aria-label="ตัวกรองสินค้า"
+                        >
+                            <div className="catalog-filter-content min-w-0">
+                                <div className="flex min-w-0 items-center justify-between gap-3 border-b border-[var(--border)] pb-4">
+                                    <h2 className="text-base font-bold">
+                                        ตัวกรองสินค้า
+                                    </h2>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={resetProductFilters}
+                                        className="shrink-0 text-xs text-[var(--muted)] hover:bg-[var(--rose-soft)]"
                                     >
-                                        <div>
-                                            <div className="relative aspect-4/3 w-full overflow-hidden rounded-2xl bg-[var(--rose-soft)] shadow-2xs">
-                                                <img
-                                                    src={product.image}
-                                                    alt={product.name}
-                                                    className="size-full object-cover transition-transform duration-700 group-hover:scale-105"
+                                        ล้างทั้งหมด
+                                    </Button>
+                                </div>
+
+                                {/* Color Filter */}
+                                <fieldset className="min-w-0 border-b border-[var(--border)] py-5">
+                                    <legend className="sr-only">
+                                        สีดอกไม้
+                                    </legend>
+                                    <p
+                                        aria-hidden="true"
+                                        className="mb-3 text-sm font-bold"
+                                    >
+                                        สีดอกไม้
+                                    </p>
+                                    <div className="grid min-w-0 gap-1">
+                                        {colorFilterOptions.map((color) => (
+                                            <label
+                                                key={color.value}
+                                                className="flex min-h-11 min-w-0 cursor-pointer items-center gap-3 rounded-md px-1 text-sm hover:bg-[var(--rose-soft)]"
+                                            >
+                                                <span
+                                                    aria-hidden="true"
+                                                    className="size-[18px] shrink-0 rounded-full border border-[#ba9ea6]"
                                                     style={{
-                                                        objectPosition: product.position || 'center',
+                                                        backgroundColor:
+                                                            color.hex,
                                                     }}
                                                 />
-
-                                                {/* Top Right Actions (Edit & Delete) */}
-                                                <div className="absolute top-3 right-3 flex items-center gap-1.5 opacity-90 transition-opacity group-hover:opacity-100">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleStartEdit(product)}
-                                                        className="grid size-8 place-items-center rounded-full bg-white/95 text-[var(--accent)] shadow-xs backdrop-blur-xs transition-colors hover:bg-[var(--rose-soft)]"
-                                                        title="Edit Product"
-                                                    >
-                                                        <Edit3 size={14} />
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleToggleSell(product.id)}
-                                                        className={`grid size-8 place-items-center rounded-full shadow-xs backdrop-blur-xs transition-colors ${
-                                                            product.is_deleted
-                                                                ? 'bg-amber-100 text-amber-700 hover:bg-amber-200'
-                                                                : 'bg-white/95 text-slate-600 hover:bg-slate-100'
-                                                        }`}
-                                                        title={product.is_deleted ? 'เปิดการขาย (Open Sale)' : 'ปิดการขาย (Close Sale)'}
-                                                    >
-                                                        <Ban size={14} />
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleDeleteProduct(product.id)}
-                                                        className="grid size-8 place-items-center rounded-full bg-white/95 text-red-600 shadow-xs backdrop-blur-xs transition-colors hover:bg-red-50"
-                                                        title="Delete Bouquet"
-                                                    >
-                                                        <Trash2 size={14} />
-                                                    </button>
-                                                </div>
-
-                                                {product.is_deleted && (
-                                                    <div className="absolute top-3 left-3 rounded-full bg-red-600/90 px-2.5 py-0.5 text-[10px] font-bold text-white shadow-xs backdrop-blur-xs">
-                                                        ปิดการขาย
-                                                    </div>
-                                                )}
-
-                                                {product.color && (
-                                                    <div className="absolute bottom-3 left-3 flex items-center gap-1.5 rounded-full bg-white/95 px-2.5 py-0.5 text-[11px] font-semibold text-[var(--ink)] shadow-2xs backdrop-blur-xs">
-                                                        {getValidCssColor(product.color) ? (
-                                                            <span
-                                                                className="size-2 rounded-full border border-black/10 shrink-0"
-                                                                style={{
-                                                                    backgroundColor: getValidCssColor(product.color)!,
-                                                                }}
-                                                            />
-                                                        ) : null}
-                                                        <span className="capitalize">{product.color}</span>
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                            <div className="mt-4">
-                                                <h3 className="font-serif text-lg font-bold text-[var(--ink)] group-hover:text-[var(--accent)] transition-colors">
-                                                    {product.name}
-                                                </h3>
-                                                {product.thai && (
-                                                    <p className="text-xs text-[var(--muted)]">{product.thai}</p>
-                                                )}
-                                            </div>
-                                        </div>
-
-                                        <div className="mt-5 flex items-center justify-between border-t border-[var(--border)]/60 pt-3.5">
-                                            <div>
-                                                <span className="text-[10px] uppercase tracking-wider text-[var(--muted)]">
-                                                    Price
+                                                <span className="min-w-0 flex-1">
+                                                    {color.label}
                                                 </span>
-                                                <div className="font-serif text-2xl font-bold text-[var(--ink)]">
-                                                    ฿{product.price.toLocaleString()}
-                                                </div>
-                                            </div>
+                                                <Checkbox
+                                                    checked={selectedColors.includes(
+                                                        color.value.toLowerCase(),
+                                                    )}
+                                                    onCheckedChange={() =>
+                                                        toggleColorFilter(
+                                                            color.value.toLowerCase(),
+                                                        )
+                                                    }
+                                                    className="catalog-checkbox"
+                                                />
+                                            </label>
+                                        ))}
+                                    </div>
+                                </fieldset>
 
+                                {/* Price Range Filter (Same ranges as products.tsx) */}
+                                <fieldset className="min-w-0 border-b border-[var(--border)] py-5">
+                                    <legend className="sr-only">
+                                        ช่วงราคา
+                                    </legend>
+                                    <p
+                                        aria-hidden="true"
+                                        className="mb-3 text-sm font-bold"
+                                    >
+                                        ช่วงราคา
+                                    </p>
+                                    <div className="grid min-w-0 gap-1">
+                                        {prices.map((item) => (
+                                            <label
+                                                key={item.value}
+                                                className="flex min-h-11 min-w-0 cursor-pointer items-center gap-3 rounded-md px-1 text-sm hover:bg-[var(--rose-soft)]"
+                                            >
+                                                <span className="min-w-0 flex-1">
+                                                    {item.label}
+                                                </span>
+                                                <input
+                                                    className="catalog-radio size-4 shrink-0"
+                                                    type="radio"
+                                                    name="admin-price"
+                                                    value={item.value}
+                                                    checked={
+                                                        priceRange ===
+                                                        item.value
+                                                    }
+                                                    onChange={() =>
+                                                        setPriceRange(
+                                                            item.value,
+                                                        )
+                                                    }
+                                                />
+                                            </label>
+                                        ))}
+                                    </div>
+                                </fieldset>
+
+                                {/* Rating Filter */}
+                                <fieldset className="min-w-0 border-b border-[var(--border)] py-5">
+                                    <legend className="sr-only">
+                                        คะแนนสินค้า
+                                    </legend>
+                                    <p
+                                        aria-hidden="true"
+                                        className="mb-3 text-sm font-bold"
+                                    >
+                                        คะแนนสินค้า
+                                    </p>
+                                    <div className="grid min-w-0 gap-1">
+                                        {[
+                                            { value: '0', label: 'ทุกคะแนน' },
+                                            {
+                                                value: '1',
+                                                label: '1 ดาวขึ้นไป',
+                                            },
+                                            {
+                                                value: '2',
+                                                label: '2 ดาวขึ้นไป',
+                                            },
+                                            {
+                                                value: '3',
+                                                label: '3 ดาวขึ้นไป',
+                                            },
+                                            {
+                                                value: '4',
+                                                label: '4 ดาวขึ้นไป',
+                                            },
+                                            { value: '5', label: '5 ดาว' },
+                                        ].map((item) => (
+                                            <label
+                                                key={item.value}
+                                                className="flex min-h-11 min-w-0 cursor-pointer items-center gap-3 rounded-md px-1 text-sm hover:bg-[var(--rose-soft)]"
+                                            >
+                                                <span className="flex min-w-0 flex-1 items-center gap-1">
+                                                    {item.value !== '0' && (
+                                                        <Star
+                                                            className="shrink-0 text-[var(--accent)]"
+                                                            size={14}
+                                                        />
+                                                    )}
+                                                    {item.label}
+                                                </span>
+                                                <input
+                                                    className="catalog-radio size-4 shrink-0"
+                                                    type="radio"
+                                                    name="admin-rating"
+                                                    value={item.value}
+                                                    checked={
+                                                        minRating === item.value
+                                                    }
+                                                    onChange={() =>
+                                                        setMinRating(item.value)
+                                                    }
+                                                />
+                                            </label>
+                                        ))}
+                                    </div>
+                                </fieldset>
+                            </div>
+                        </aside>
+
+                        {/* RIGHT: Product Grid matching products.tsx */}
+                        <section
+                            className="catalog-results"
+                            aria-label="รายการสินค้าในคลัง"
+                        >
+                            <div className="catalog-toolbar">
+                                <div>
+                                    <h2>ช่อดอกไม้ทั้งหมด</h2>
+                                    <p role="status" aria-live="polite">
+                                        พบ {filteredProducts.length} รายการในคลัง
+                                    </p>
+                                </div>
+                                <label className="catalog-sort">
+                                    เรียงตาม
+                                    <select
+                                        value={sortBy}
+                                        onChange={(e) =>
+                                            setSortBy(e.target.value)
+                                        }
+                                    >
+                                        <option value="recommended">
+                                            รหัสสินค้า (เริ่มต้น)
+                                        </option>
+                                        <option value="price-asc">
+                                            ราคา: ต่ำไปสูง
+                                        </option>
+                                        <option value="price-desc">
+                                            ราคา: สูงไปต่ำ
+                                        </option>
+                                        <option value="rating">
+                                            คะแนนสูงสุด
+                                        </option>
+                                    </select>
+                                </label>
+                            </div>
+
+                            <div className="catalog-search-row">
+                                <label className="catalog-search">
+                                    <Search size={18} />
+                                    <input
+                                        aria-label="ค้นหาในรายการสินค้า"
+                                        placeholder="ค้นหาชื่อดอกไม้หรือคำอธิบายช่อดอกไม้"
+                                        value={searchQuery}
+                                        onChange={(e) =>
+                                            setSearchQuery(e.target.value)
+                                        }
+                                    />
+                                    {searchQuery && (
+                                        <button
+                                            type="button"
+                                            aria-label="ล้างคำค้นหา"
+                                            onClick={() => setSearchQuery('')}
+                                        >
+                                            <X size={16} />
+                                        </button>
+                                    )}
+                                </label>
+                            </div>
+
+                            {activeFilterCount > 0 && (
+                                <div className="catalog-chips">
+                                    {selectedColors.map((color) => (
+                                        <button
+                                            key={color}
+                                            type="button"
+                                            onClick={() =>
+                                                toggleColorFilter(color)
+                                            }
+                                        >
+                                            {color}
+                                            <X size={13} />
+                                        </button>
+                                    ))}
+                                    {priceRange !== 'all' && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setPriceRange('all')}
+                                        >
+                                            {activePriceObj.label}
+                                            <X size={13} />
+                                        </button>
+                                    )}
+                                    {minRating !== '0' && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setMinRating('0')}
+                                        >
+                                            {minRating}{' '}
+                                            {minRating === '5'
+                                                ? 'ดาว'
+                                                : 'ดาวขึ้นไป'}
+                                            <X size={13} />
+                                        </button>
+                                    )}
+                                </div>
+                            )}
+
+                            <p className="catalog-demo">
+                                คลิกที่รูปหรือชื่อช่อดอกไม้เพื่อแก้ไขรายละเอียดและสต็อก
+                            </p>
+
+                            <div className="catalog-grid">
+                                {/* Card 0: Add New Bouquet Card in Storefront Aspect Ratio */}
+                                <article className="flower-product">
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsAddModalOpen(true)}
+                                        className="flower-product-image flex w-full flex-col items-center justify-center gap-3 border border-dashed border-[var(--border)] bg-[var(--rose-soft)]/60 p-6 text-center transition-colors hover:border-[var(--accent)] hover:bg-[var(--rose-soft)]"
+                                    >
+                                        <span className="grid size-14 place-items-center rounded-full bg-[var(--cream)] text-[var(--accent)]">
+                                            <Plus size={28} strokeWidth={1.5} />
+                                        </span>
+                                        <span className="font-bold text-[var(--ink)]">
+                                            เพิ่มช่อดอกไม้ใหม่
+                                        </span>
+                                        <span className="text-xs text-[var(--muted)]">
+                                            คลิกเพื่อเพิ่มรายการสินค้าเข้าสู่ร้านค้า
+                                        </span>
+                                    </button>
+                                </article>
+
+                                {/* Product Cards matching products.tsx */}
+                                {filteredProducts.map((item) => (
+                                    <article
+                                        className="flower-product"
+                                        key={item.id}
+                                    >
+                                        <div className="flower-product-image">
                                             <button
                                                 type="button"
-                                                onClick={() => handleStartEdit(product)}
-                                                className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--border)] bg-[var(--cream)] px-3 py-1.5 text-xs font-bold text-[var(--ink)] hover:bg-white"
+                                                className="flower-product-open"
+                                                onClick={() =>
+                                                    handleStartEdit(item)
+                                                }
+                                                aria-label={`แก้ไข ${item.name}`}
                                             >
-                                                <Edit3 size={13} />
-                                                <span>Edit</span>
+                                                <img
+                                                    src={item.image}
+                                                    alt={item.name}
+                                                    style={{
+                                                        objectPosition:
+                                                            item.position,
+                                                    }}
+                                                    loading="lazy"
+                                                />
+                                                <span className="flower-product-overlay">
+                                                    แก้ไขช่อดอกไม้{' '}
+                                                    <Edit3 size={15} />
+                                                </span>
                                             </button>
+
+                                            {/* Top-right Admin Action Buttons (Styled like .flower-heart) */}
+                                            <div className="absolute top-3 right-3 flex items-center gap-1.5">
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        handleStartEdit(item)
+                                                    }
+                                                    className="grid size-9 place-items-center rounded-full bg-[#fff9f6ed] text-[var(--accent)] transition-colors hover:bg-[var(--rose)]"
+                                                    title="แก้ไขสินค้า"
+                                                >
+                                                    <Edit3 size={15} />
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        handleToggleSell(
+                                                            item.id,
+                                                        )
+                                                    }
+                                                    className={`grid size-9 place-items-center rounded-full transition-colors ${
+                                                        item.is_deleted
+                                                            ? 'bg-[var(--accent)] text-[var(--on-accent)]'
+                                                            : 'bg-[#fff9f6ed] text-[var(--muted)] hover:bg-[var(--rose)]'
+                                                    }`}
+                                                    title={
+                                                        item.is_deleted
+                                                            ? 'เปิดการขายอีกครั้ง'
+                                                            : 'ซ่อน/ปิดการขายชั่วคราว'
+                                                    }
+                                                >
+                                                    <Ban size={15} />
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        handleDeleteProduct(
+                                                            item.id,
+                                                        )
+                                                    }
+                                                    className="grid size-9 place-items-center rounded-full bg-[#fff9f6ed] text-[#9a3b50] transition-colors hover:bg-[var(--rose)]"
+                                                    title="ลบสินค้า"
+                                                >
+                                                    <Trash2 size={15} />
+                                                </button>
+                                            </div>
+
+                                            {/* Top-left Status Tag */}
+                                            {item.is_deleted ? (
+                                                <span className="flower-product-tag !bg-[#9a3b50] !text-white">
+                                                    ปิดการขาย
+                                                </span>
+                                            ) : null}
+
+                                            {/* Bottom-left Stock Pill matching .catalog-stock */}
+                                            <span className="catalog-stock">
+                                                {item.stock > 0
+                                                    ? `คงเหลือ ${item.stock} ช่อ`
+                                                    : 'สินค้าหมด'}
+                                            </span>
                                         </div>
-                                    </div>
+
+                                        <div className="catalog-product-meta">
+                                            <span className="catalog-rating">
+                                                {item.ratingCount > 0 ||
+                                                item.rating > 0 ? (
+                                                    <>
+                                                        <Star
+                                                            size={13}
+                                                            fill="currentColor"
+                                                        />{' '}
+                                                        {item.rating.toFixed(1)}
+                                                        {item.ratingCount >
+                                                            0 && (
+                                                            <small>
+                                                                (
+                                                                {
+                                                                    item.ratingCount
+                                                                }
+                                                                )
+                                                            </small>
+                                                        )}
+                                                    </>
+                                                ) : (
+                                                    'ยังไม่มีคะแนน'
+                                                )}
+                                            </span>
+
+                                            {item.colors.length > 0 && (
+                                                <div
+                                                    className="flex items-center gap-1.5"
+                                                    aria-label={`โทนสี: ${item.colors.join(', ')}`}
+                                                >
+                                                    {item.colors.map((c) => (
+                                                        <span
+                                                            key={c}
+                                                            title={c}
+                                                            className="size-3.5 shrink-0 rounded-full border border-[#ba9ea6]"
+                                                            style={{
+                                                                backgroundColor:
+                                                                    getSwatchColor(
+                                                                        c,
+                                                                        catalogHexLookup,
+                                                                    ) ??
+                                                                    '#dbc3ca',
+                                                            }}
+                                                        />
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <button
+                                            type="button"
+                                            className="catalog-product-name"
+                                            onClick={() =>
+                                                handleStartEdit(item)
+                                            }
+                                        >
+                                            <h3>{item.name}</h3>
+                                            <p className="line-clamp-2">
+                                                {item.description}
+                                            </p>
+                                        </button>
+
+                                        <div className="catalog-price flex items-center justify-between">
+                                            {/* <div>
+                                                ฿
+                                                {item.price.toLocaleString(
+                                                    'th-TH',
+                                                )}
+                                                <small>สต็อก {item.stock}</small>
+                                            </div> */}
+                                            {/* <button
+                                                type="button"
+                                                onClick={() =>
+                                                    handleStartEdit(item)
+                                                }
+                                                className="rounded-full border border-[var(--border)] px-3 py-1 text-xs font-normal text-[var(--ink)] hover:bg-[var(--rose-soft)]"
+                                            >
+                                                แก้ไข
+                                            </button> */}
+                                        </div>
+                                    </article>
                                 ))}
                             </div>
-                        </div>
+
+                            {filteredProducts.length === 0 && (
+                                <div className="flower-empty">
+                                    <Flower2 size={38} />
+                                    <h3>ไม่พบช่อดอกไม้ที่ค้นหา</h3>
+                                    <p>
+                                        ลองเปลี่ยนคำค้นหาหรือล้างตัวกรองเพื่อดูสินค้าทั้งหมดในคลัง
+                                    </p>
+                                    <button
+                                        type="button"
+                                        className="flower-cta"
+                                        onClick={resetProductFilters}
+                                    >
+                                        ดูสินค้าทั้งหมด <ArrowRight size={18} />
+                                    </button>
+                                </div>
+                            )}
+                        </section>
                     </div>
                 </main>
             )}
 
             {/* ========================================================= */}
-            {/* VIEW: USERS MANAGEMENT                                    */}
+            {/* VIEW 3: USERS MANAGEMENT                                  */}
             {/* ========================================================= */}
             {activeNav === 'users' && (
-                <main className="flower-container py-8 md:py-12">
-                    <div className="mb-8 flex flex-col justify-between gap-4 border-b border-[var(--border)] pb-6 md:flex-row md:items-end">
-                        <div>
-                            <p className="flower-eyebrow text-xs tracking-wider text-[var(--muted)] uppercase">
+                <main>
+                    <section className="catalog-intro">
+                        <div className="flower-container">
+                            {/* <nav
+                                aria-label="เส้นทางหน้า"
+                                className="catalog-breadcrumb"
+                            >
+                                <Link href="/">หน้าแรก</Link>
+                                <ChevronRight size={12} />
+                                <span aria-current="page">จัดการสมาชิก</span>
+                            </nav>
+                            <p className="flower-eyebrow">
                                 REGISTERED CUSTOMERS DIRECTORY
+                            </p> */}
+                            <h1>จัดการบัญชีสมาชิก</h1>
+                            <p>
+                                ตรวจสอบรายชื่อสมาชิก ประวัติจำนวนการสั่งซื้อ
+                                กำหนดสิทธิ์ผู้ดูแล และระงับการใช้งานบัญชี
                             </p>
-                            <h1 className="mt-1 font-serif text-3xl font-bold tracking-tight text-[var(--ink)] md:text-4xl">
-                                User Management
-                            </h1>
-                            <p className="mt-1 text-sm text-[var(--muted)]">
-                                View customer credentials, supervise membership statuses, and control access permissions.
-                            </p>
+                            <Flower2
+                                className="catalog-intro-flower"
+                                size={125}
+                                strokeWidth={0.6}
+                            />
                         </div>
+                    </section>
 
-                        <div className="flex items-center gap-2 rounded-2xl border border-[var(--border)] bg-white p-1.5 shadow-2xs">
-                            <button
-                                type="button"
-                                onClick={() => setUserStatusFilter('all')}
-                                className={`rounded-xl px-4 py-2 text-xs font-semibold tracking-wide transition-all ${
-                                    userStatusFilter === 'all'
-                                        ? 'bg-[var(--accent)] text-white shadow-2xs'
-                                        : 'text-[var(--muted)] hover:text-[var(--ink)]'
-                                }`}
-                            >
-                                All users ({users.length})
-                            </button>
-
-                            <button
-                                type="button"
-                                onClick={() => setUserStatusFilter('active')}
-                                className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-semibold tracking-wide transition-all ${
-                                    userStatusFilter === 'active'
-                                        ? 'bg-[var(--accent)] text-white shadow-2xs'
-                                        : 'text-[var(--muted)] hover:text-[var(--ink)]'
-                                }`}
-                            >
-                                <UserCheck size={14} />
-                                Active ({activeUsersCount})
-                            </button>
-
-                            <button
-                                type="button"
-                                onClick={() => setUserStatusFilter('blocked')}
-                                className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-semibold tracking-wide transition-all ${
-                                    userStatusFilter === 'blocked'
-                                        ? 'bg-[var(--accent)] text-white shadow-2xs'
-                                        : 'text-[var(--muted)] hover:text-[var(--ink)]'
-                                }`}
-                            >
-                                <Ban size={14} />
-                                Blocked ({blockedUsersCount})
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* DROPDOWN INSTRUCTION GUIDE & PAGE USE TIPS */}
-                    <div className="mb-6 overflow-hidden rounded-3xl border border-[var(--border)] bg-white shadow-2xs transition-all duration-300">
-                        <button
-                            type="button"
-                            onClick={() => setIsUserGuideOpen((prev) => !prev)}
-                            className="flex w-full items-center justify-between px-5 py-3.5 text-left transition-colors hover:bg-[var(--rose-soft)]/20"
-                            aria-expanded={isUserGuideOpen}
-                        >
-                            <div className="flex items-center gap-3">
-                                <div className="grid size-8 shrink-0 place-items-center rounded-xl bg-[var(--accent)]/15 text-[var(--accent)] border border-[var(--accent)]/20">
-                                    <Info size={16} strokeWidth={2.4} />
-                                </div>
-                                <div className="flex flex-wrap items-center gap-2.5">
-                                    <span className="font-serif text-sm font-bold text-[var(--ink)]">
-                                        How to assign admin
-                                    </span>
-                                    <span className="rounded-full bg-[var(--cream)] border border-[var(--border)] px-2.5 py-0.5 text-[11px] font-medium text-[var(--muted)]">
-                                        Click to view instructions & page guidelines
-                                    </span>
-                                </div>
+                    <div className="flower-container py-8 md:py-12">
+                        {/* Filter Tabs matching orders.tsx */}
+                        <div className="mb-6 flex flex-wrap items-center justify-between gap-4 border-b border-[var(--border)] pb-4">
+                            <div className="flex flex-wrap items-center gap-2">
+                                {[
+                                    {
+                                        id: 'all' as const,
+                                        label: `ทั้งหมด (${users.length})`,
+                                    },
+                                    {
+                                        id: 'active' as const,
+                                        label: `ปกติ (${activeUsersCount})`,
+                                    },
+                                    {
+                                        id: 'blocked' as const,
+                                        label: `ถูกระงับ (${blockedUsersCount})`,
+                                    },
+                                ].map((tab) => (
+                                    <button
+                                        key={tab.id}
+                                        type="button"
+                                        onClick={() =>
+                                            setUserStatusFilter(tab.id)
+                                        }
+                                        className={`rounded-full px-4 py-2 text-xs transition-colors ${
+                                            userStatusFilter === tab.id
+                                                ? 'bg-[var(--accent)] text-[var(--on-accent)]'
+                                                : 'text-[var(--muted)] hover:bg-[var(--rose-soft)] hover:text-[var(--ink)]'
+                                        }`}
+                                    >
+                                        {tab.label}
+                                    </button>
+                                ))}
                             </div>
 
-                            <div className="flex items-center gap-1.5 text-xs font-semibold text-[var(--muted)]">
-                                <span className="hidden sm:inline">
-                                    {isUserGuideOpen ? 'Hide Guide' : 'Show Guide'}
-                                </span>
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    setIsUserGuideOpen((prev) => !prev)
+                                }
+                                className="inline-flex items-center gap-2 text-xs text-[var(--accent)] hover:underline"
+                            >
+                                <Info size={15} />
+                                <span>คำแนะนำการจัดการสิทธิ์สมาชิก</span>
                                 <ChevronDown
-                                    size={16}
-                                    className={`transition-transform duration-300 ${
-                                        isUserGuideOpen ? 'rotate-180 text-[var(--accent)]' : ''
+                                    size={15}
+                                    className={`transition-transform ${
+                                        isUserGuideOpen ? 'rotate-180' : ''
                                     }`}
                                 />
-                            </div>
-                        </button>
+                            </button>
+                        </div>
 
-                        {/* Dropdown Body: Rendered when opened */}
+                        {/* Collapsible Guide in Storefront Palette */}
                         {isUserGuideOpen && (
-                            <div className="border-t border-[var(--border)]/70 bg-gradient-to-b from-[var(--cream)]/30 to-white p-5 sm:p-6 animate-in fade-in duration-200">
-                                {/* Section 1: How to Assign Admin Role */}
-                                <div>
-                                    <div className="flex items-center gap-2">
-                                        <ShieldCheck size={18} className="text-[var(--accent)]" />
-                                        <h3 className="font-serif text-base font-bold text-[var(--ink)]">
-                                            How to Assign or Revoke the Admin Role
-                                        </h3>
+                            <div className="mb-6 rounded-2xl border border-[var(--border)] bg-[var(--rose-soft)] p-5 text-sm">
+                                <h2 className="flex items-center gap-2 font-bold text-[var(--accent)]">
+                                    <ShieldCheck size={18} />
+                                    การกำหนดสิทธิ์ผู้ดูแลระบบ (Admin) และการระงับบัญชี
+                                </h2>
+                                <div className="mt-3 grid gap-4 sm:grid-cols-3">
+                                    <div className="rounded-xl border border-[var(--border)] bg-[var(--cream)] p-4">
+                                        <strong className="text-xs text-[var(--accent)]">
+                                            1. เปลี่ยนบทบาท (Role)
+                                        </strong>
+                                        <p className="mt-1 text-xs text-[var(--muted)]">
+                                            คลิกปุ่มบทบาท (Customer / Admin)
+                                            ของสมาชิกเพื่อเลื่อนขั้นหรือปรับลดสิทธิ์พร้อมยืนยันในหน้าต่างป๊อปอัป
+                                        </p>
                                     </div>
-                                    <p className="mt-1 text-xs text-[var(--muted)]">
-                                        Promoting a user grants them full privileges to add/edit bouquets, adjust inventory, supervise customer orders, and manage accounts.
-                                    </p>
-
-                                    <div className="mt-3.5 grid grid-cols-1 gap-3 sm:grid-cols-3">
-                                        <div className="flex items-start gap-3 rounded-2xl border border-[var(--border)]/70 bg-white p-3.5 shadow-2xs">
-                                            <span className="grid size-6 shrink-0 place-items-center rounded-full bg-[var(--accent)] text-xs font-bold text-white">
-                                                1
-                                            </span>
-                                            <div>
-                                                <p className="text-xs font-bold text-[var(--ink)]">Locate the Member</p>
-                                                <p className="mt-0.5 text-[11px] leading-relaxed text-[var(--muted)]">
-                                                    Find the user's card in the directory list below or use the search bar.
-                                                </p>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-start gap-3 rounded-2xl border border-[var(--border)]/70 bg-white p-3.5 shadow-2xs">
-                                            <span className="grid size-6 shrink-0 place-items-center rounded-full bg-[var(--accent)] text-xs font-bold text-white">
-                                                2
-                                            </span>
-                                            <div>
-                                                <p className="text-xs font-bold text-[var(--ink)]">Click Role Pill</p>
-                                                <p className="mt-0.5 text-[11px] leading-relaxed text-[var(--muted)]">
-                                                    In the <span className="font-semibold text-[var(--ink)]">[ Admin | Block ]</span> tab, click the <span className="font-semibold text-[var(--accent)]">Customer</span> or <span className="font-semibold text-[var(--accent)]">Admin</span> pill.
-                                                </p>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-start gap-3 rounded-2xl border border-[var(--border)]/70 bg-white p-3.5 shadow-2xs">
-                                            <span className="grid size-6 shrink-0 place-items-center rounded-full bg-[var(--accent)] text-xs font-bold text-white">
-                                                3
-                                            </span>
-                                            <div>
-                                                <p className="text-xs font-bold text-[var(--ink)]">Confirm in Modal</p>
-                                                <p className="mt-0.5 text-[11px] leading-relaxed text-[var(--muted)]">
-                                                    A confirmation dialog will pop up. Click <span className="font-semibold text-[var(--accent)]">"Yes, Assign Admin"</span> to save immediately.
-                                                </p>
-                                            </div>
-                                        </div>
+                                    <div className="rounded-xl border border-[var(--border)] bg-[var(--cream)] p-4">
+                                        <strong className="text-xs text-[var(--accent)]">
+                                            2. ระงับการใช้งาน (แบน)
+                                        </strong>
+                                        <p className="mt-1 text-xs text-[var(--muted)]">
+                                            คลิกปุ่ม "ระงับสิทธิ์" เพื่อป้องกันไม่ให้สมาชิกสั่งซื้อสินค้าหรือเพิ่มตะกร้า
+                                        </p>
                                     </div>
-                                </div>
-
-                                {/* Section 2: Crucial Instructions to Use This Page */}
-                                <div className="mt-5 border-t border-[var(--border)]/60 pt-4">
-                                    <h4 className="text-xs font-bold uppercase tracking-wider text-[var(--muted)]">
-                                        Crucial Page Instructions & Security Rules
-                                    </h4>
-
-                                    <div className="mt-3 grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
-                                        <div className="rounded-xl border border-[var(--border)]/60 bg-white p-3">
-                                            <div className="flex items-center gap-1.5 text-xs font-bold text-[var(--ink)]">
-                                                <CheckCircle2 size={14} className="text-emerald-600" />
-                                                <span>Active / Blocked Status</span>
-                                            </div>
-                                            <p className="mt-1 text-[11px] leading-relaxed text-[var(--muted)]">
-                                                Displayed prominently beside the profile. Blocked members are immediately denied sign-in and checkout.
-                                            </p>
-                                        </div>
-
-                                        <div className="rounded-xl border border-[var(--border)]/60 bg-white p-3">
-                                            <div className="flex items-center gap-1.5 text-xs font-bold text-[var(--ink)]">
-                                                <Ban size={14} className="text-[#FF5F2A]" />
-                                                <span>Block / Unblock Action</span>
-                                            </div>
-                                            <p className="mt-1 text-[11px] leading-relaxed text-[var(--muted)]">
-                                                Toggle member access anytime via the orange Block / Unblock button in the right controls tab.
-                                            </p>
-                                        </div>
-
-                                        <div className="rounded-xl border border-[var(--border)]/60 bg-white p-3">
-                                            <div className="flex items-center gap-1.5 text-xs font-bold text-[var(--ink)]">
-                                                <ShoppingBag size={14} className="text-[var(--accent)]" />
-                                                <span>Orders Made Counter</span>
-                                            </div>
-                                            <p className="mt-1 text-[11px] leading-relaxed text-[var(--muted)]">
-                                                The centered pill tracks total bouquets purchased (formatted as <span className="font-mono font-bold">001 | bouquets</span>).
-                                            </p>
-                                        </div>
-
-                                        <div className="rounded-xl border border-[var(--border)]/60 bg-white p-3">
-                                            <div className="flex items-center gap-1.5 text-xs font-bold text-[var(--ink)]">
-                                                <ShieldAlert size={14} className="text-amber-600" />
-                                                <span>Self-Action Lock</span>
-                                            </div>
-                                            <p className="mt-1 text-[11px] leading-relaxed text-[var(--muted)]">
-                                                For safety, administrators cannot demote their own role or block their own currently signed-in account.
-                                            </p>
-                                        </div>
+                                    <div className="rounded-xl border border-[var(--border)] bg-[var(--cream)] p-4">
+                                        <strong className="text-xs text-[var(--accent)]">
+                                            3. ความปลอดภัยของระบบ
+                                        </strong>
+                                        <p className="mt-1 text-xs text-[var(--muted)]">
+                                            ผู้ดูแลระบบไม่สามารถลดสิทธิ์หรือระงับบัญชีของตนเองที่กำลังเข้าสู่ระบบอยู่ได้
+                                        </p>
                                     </div>
                                 </div>
                             </div>
                         )}
-                    </div>
 
-                    <div className="space-y-4">
-                        {filteredUsers.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-[var(--border)] bg-white/70 py-16 text-center">
-                                <div className="grid size-16 place-items-center rounded-full bg-[var(--rose-soft)] text-[var(--muted)]">
-                                    <Users size={32} />
+                        {/* Users List */}
+                        <div className="space-y-4">
+                            {filteredUsers.length === 0 ? (
+                                <div className="flower-empty rounded-2xl border border-[var(--border)]">
+                                    <Users size={38} />
+                                    <h3>ไม่พบข้อมูลสมาชิก</h3>
+                                    <p className="text-xs text-[var(--muted)]">
+                                        ไม่มีสมาชิกที่ตรงกับคำค้นหาหรือตัวกรองที่เลือก
+                                    </p>
                                 </div>
-                                <h3 className="mt-4 text-lg font-bold text-[var(--ink)]">No users found</h3>
-                                <p className="mt-1 text-sm text-[var(--muted)]">
-                                    There are no customers matching your search or filter settings.
-                                </p>
-                            </div>
-                        ) : (
-                            filteredUsers.map((user) => (
-                                <div
-                                    key={user.id}
-                                    className="group grid grid-cols-1 items-center gap-3.5 rounded-3xl border border-[var(--border)] bg-white p-4.5 shadow-xs transition-all duration-200 hover:border-[var(--accent)]/40 hover:shadow-md lg:grid-cols-[1fr_auto_1fr] lg:gap-4 lg:px-6 lg:py-3.5"
-                                >
-                                    {/* 1. LEFT: PROFILE + FIXED COMPACT ACTIVE BADGE */}
-                                    <div className="flex min-w-0 items-center gap-3">
-                                        <div className="relative grid size-11 shrink-0 place-items-center rounded-2xl border border-[var(--border)]/60 bg-[var(--rose-soft)] text-[var(--accent)] shadow-2xs">
-                                            <UserRound size={18} strokeWidth={1.8} />
-                                            <span className="absolute -bottom-1 -right-1 grid size-4.5 place-items-center rounded-full border border-[var(--border)] bg-white text-[9px] font-bold text-[var(--ink)] shadow-2xs">
-                                                {(user.username || user.name || 'U').charAt(0).toUpperCase()}
+                            ) : (
+                                filteredUsers.map((user) => (
+                                    <article
+                                        key={user.id}
+                                        className="grid grid-cols-1 items-center gap-4 rounded-2xl border border-[var(--border)] bg-[var(--cream)] p-5 transition-colors hover:bg-[var(--rose-soft)]/35 lg:grid-cols-[1fr_auto_1fr]"
+                                    >
+                                        {/* Left: User Info */}
+                                        <div className="flex min-w-0 items-center gap-3.5">
+                                            <div className="grid size-11 shrink-0 place-items-center rounded-full bg-[var(--rose-soft)] font-bold text-[var(--accent)]">
+                                                {(
+                                                    user.username ||
+                                                    user.name ||
+                                                    'U'
+                                                )
+                                                    .charAt(0)
+                                                    .toUpperCase()}
+                                            </div>
+                                            <div className="min-w-0 flex-1">
+                                                <div className="flex flex-wrap items-center gap-2">
+                                                    <h3 className="truncate font-bold text-[var(--ink)]">
+                                                        {user.username ||
+                                                            user.name}
+                                                    </h3>
+                                                    {user.status ===
+                                                    'active' ? (
+                                                        <span className="inline-flex items-center gap-1 rounded-full bg-[var(--rose-soft)] px-2.5 py-0.5 text-xs text-[var(--accent)]">
+                                                            <Check size={12} />{' '}
+                                                            ปกติ
+                                                        </span>
+                                                    ) : (
+                                                        <span className="inline-flex items-center gap-1 rounded-full bg-[#9a3b50]/15 px-2.5 py-0.5 text-xs text-[#9a3b50]">
+                                                            <Ban size={12} />{' '}
+                                                            ถูกระงับ
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <p className="truncate text-xs text-[var(--muted)]">
+                                                    {user.email} · สมัครเมื่อ{' '}
+                                                    {user.joined}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        {/* Center: Orders Count */}
+                                        <div className="flex items-center lg:justify-center">
+                                            <span className="inline-flex items-center gap-2 rounded-full bg-[var(--rose-soft)] px-4 py-1.5 text-xs text-[var(--ink)]">
+                                                <ShoppingBag
+                                                    size={14}
+                                                    className="text-[var(--accent)]"
+                                                />
+                                                คำสั่งซื้อทั้งหมด{' '}
+                                                <strong className="text-[var(--accent)]">
+                                                    {user.ordersCount}
+                                                </strong>{' '}
+                                                รายการ
                                             </span>
                                         </div>
 
-                                        <div className="min-w-0 flex-1">
-                                            <div className="flex items-center gap-1.5">
-                                                <span className="text-[10px] tracking-wider text-[var(--muted)] uppercase">
-                                                    Username
-                                                </span>
-                                                <span
-                                                    className="block truncate font-serif text-sm font-bold text-[var(--ink)]"
-                                                    title={user.username || user.name}
-                                                >
-                                                    {user.username || user.name || 'Member'}
-                                                </span>
-                                            </div>
-
-                                            <div className="mt-0.5 flex items-center gap-1 text-xs text-[var(--muted)]">
-                                                <span className="text-[10px] tracking-wider uppercase">Email:</span>
-                                                <span
-                                                    className="block truncate font-medium text-[var(--ink)]"
-                                                    title={user.email}
-                                                >
-                                                    {user.email}
-                                                </span>
-                                            </div>
-                                        </div>
-
-                                        {/* Fixed & Compact Status Badge (Noticeable, not too small) */}
-                                        <div className="shrink-0">
-                                            {user.status === 'active' ? (
-                                                <span className="inline-flex h-6.5 w-20 items-center justify-center gap-1 rounded-full border border-emerald-300 bg-emerald-50 text-[11px] font-bold text-emerald-800 shadow-2xs">
-                                                    <CheckCircle2 size={13} className="shrink-0 text-emerald-600" strokeWidth={2.5} />
-                                                    <span>Active</span>
-                                                </span>
-                                            ) : (
-                                                <span className="inline-flex h-6.5 w-20 items-center justify-center gap-1 rounded-full border border-orange-300 bg-orange-50 text-[11px] font-bold text-[#FF5F2A] shadow-2xs">
-                                                    <Ban size={13} className="shrink-0 text-[#FF5F2A]" strokeWidth={2.5} />
-                                                    <span>Blocked</span>
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    {/* 2. MIDDLE: ORDERS MADE (Mathematically Fixed in Middle) */}
-                                    <div className="flex shrink-0 items-center justify-start lg:justify-center">
-                                        <div className="inline-flex h-7 items-center gap-1.5 rounded-xl border border-[var(--border)] bg-[var(--cream)]/80 px-2.5 shadow-2xs">
-                                            <span className="text-[10px] font-bold tracking-wider text-[var(--muted)] uppercase">
-                                                Orders
-                                            </span>
-                                            <div className="flex items-center gap-1 font-mono text-xs font-semibold text-[var(--ink)]">
-                                                <span className="tabular-nums font-bold text-[var(--accent)]">
-                                                    {String(user.ordersCount || 0).padStart(3, '0')}
-                                                </span>
-                                                <span className="text-[var(--border)] select-none">|</span>
-                                                <span className="font-sans text-[11px] font-medium text-[var(--muted)]">
-                                                    bouquets
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* 3. RIGHT: CONTROLS [ Admin | Block ] (Aligned to Right) */}
-                                    <div className="flex shrink-0 items-center justify-start lg:justify-end">
-                                        <div className="flex h-8 items-center rounded-2xl border border-[var(--border)] bg-[var(--cream)]/60 p-0.5 shadow-2xs transition-all group-hover:border-[var(--accent)]/30">
-                                            {/* Role Button (Admin / Customer) */}
+                                        {/* Right: Role & Ban Controls */}
+                                        <div className="flex flex-wrap items-center gap-2.5 lg:justify-end">
                                             <button
                                                 type="button"
-                                                onClick={() => handlePromptChangeRole(user)}
-                                                title="คลิกเพื่อเปลี่ยน Role ผู้ใช้ (เปิดหน้าต่างยืนยัน)"
-                                                className={`flex h-6.5 w-24 items-center justify-center gap-1.5 rounded-xl border text-[11px] font-semibold transition-all hover:shadow-xs active:scale-95 ${
+                                                onClick={() =>
+                                                    handlePromptChangeRole(user)
+                                                }
+                                                disabled={
+                                                    auth.user?.id === user.id
+                                                }
+                                                className={`inline-flex h-9 items-center gap-1.5 rounded-full border px-4 text-xs transition-colors disabled:opacity-50 ${
                                                     user.role === 'admin'
-                                                        ? 'border-[var(--accent)]/40 bg-[var(--accent)]/15 font-bold text-[var(--accent)]'
-                                                        : 'border-transparent bg-white text-[var(--ink)] hover:border-[var(--border)]'
+                                                        ? 'border-[var(--accent)] bg-[var(--accent)] text-[var(--on-accent)]'
+                                                        : 'border-[var(--border)] bg-[var(--cream)] text-[var(--ink)] hover:bg-[var(--rose-soft)]'
                                                 }`}
                                             >
                                                 {user.role === 'admin' ? (
-                                                    <ShieldCheck size={13} className="shrink-0 text-[var(--accent)]" />
+                                                    <ShieldCheck size={14} />
                                                 ) : (
-                                                    <UserRound size={13} className="shrink-0 text-[var(--muted)]" />
+                                                    <UserRound size={14} />
                                                 )}
-                                                <span className="truncate">{user.role === 'admin' ? 'Admin' : 'Customer'}</span>
+                                                <span>
+                                                    {user.role === 'admin'
+                                                        ? 'Admin'
+                                                        : 'Customer'}
+                                                </span>
                                             </button>
 
-                                            {/* Divider */}
-                                            <span className="mx-1 h-3.5 w-px bg-[var(--border)] select-none" />
-
-                                            {/* Block / Unblock Button */}
-                                            <div className="w-20">
-                                                {user.status === 'active' ? (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleToggleUserBlock(user.id)}
-                                                        className="inline-flex h-6.5 w-full items-center justify-center gap-1 rounded-xl bg-[#FF5F2A] text-[11px] font-bold text-white shadow-2xs transition-all hover:bg-[#e04f1e] hover:shadow-xs active:scale-95"
-                                                    >
-                                                        <Ban size={12} />
-                                                        <span>Block</span>
-                                                    </button>
-                                                ) : (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleToggleUserBlock(user.id)}
-                                                        className="inline-flex h-6.5 w-full items-center justify-center gap-1 rounded-xl border-2 border-[#FF5F2A] bg-white text-[11px] font-bold text-[#FF5F2A] shadow-2xs transition-all hover:bg-orange-50 active:scale-95"
-                                                    >
-                                                        <Unlock size={12} />
-                                                        <span>Unblock</span>
-                                                    </button>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))
-                        )}
-                    </div>
-                </main>
-            )}
-
-            {/* ========================================================= */}
-            {/* VIEW: ORDER HISTORY                                       */}
-            {/* ========================================================= */}
-            {activeNav === 'orders' && (
-                <main className="flower-container py-8 md:py-12">
-                    <div className="mb-8 flex flex-col justify-between gap-4 border-b border-[var(--border)] pb-6 md:flex-row md:items-end">
-                        <div>
-                            <p className="flower-eyebrow text-xs tracking-wider text-[var(--muted)] uppercase">
-                                STORE ORDERS OVERVIEW
-                            </p>
-                            <h1 className="mt-1 font-serif text-3xl font-bold tracking-tight text-[var(--ink)] md:text-4xl">
-                                Order Management
-                            </h1>
-                            <p className="mt-1 text-sm text-[var(--muted)]">
-                                Monitor incoming requests, verify deliveries, and manage fulfilled customer orders.
-                            </p>
-                        </div>
-
-                        <div className="flex items-center gap-2 rounded-2xl border border-[var(--border)] bg-white p-1.5 shadow-2xs">
-                            <button
-                                type="button"
-                                onClick={() => setOrderStatusFilter('all')}
-                                className={`rounded-xl px-4 py-2 text-xs font-semibold tracking-wide transition-all ${
-                                    orderStatusFilter === 'all'
-                                        ? 'bg-[var(--accent)] text-white shadow-2xs'
-                                        : 'text-[var(--muted)] hover:text-[var(--ink)]'
-                                }`}
-                            >
-                                All order ({orders.length})
-                            </button>
-
-                            <button
-                                type="button"
-                                onClick={() => setOrderStatusFilter('delivery')}
-                                className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-semibold tracking-wide transition-all ${
-                                    orderStatusFilter === 'delivery'
-                                        ? 'bg-[var(--accent)] text-white shadow-2xs'
-                                        : 'text-[var(--muted)] hover:text-[var(--ink)]'
-                                }`}
-                            >
-                                <Truck size={14} />
-                                On delivery ({deliveryOrdersCount})
-                            </button>
-
-                            <button
-                                type="button"
-                                onClick={() => setOrderStatusFilter('success')}
-                                className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-semibold tracking-wide transition-all ${
-                                    orderStatusFilter === 'success'
-                                        ? 'bg-[var(--accent)] text-white shadow-2xs'
-                                        : 'text-[var(--muted)] hover:text-[var(--ink)]'
-                                }`}
-                            >
-                                <CheckCircle2 size={14} />
-                                Success ({successOrdersCount})
-                            </button>
-                        </div>
-                    </div>
-
-                    <div className="space-y-8">
-                        {filteredOrders.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-[var(--border)] bg-white/70 py-16 text-center">
-                                <div className="grid size-16 place-items-center rounded-full bg-[var(--rose-soft)] text-[var(--muted)]">
-                                    <Package size={32} />
-                                </div>
-                                <h3 className="mt-4 text-lg font-bold text-[var(--ink)]">No orders found</h3>
-                                <p className="mt-1 text-sm text-[var(--muted)]">
-                                    There are no orders matching your current filter or search criteria.
-                                </p>
-                            </div>
-                        ) : (
-                            filteredOrders.map((order) => (
-                                <section
-                                    key={order.id}
-                                    className="overflow-hidden rounded-3xl border border-[var(--border)] bg-white shadow-sm transition-shadow duration-300 hover:shadow-md"
-                                >
-                                    <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[var(--border)]/70 bg-[var(--rose-soft)]/40 px-6 py-4.5 md:px-8">
-                                        <div className="flex flex-wrap items-center gap-3">
-                                            <div className="flex items-center gap-2 text-sm font-semibold text-[var(--ink)]">
-                                                <Clock size={16} className="text-[var(--accent)]" />
-                                                <span>{order.date}</span>
-                                            </div>
-                                            <span className="hidden text-xs text-[var(--border)] md:inline">|</span>
-                                            <span className="rounded-full bg-white/90 px-3 py-0.5 text-xs font-medium text-[var(--muted)] border border-[var(--border)]/60">
-                                                {order.id}
-                                            </span>
-                                        </div>
-
-                                        <div className="flex items-center gap-4">
-                                            <div className="text-right">
-                                                <span className="text-xs uppercase tracking-wider text-[var(--muted)]">
-                                                    Order Total
-                                                </span>
-                                                <div className="font-serif text-2xl font-bold text-[var(--ink)]">
-                                                    ฿{order.total.toLocaleString()}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* CUSTOMER & DELIVERY CREDENTIALS */}
-                                    <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[var(--border)]/60 bg-[var(--cream)]/45 px-6 py-3.5 md:px-8">
-                                        <div className="flex flex-wrap items-center gap-5 sm:gap-7">
-                                            {/* Customer Identity */}
-                                            <div className="flex items-center gap-3">
-                                                <div className="grid size-9 shrink-0 place-items-center rounded-2xl border border-[var(--border)] bg-white font-serif text-sm font-bold text-[var(--accent)] shadow-2xs">
-                                                    {(order.customerName || 'U').charAt(0).toUpperCase()}
-                                                </div>
-                                                <div>
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="font-serif text-sm font-bold text-[var(--ink)]">
-                                                            {order.customerName || 'Customer'}
-                                                        </span>
-                                                        {order.customerRole && (
-                                                            <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[var(--muted)] border border-[var(--border)] shadow-2xs">
-                                                                {order.customerRole}
-                                                            </span>
-                                                        )}
-                                                        {order.userId && (
-                                                            <span className="font-mono text-[10px] text-[var(--muted)]">
-                                                                #UID-{order.userId}
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                    {order.customerEmail ? (
-                                                        <div className="mt-0.5 flex items-center gap-1.5 text-xs text-[var(--muted)]">
-                                                            <Mail size={12} className="shrink-0 text-[var(--accent)]" />
-                                                            <span className="font-mono">{order.customerEmail}</span>
-                                                        </div>
-                                                    ) : (
-                                                        <span className="text-[11px] text-[var(--muted)]">No email on file</span>
-                                                    )}
-                                                </div>
-                                            </div>
-
-                                            {/* Recipient & Phone Number */}
-                                            {(order.phoneNumber || (order.recipientName && order.recipientName !== order.customerName)) && (
-                                                <div className="border-l border-[var(--border)]/70 pl-5 sm:pl-7">
-                                                    <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--muted)]">
-                                                        Recipient / Contact
-                                                    </span>
-                                                    <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs">
-                                                        {order.recipientName && (
-                                                            <span className="font-semibold text-[var(--ink)]">
-                                                                {order.recipientName}
-                                                            </span>
-                                                        )}
-                                                        {order.phoneNumber && (
-                                                            <a
-                                                                href={`tel:${order.phoneNumber}`}
-                                                                className="inline-flex items-center gap-1 rounded-md bg-white px-2 py-0.5 font-mono text-[11px] font-semibold text-[var(--accent)] border border-[var(--border)] shadow-2xs hover:underline"
-                                                            >
-                                                                <Phone size={11} />
-                                                                <span>{order.phoneNumber}</span>
-                                                            </a>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        {/* Shipping Address */}
-                                        {(order.fullAddress || order.addressName) && (
-                                            <div className="flex items-start gap-2 max-w-md text-xs text-[var(--ink)]">
-                                                <MapPin size={14} className="shrink-0 text-[var(--accent)] mt-0.5" />
-                                                <div className="text-left leading-relaxed">
-                                                    {order.addressName && (
-                                                        <span className="font-bold text-[var(--ink)] mr-1">
-                                                            [{order.addressName}]
-                                                        </span>
-                                                    )}
-                                                    <span className="text-[var(--muted)] text-[11px]">
-                                                        {order.fullAddress || 'Address on file'}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    <div className="divide-y divide-[var(--border)]/50 p-6 md:p-8">
-                                        {order.items.map((item) => (
-                                            <div
-                                                key={item.id}
-                                                className="group flex flex-col justify-between gap-4 py-4.5 first:pt-0 last:pb-0 sm:flex-row sm:items-center"
-                                            >
-                                                <div className="flex items-center gap-4.5">
-                                                    <div className="relative size-20 shrink-0 overflow-hidden rounded-2xl border border-[var(--border)]/80 bg-[var(--rose-soft)] shadow-2xs sm:size-24">
-                                                        <img
-                                                            src={item.image}
-                                                            alt={item.name}
-                                                            className="size-full object-cover transition-transform duration-500 group-hover:scale-105"
-                                                            style={{
-                                                                objectPosition: item.position || 'center',
-                                                            }}
-                                                        />
-                                                    </div>
-
-                                                    <div>
-                                                        <h3 className="font-serif text-base font-bold text-[var(--ink)] transition-colors group-hover:text-[var(--accent)] sm:text-lg">
-                                                            {item.name}
-                                                        </h3>
-                                                        <p className="mt-1 text-xs text-[var(--muted)] sm:text-sm">
-                                                            {item.variant}
-                                                        </p>
-                                                        <div className="mt-2 text-sm font-bold text-[var(--accent)] sm:hidden">
-                                                            ฿{item.price.toLocaleString()}
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <div className="flex items-center justify-between gap-8 sm:justify-end">
-                                                    <div className="hidden text-right sm:block">
-                                                        <span className="text-xs text-[var(--muted)]">Price</span>
-                                                        <div className="font-serif text-xl font-bold text-[var(--ink)]">
-                                                            ฿{item.price.toLocaleString()}
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="flex items-center gap-1.5 rounded-full border border-[var(--border)] bg-[var(--cream)] px-4 py-1.5 text-xs font-semibold text-[var(--ink)] shadow-2xs">
-                                                        <span className="text-[var(--muted)]">Qty:</span>
-                                                        <span>{item.quantity}</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-
-                                    <div className="flex flex-wrap items-center justify-between gap-4 border-t border-[var(--border)]/70 bg-gradient-to-r from-transparent to-[var(--rose-soft)]/20 px-6 py-4.5 md:px-8">
-                                        <div className="flex items-center gap-2 text-xs text-[var(--muted)]">
-                                            <span>Items count: {order.items.length} bouquets</span>
-                                        </div>
-
-                                        <div>
-                                            {order.status === 'delivery' ? (
+                                            {user.status === 'active' ? (
                                                 <button
                                                     type="button"
-                                                    onClick={() => handleConfirmSuccess(order.id)}
-                                                    className="group inline-flex items-center gap-2 rounded-xl bg-[var(--accent)] px-6 py-2.5 text-sm font-semibold text-white shadow-xs transition-all duration-200 hover:bg-[var(--accent-hover)] hover:shadow-md active:scale-95"
+                                                    disabled={
+                                                        auth.user?.id ===
+                                                        user.id
+                                                    }
+                                                    onClick={() =>
+                                                        handleToggleUserBlock(
+                                                            user.id,
+                                                        )
+                                                    }
+                                                    className="inline-flex h-9 items-center gap-1.5 rounded-full border border-[#9a3b50]/40 px-4 text-xs text-[#9a3b50] transition-colors hover:bg-[#9a3b50] hover:text-white disabled:opacity-40"
                                                 >
-                                                    <CheckCircle2
-                                                        size={18}
-                                                        className="transition-transform duration-200 group-hover:scale-110"
-                                                    />
-                                                    <span>Confirm Success</span>
+                                                    <Ban size={13} />
+                                                    <span>ระงับสิทธิ์</span>
                                                 </button>
                                             ) : (
-                                                <div className="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50/80 px-5 py-2.5 text-sm font-semibold text-emerald-800 shadow-2xs">
-                                                    <CheckCircle2 size={18} className="text-emerald-600" />
-                                                    <span>Successfully delivered</span>
-                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        handleToggleUserBlock(
+                                                            user.id,
+                                                        )
+                                                    }
+                                                    className="inline-flex h-9 items-center gap-1.5 rounded-full bg-[var(--accent)] px-4 text-xs text-[var(--on-accent)] transition-colors hover:bg-[var(--accent-hover)]"
+                                                >
+                                                    <Unlock size={13} />
+                                                    <span>ปลดระงับ</span>
+                                                </button>
                                             )}
                                         </div>
-                                    </div>
-                                </section>
-                            ))
-                        )}
+                                    </article>
+                                ))
+                            )}
+                        </div>
                     </div>
                 </main>
             )}
 
-            {/* MODAL: ADD NEW BOUQUET */}
-            {isAddModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-xs">
-                    <div className="w-full max-w-md rounded-3xl border border-[var(--border)] bg-[var(--cream)] p-6 shadow-xl">
-                        <div className="flex items-center justify-between border-b border-[var(--border)]/70 pb-3.5">
-                            <h2 className="font-serif text-xl font-bold text-[var(--ink)]">
-                                Add New Flower Bouquet
-                            </h2>
+            {/* ========================================================= */}
+            {/* VIEW 4: ORDER HISTORY MANAGEMENT (Matched with orders.tsx) */}
+            {/* ========================================================= */}
+            {activeNav === 'orders' && (
+                <main>
+                    <section className="catalog-intro">
+                        <div className="flower-container">
+                            {/* <nav
+                                aria-label="เส้นทางหน้า"
+                                className="catalog-breadcrumb"
+                            >
+                                <Link href="/">หน้าแรก</Link>
+                                <ChevronRight size={12} />
+                                <span aria-current="page">
+                                    รายการคำสั่งซื้อทั้งหมด
+                                </span>
+                            </nav>
+                            <p className="flower-eyebrow">
+                                STORE ORDERS OVERVIEW
+                            </p> */}
+                            <h1>จัดการคำสั่งซื้อลูกค้า</h1>
+                            <p>
+                                ตรวจสอบคำสั่งซื้อที่เข้ามา ยอมรับเพื่อจัดส่ง
+                                ยืนยันการจัดส่งสำเร็จ หรือยกเลิกคำสั่งซื้อ
+                            </p>
+                            <Flower2
+                                className="catalog-intro-flower"
+                                size={125}
+                                strokeWidth={0.6}
+                            />
+                        </div>
+                    </section>
+
+                    <div className="flower-container py-8 md:py-12">
+                        {/* Status Filter Pills matching orders.tsx TabsList */}
+                        <div className="mb-6 flex flex-wrap gap-1.5 border-b border-[var(--border)] pb-3">
+                            {[
+                                {
+                                    id: 'all' as const,
+                                    label: `ทั้งหมด (${orders.length})`,
+                                },
+                                {
+                                    id: 'pending' as const,
+                                    label: `รอจัดส่ง (${pendingOrdersCount})`,
+                                },
+                                {
+                                    id: 'delivery' as const,
+                                    label: `ระหว่างจัดส่ง (${deliveryOrdersCount})`,
+                                },
+                                {
+                                    id: 'success' as const,
+                                    label: `จัดส่งสำเร็จ (${successOrdersCount})`,
+                                },
+                                // {
+                                //     id: 'cancelled' as const,
+                                //     label: `ยกเลิกแล้ว (${cancelledOrdersCount})`,
+                                // },
+                            ].map((tab) => (
+                                <button
+                                    key={tab.id}
+                                    type="button"
+                                    onClick={() =>
+                                        setOrderStatusFilter(tab.id)
+                                    }
+                                    className={`rounded-full px-4 py-2 text-xs transition-colors ${
+                                        orderStatusFilter === tab.id
+                                            ? 'bg-[var(--accent)] text-[var(--on-accent)]'
+                                            : 'text-[var(--muted)] hover:bg-[var(--rose-soft)] hover:text-[var(--ink)]'
+                                    }`}
+                                >
+                                    {tab.label}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Orders List matching orders.tsx cards */}
+                        <div className="space-y-6">
+                            {filteredOrders.length === 0 ? (
+                                <section className="flex flex-col items-center rounded-2xl border border-[var(--border)] px-5 py-16 text-center">
+                                    <span className="mb-5 grid size-20 place-items-center rounded-full bg-[var(--rose)] text-[var(--accent)]">
+                                        <Package size={34} strokeWidth={1.3} />
+                                    </span>
+                                    <h2 className="text-2xl">
+                                        ไม่พบรายการคำสั่งซื้อ
+                                    </h2>
+                                    <p className="mt-2 text-sm text-[var(--muted)]">
+                                        ไม่มีคำสั่งซื้อที่ตรงกับสถานะหรือคำค้นหาที่เลือก
+                                    </p>
+                                </section>
+                            ) : (
+                                filteredOrders.map((order) => (
+                                    <article
+                                        key={order.id}
+                                        className="overflow-hidden rounded-2xl border border-[var(--border)]"
+                                    >
+                                        {/* Card Header matching orders.tsx */}
+                                        <header className="flex flex-wrap items-center justify-between gap-4 bg-[var(--rose-soft)] px-5 py-4 sm:px-7">
+                                            <div>
+                                                <div className="flex items-center gap-2.5">
+                                                    <h2 className="font-bold">
+                                                        คำสั่งซื้อ #{order.id}
+                                                    </h2>
+                                                    <span className="text-xs text-[var(--muted)]">
+                                                        · {order.date}
+                                                    </span>
+                                                </div>
+                                                <p className="mt-1 text-xs text-[var(--muted)]">
+                                                    ผู้สั่งซื้อ:{' '}
+                                                    <strong className="text-[var(--ink)]">
+                                                        {order.customerName}
+                                                    </strong>
+                                                    {order.customerEmail
+                                                        ? ` (${order.customerEmail})`
+                                                        : ''}
+                                                </p>
+                                            </div>
+
+                                            <span
+                                                className={`inline-flex items-center gap-1.5 rounded-full bg-[var(--cream)] px-3.5 py-1.5 text-xs ${
+                                                    order.status === 'cancelled'
+                                                        ? 'text-[#9a3b50]'
+                                                        : 'text-[var(--accent)]'
+                                                }`}
+                                            >
+                                                {order.status === 'success' ? (
+                                                    <Check size={14} />
+                                                ) : order.status ===
+                                                  'cancelled' ? (
+                                                    <Ban size={14} />
+                                                ) : (
+                                                    <Truck size={14} />
+                                                )}
+                                                {orderStatus(order.rawStatus)}
+                                            </span>
+                                        </header>
+
+                                        {/* Delivery Address Bar */}
+                                        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[var(--border)] bg-[var(--cream)] px-5 py-3.5 text-xs sm:px-7">
+                                            <div className="flex flex-wrap items-center gap-4">
+                                                <span className="inline-flex items-center gap-1.5 text-[var(--ink)]">
+                                                    <UserRound
+                                                        size={14}
+                                                        className="text-[var(--accent)]"
+                                                    />
+                                                    ผู้รับ:{' '}
+                                                    <strong>
+                                                        {order.recipientName}
+                                                    </strong>
+                                                </span>
+                                                {order.phoneNumber && (
+                                                    <a
+                                                        href={`tel:${order.phoneNumber}`}
+                                                        className="inline-flex items-center gap-1 text-[var(--accent)] hover:underline"
+                                                    >
+                                                        <Phone size={13} />
+                                                        {order.phoneNumber}
+                                                    </a>
+                                                )}
+                                            </div>
+
+                                            {(order.fullAddress ||
+                                                order.addressName) && (
+                                                <div className="flex items-start gap-1.5 text-[var(--muted)]">
+                                                    <MapPin
+                                                        size={14}
+                                                        className="mt-0.5 shrink-0 text-[var(--accent)]"
+                                                    />
+                                                    <span>
+                                                        {order.addressName && (
+                                                            <strong className="mr-1 text-[var(--ink)]">
+                                                                [
+                                                                {
+                                                                    order.addressName
+                                                                }
+                                                                ]
+                                                            </strong>
+                                                        )}
+                                                        {order.fullAddress}
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Order Items matching PurchasedOrderItems */}
+                                        <div className="px-5 sm:px-7">
+                                            <div className="divide-y divide-[var(--border)]">
+                                                {order.items.map((item) => (
+                                                    <div
+                                                        key={item.id}
+                                                        className="flex gap-4 py-5 sm:gap-5"
+                                                    >
+                                                        <Link
+                                                            href={`/products/${item.id}`}
+                                                            className="h-24 w-20 shrink-0 overflow-hidden rounded-lg bg-[var(--rose-soft)] sm:h-28 sm:w-24"
+                                                        >
+                                                            <img
+                                                                src={item.image}
+                                                                alt={item.name}
+                                                                className="h-full w-full object-cover"
+                                                                loading="lazy"
+                                                            />
+                                                        </Link>
+                                                        <div className="min-w-0 flex-1">
+                                                            <div className="flex flex-wrap justify-between gap-2">
+                                                                <Link
+                                                                    href={`/products/${item.id}`}
+                                                                    className="font-bold hover:underline"
+                                                                >
+                                                                    {item.name}
+                                                                </Link>
+                                                                <p className="font-bold text-[var(--accent)]">
+                                                                    {money(
+                                                                        item.price *
+                                                                            item.quantity,
+                                                                    )}
+                                                                </p>
+                                                            </div>
+                                                            <p className="mt-2 text-xs text-[var(--muted)]">
+                                                                {money(
+                                                                    item.price,
+                                                                )}{' '}
+                                                                / ช่อ ·{' '}
+                                                                {item.variant}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+
+                                            {/* Footer with Total & Admin Actions */}
+                                            <footer className="flex flex-wrap items-center justify-between gap-4 border-t border-[var(--border)] py-5">
+                                                <p className="text-sm">
+                                                    ยอดรวมทั้งสิ้น (
+                                                    {order.items.length} รายการ){' '}
+                                                    <strong className="ml-2 text-xl text-[var(--accent)]">
+                                                        {money(order.total)}
+                                                    </strong>
+                                                    <span className="ml-2 text-xs text-[var(--muted)]">
+                                                        จัดส่งฟรี
+                                                    </span>
+                                                </p>
+
+                                                <div className="flex flex-wrap items-center gap-2.5">
+                                                    {['pending', 'delivery'].includes(
+                                                        order.status,
+                                                    ) && (
+                                                        <>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() =>
+                                                                    handleUpdateOrderStatus(
+                                                                        order.id,
+                                                                        'cancelled',
+                                                                    )
+                                                                }
+                                                                className="inline-flex h-10 items-center gap-1.5 rounded-full border border-[#9a3b50]/40 px-4 text-xs text-[#9a3b50] transition-colors hover:bg-[#9a3b50] hover:text-white"
+                                                            >
+                                                                <X size={14} />
+                                                                ยกเลิกออเดอร์
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() =>
+                                                                    handleUpdateOrderStatus(
+                                                                        order.id,
+                                                                        order.status ===
+                                                                            'pending'
+                                                                            ? 'shipping'
+                                                                            : 'delivered',
+                                                                    )
+                                                                }
+                                                                className={
+                                                                    primaryBtn
+                                                                }
+                                                            >
+                                                                <CheckCircle2
+                                                                    size={16}
+                                                                />
+                                                                <span>
+                                                                    {order.status ===
+                                                                    'pending'
+                                                                        ? 'ยอมรับและเริ่มจัดส่ง'
+                                                                        : 'ยืนยันจัดส่งสำเร็จ'}
+                                                                </span>
+                                                            </button>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </footer>
+                                        </div>
+                                    </article>
+                                ))
+                            )}
+                        </div>
+                    </div>
+                </main>
+            )}
+
+            <StoreFooter />
+
+            {/* ========================================================= */}
+            {/* DIALOG: ADD NEW BOUQUET (Using flower-dialog)             */}
+            {/* ========================================================= */}
+            <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+                <DialogContent className="flower-dialog sm:max-w-lg">
+                    <DialogHeader>
+                        <DialogTitle>เพิ่มช่อดอกไม้ใหม่</DialogTitle>
+                        <DialogDescription>
+                            กรอกรายละเอียดช่อดอกไม้ ราคา โทนสี และจำนวนสต็อกเพื่อเปิดจำหน่ายในร้าน
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <form onSubmit={handleAddProduct} className="space-y-4">
+                        <div>
+                            <label className="block text-xs text-[var(--muted)]">
+                                ชื่อช่อดอกไม้ *
+                            </label>
+                            <input
+                                type="text"
+                                required
+                                placeholder="เช่น Peachy Morning"
+                                value={newProductName}
+                                onChange={(e) =>
+                                    setNewProductName(e.target.value)
+                                }
+                                className="mt-1 h-11 w-full rounded-lg border border-[var(--border)] bg-[var(--cream)] px-3.5 text-sm text-[var(--ink)] focus:border-[var(--accent)] focus:outline-none"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-xs text-[var(--muted)]">
+                                คำอธิบายสินค้า
+                            </label>
+                            <textarea
+                                rows={2}
+                                placeholder="บรรยายความหมายและโทนของช่อดอกไม้..."
+                                value={newProductDescription}
+                                onChange={(e) =>
+                                    setNewProductDescription(e.target.value)
+                                }
+                                className="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--cream)] p-3 text-sm text-[var(--ink)] focus:border-[var(--accent)] focus:outline-none"
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                            <div>
+                                <label className="block text-xs text-[var(--muted)]">
+                                    ราคา (฿) *
+                                </label>
+                                <input
+                                    type="number"
+                                    required
+                                    min={0}
+                                    step="0.01"
+                                    max={9999999.99}
+                                    placeholder="590"
+                                    value={newProductPrice}
+                                    onChange={(e) =>
+                                        setNewProductPrice(e.target.value)
+                                    }
+                                    className="mt-1 h-11 w-full rounded-lg border border-[var(--border)] bg-[var(--cream)] px-3.5 text-sm text-[var(--ink)] focus:border-[var(--accent)] focus:outline-none"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs text-[var(--muted)]">
+                                    จำนวนสต็อก *
+                                </label>
+                                <input
+                                    type="number"
+                                    required
+                                    min={0}
+                                    step={1}
+                                    max={1000000}
+                                    placeholder="10"
+                                    value={newProductStock}
+                                    onChange={(e) =>
+                                        setNewProductStock(e.target.value)
+                                    }
+                                    className="mt-1 h-11 w-full rounded-lg border border-[var(--border)] bg-[var(--cream)] px-3.5 text-sm text-[var(--ink)] focus:border-[var(--accent)] focus:outline-none"
+                                />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="mb-1.5 block text-xs text-[var(--muted)]">
+                                โทนสีดอกไม้ (เลือกได้หลายสี หรือสร้างสีใหม่เข้าระบบ) *
+                            </label>
+                            <ColorMultiSelect
+                                selectedColors={newProductColors}
+                                onChange={(next) => {
+                                    setNewProductColors(next);
+                                    if (next.length > 0 && addColorError) {
+                                        setAddColorError(null);
+                                    }
+                                }}
+                                catalogColors={catalogColors}
+                                onColorCreated={handleColorCreated}
+                            />
+                            {addColorError && (
+                                <p className="mt-1.5 text-xs text-[#9a3b50]">
+                                    {addColorError}
+                                </p>
+                            )}
+                        </div>
+
+                        <div>
+                            <label className="block text-xs text-[var(--muted)]">
+                                รูปภาพช่อดอกไม้
+                            </label>
+                            <div className="mt-1.5 flex items-center gap-3">
+                                {newProductFilePreview && (
+                                    <div className="relative size-16 shrink-0 overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--rose-soft)]">
+                                        <img
+                                            src={newProductFilePreview}
+                                            alt="ตัวอย่างรูปสินค้า"
+                                            className="size-full object-cover"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setNewProductFile(null);
+                                                setNewProductFilePreview(null);
+                                            }}
+                                            className="absolute top-1 right-1 grid size-5 place-items-center rounded-full bg-black/60 text-white"
+                                        >
+                                            <X size={10} />
+                                        </button>
+                                    </div>
+                                )}
+                                <label className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-[var(--border)] bg-[var(--rose-soft)]/50 px-4 py-3 text-xs text-[var(--ink)] transition-colors hover:border-[var(--accent)] hover:bg-[var(--rose-soft)]">
+                                    <Upload
+                                        size={15}
+                                        className="text-[var(--accent)]"
+                                    />
+                                    <span>
+                                        {newProductFile
+                                            ? newProductFile.name
+                                            : 'เลือกรูปภาพประกอบสินค้า'}
+                                    </span>
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        className="hidden"
+                                        onChange={(e) => {
+                                            const file = e.target.files?.[0];
+                                            if (file) {
+                                                setNewProductFile(file);
+                                                setNewProductFilePreview(
+                                                    URL.createObjectURL(file),
+                                                );
+                                            }
+                                        }}
+                                    />
+                                </label>
+                            </div>
+                        </div>
+
+                        <div className="flex justify-end gap-3 pt-2">
                             <button
                                 type="button"
                                 onClick={() => setIsAddModalOpen(false)}
-                                className="grid size-8 place-items-center rounded-full text-[var(--muted)] hover:bg-[var(--rose-soft)]"
+                                className="rounded-full border border-[var(--border)] px-5 py-2.5 text-xs text-[var(--muted)] hover:bg-[var(--rose-soft)]"
                             >
-                                <X size={18} />
+                                ยกเลิก
+                            </button>
+                            <button type="submit" className={primaryBtn}>
+                                บันทึกช่อดอกไม้
                             </button>
                         </div>
+                    </form>
+                </DialogContent>
+            </Dialog>
 
-                        <form onSubmit={handleAddProduct} className="mt-5 space-y-4">
-                            <div>
-                                <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--muted)]">
-                                    Bouquet Name
-                                </label>
-                                <input
-                                    type="text"
-                                    required
-                                    placeholder="e.g. Lavender Dreams"
-                                    value={newProductName}
-                                    onChange={(e) => setNewProductName(e.target.value)}
-                                    className="mt-1.5 h-11 w-full rounded-xl border border-[var(--border)] bg-white px-3.5 text-sm text-[var(--ink)] focus:border-[var(--accent)] focus:outline-none"
-                                />
-                            </div>
+            {/* ========================================================= */}
+            {/* DIALOG: ASSIGN ROLE CONFIRMATION (Using flower-dialog)    */}
+            {/* ========================================================= */}
+            <Dialog
+                open={roleConfirmUser !== null}
+                onOpenChange={(open) => {
+                    if (!open) setRoleConfirmUser(null);
+                }}
+            >
+                <DialogContent className="flower-dialog sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>
+                            {targetRole === 'admin'
+                                ? 'ยืนยันการมอบสิทธิ์ผู้ดูแลร้าน (Admin)'
+                                : 'ยืนยันการเปลี่ยนบทบาทเป็นลูกค้า (Customer)'}
+                        </DialogTitle>
+                        <DialogDescription>
+                            {targetRole === 'admin'
+                                ? `คุณต้องการเปลี่ยนบทบาทของ "${roleConfirmUser?.username || roleConfirmUser?.name}" เป็นผู้ดูแลระบบ (Admin) ใช่หรือไม่? บัญชีนี้จะสามารถจัดการสินค้า คำสั่งซื้อ และสมาชิกได้`
+                                : `คุณต้องการถอดสิทธิ์ผู้ดูแลระบบของ "${roleConfirmUser?.username || roleConfirmUser?.name}" และเปลี่ยนกลับเป็นลูกค้าทั่วไปใช่หรือไม่?`}
+                        </DialogDescription>
+                    </DialogHeader>
 
-                            <div>
-                                <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--muted)]">
-                                    Description
-                                </label>
-                                <textarea
-                                    rows={2}
-                                    placeholder="Describe the bouquet, floral varieties included, styling notes..."
-                                    value={newProductDescription}
-                                    onChange={(e) => setNewProductDescription(e.target.value)}
-                                    className="mt-1.5 w-full rounded-xl border border-[var(--border)] bg-white p-3 text-sm text-[var(--ink)] focus:border-[var(--accent)] focus:outline-none"
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                <div>
-                                    <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--muted)]">
-                                        Price (฿)
-                                    </label>
-                                    <input
-                                        type="number"
-                                        required
-                                        min={0}
-                                        value={newProductPrice}
-                                        onChange={(e) => setNewProductPrice(e.target.value)}
-                                        className="mt-1.5 h-11 w-full rounded-xl border border-[var(--border)] bg-white px-3.5 text-sm text-[var(--ink)] focus:border-[var(--accent)] focus:outline-none"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--muted)]">
-                                        Color
-                                    </label>
-                                    <div className="relative mt-1.5">
-                                        <input
-                                            type="text"
-                                            placeholder="e.g. pink, lavender, #ec4899"
-                                            value={newProductColor}
-                                            onChange={(e) => setNewProductColor(e.target.value)}
-                                            className="h-11 w-full rounded-xl border border-[var(--border)] bg-white pl-9 pr-3 text-sm text-[var(--ink)] focus:border-[var(--accent)] focus:outline-none"
-                                        />
-                                        <div className="absolute left-2.5 top-1/2 -translate-y-1/2">
-                                            {getValidCssColor(newProductColor) ? (
-                                                <span
-                                                    className="block size-4 rounded-full border border-black/10 shadow-2xs"
-                                                    style={{ backgroundColor: getValidCssColor(newProductColor)! }}
-                                                />
-                                            ) : (
-                                                <span className="block size-4 rounded-full border border-dashed border-[var(--border)] bg-[var(--rose-soft)]" />
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--muted)]">
-                                        Stock Qty
-                                    </label>
-                                    <input
-                                        type="number"
-                                        min={0}
-                                        required
-                                        value={newProductStock}
-                                        onChange={(e) => setNewProductStock(e.target.value)}
-                                        className="mt-1.5 h-11 w-full rounded-xl border border-[var(--border)] bg-white px-3.5 text-sm text-[var(--ink)] focus:border-[var(--accent)] focus:outline-none"
-                                    />
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--muted)]">
-                                    Bouquet Picture
-                                </label>
-                                <div className="mt-1.5 flex items-center gap-3">
-                                    {newProductFilePreview ? (
-                                        <div className="relative size-16 shrink-0 overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--rose-soft)]">
-                                            <img
-                                                src={newProductFilePreview}
-                                                alt="Preview"
-                                                className="size-full object-cover"
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    setNewProductFile(null);
-                                                    setNewProductFilePreview(null);
-                                                }}
-                                                className="absolute top-1 right-1 grid size-5 place-items-center rounded-full bg-black/60 text-white hover:bg-black"
-                                            >
-                                                <X size={10} />
-                                            </button>
-                                        </div>
-                                    ) : null}
-
-                                    <label className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-[var(--border)] bg-[var(--cream)]/40 px-4 py-3 text-xs font-semibold text-[var(--ink)] transition-colors hover:border-[var(--accent)] hover:bg-[var(--rose-soft)]">
-                                        <Upload size={14} className="text-[var(--accent)]" />
-                                        <span>{newProductFile ? 'Change Picture File' : 'Upload Picture File'}</span>
-                                        <input
-                                            type="file"
-                                            accept="image/*"
-                                            className="hidden"
-                                            onChange={(e) => {
-                                                const file = e.target.files?.[0];
-                                                if (file) {
-                                                    setNewProductFile(file);
-                                                    setNewProductFilePreview(URL.createObjectURL(file));
-                                                }
-                                            }}
-                                        />
-                                    </label>
-                                </div>
-                            </div>
-
-                            <div className="flex justify-end gap-2.5 pt-4">
-                                <button
-                                    type="button"
-                                    onClick={() => setIsAddModalOpen(false)}
-                                    className="rounded-xl border border-[var(--border)] px-4 py-2 text-xs font-bold text-[var(--muted)] hover:bg-white"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="submit"
-                                    className="rounded-xl bg-[var(--accent)] px-5 py-2 text-xs font-bold text-white shadow-xs hover:bg-[var(--accent-hover)]"
-                                >
-                                    Create Bouquet
-                                </button>
-                            </div>
-                        </form>
+                    <div className="mt-4 flex justify-end gap-3">
+                        <button
+                            type="button"
+                            onClick={() => setRoleConfirmUser(null)}
+                            className="rounded-full border border-[var(--border)] px-5 py-2.5 text-xs text-[var(--muted)] hover:bg-[var(--rose-soft)]"
+                        >
+                            ยกเลิก
+                        </button>
+                        <button
+                            type="button"
+                            onClick={handleConfirmRoleChange}
+                            className={primaryBtn}
+                        >
+                            <Check size={15} /> ยืนยันการเปลี่ยนบทบาท
+                        </button>
                     </div>
-                </div>
-            )}
-
-            {/* MODAL: ASSIGN ROLE CONFIRMATION */}
-            {roleConfirmUser && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs animate-in fade-in duration-200">
-                    <div className="w-full max-w-md overflow-hidden rounded-3xl border border-[var(--border)] bg-white p-7 shadow-2xl">
-                        <div className="flex items-start gap-4">
-                            <div
-                                className={`grid size-12 shrink-0 place-items-center rounded-2xl border border-[var(--border)]/60 shadow-2xs ${
-                                    targetRole === 'admin'
-                                        ? 'bg-[var(--rose-soft)] text-[var(--accent)]'
-                                        : 'bg-amber-50 text-amber-700'
-                                }`}
-                            >
-                                {targetRole === 'admin' ? (
-                                    <ShieldCheck size={26} strokeWidth={2} />
-                                ) : (
-                                    <ShieldAlert size={26} strokeWidth={2} />
-                                )}
-                            </div>
-
-                            <div className="flex-1">
-                                <h3 className="font-serif text-xl font-bold text-[var(--ink)]">
-                                    {targetRole === 'admin'
-                                        ? 'Assign Admin Role?'
-                                        : 'Demote to Customer?'}
-                                </h3>
-                                <div className="mt-2 text-sm leading-relaxed text-[var(--muted)]">
-                                    {targetRole === 'admin' ? (
-                                        <>
-                                            Are you sure you want to assign the role{' '}
-                                            <strong className="text-[var(--ink)]">admin</strong> to user{' '}
-                                            <span className="font-semibold text-[var(--accent)]">
-                                                "{roleConfirmUser.username || roleConfirmUser.name}"
-                                            </span>
-                                            ?
-                                            <div className="mt-3 rounded-2xl border border-[var(--border)]/70 bg-[var(--cream)]/80 p-3.5 text-xs text-[var(--ink)]">
-                                                This user will gain administrative access to edit bouquets, adjust inventory, inspect customer orders, and supervise accounts.
-                                            </div>
-                                        </>
-                                    ) : (
-                                        <>
-                                            Are you sure you want to remove admin privileges from user{' '}
-                                            <span className="font-semibold text-[var(--accent)]">
-                                                "{roleConfirmUser.username || roleConfirmUser.name}"
-                                            </span>{' '}
-                                            and return their role to{' '}
-                                            <strong className="text-[var(--ink)]">customer</strong>?
-                                        </>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="mt-6 flex items-center justify-end gap-3 border-t border-[var(--border)]/70 pt-4">
-                            <button
-                                type="button"
-                                onClick={() => setRoleConfirmUser(null)}
-                                className="rounded-xl border border-[var(--border)] px-4 py-2 text-xs font-semibold text-[var(--muted)] hover:bg-[var(--rose-soft)] hover:text-[var(--ink)] transition-colors"
-                            >
-                                Cancel
-                            </button>
-
-                            <button
-                                type="button"
-                                onClick={handleConfirmRoleChange}
-                                className={`inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-xs font-bold text-white shadow-xs transition-all active:scale-95 ${
-                                    targetRole === 'admin'
-                                        ? 'bg-[var(--accent)] hover:bg-[var(--accent-hover)]'
-                                        : 'bg-amber-700 hover:bg-amber-800'
-                                }`}
-                            >
-                                <Check size={14} strokeWidth={2.5} />
-                                <span>
-                                    {targetRole === 'admin'
-                                        ? 'Yes, Assign Admin'
-                                        : 'Yes, Change to Customer'}
-                                </span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

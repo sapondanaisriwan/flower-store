@@ -23,14 +23,19 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { catalog, type CatalogProduct } from '@/data/catalog';
+import { normalizeProduct, type StoreProduct } from '@/data/store-product';
 import { login, register } from '@/routes';
 import '../../css/homepage.css';
 
-export default function ProductDetail({ productId, dbProduct }: { productId: number, dbProduct: any }) {
-    // ดึงจาก Database เป็นหลัก ถ้าไม่มีถึงจะไปหาใน catalog (ข้อมูลจำลอง)
-    const product = dbProduct || catalog.find((item) => item.id === productId);
-
+export default function ProductDetail({
+    dbProduct,
+    relatedProducts = [],
+}: {
+    productId: number;
+    dbProduct: StoreProduct;
+    relatedProducts?: StoreProduct[];
+}) {
+    const product = dbProduct;
     if (!product)
         return (
             <div className="flower-home">
@@ -46,51 +51,59 @@ export default function ProductDetail({ productId, dbProduct }: { productId: num
             </div>
         );
 
-    // จัดรูปแบบข้อมูลให้พร้อมส่งให้ Component ด้านล่าง
-    const formattedProduct = {
-        id: product.id,
-        name: product.name,
-        thai: product.description || 'ช่อดอกไม้สดใหม่ บรรจงจัดด้วยความประณีต',
-        price: Number(product.price),
-        stock: Number(product.stock),
-        color: product.color || 'white', 
-        rating: Number(product.avg_rating || 0),
-        count: Number(product.rating_count || 0),
-        picture_path: product.picture_path || '/images/homepage/bouquets.png', // ใช้รูปจาก DB หรือรูป fallback
-        position: product.position || 'center'
-    };
-
-    return <ProductView key={formattedProduct.id} product={formattedProduct} />;
+    return (
+        <ProductView
+            key={product.id}
+            product={normalizeProduct(product)}
+            related={relatedProducts.map(normalizeProduct)}
+        />
+    );
 }
 
-function ProductView({ product }: { product: any }) {
+function ProductView({
+    product,
+    related,
+}: {
+    product: ReturnType<typeof normalizeProduct>;
+    related: ReturnType<typeof normalizeProduct>[];
+}) {
     const { auth } = usePage().props;
     const cart = useCart();
     const [quantity, setQuantity] = useState(product.stock ? '1' : '0');
     const [zoom, setZoom] = useState(false);
     const [action, setAction] = useState<string | null>(null);
-    
+
     const amount = Number(quantity);
     const validQuantity =
         quantity.trim() !== '' &&
         Number.isInteger(amount) &&
         amount >= 1 &&
         amount <= product.stock;
-        
+
     const isAdmin = auth.user?.role === 'admin';
-    
-    // เผื่อกรณี Admin พิมพ์สีเข้ามาเอง ไม่ตรงกับที่มีในระบบ ให้แสดงชื่อสีนั้นไปเลย
-    const colorOptions: Record<string, string> = { pink: 'ชมพู & พีช', white: 'ขาวครีม', red: 'แดงไวน์' };
-    const color = colorOptions[product.color] || product.color || 'ไม่ระบุ';
-    
-    // สินค้าที่เกี่ยวข้อง (ยังคงใช้ catalog ไปก่อน ถ้าในอนาคตมี API ดึงสินค้าแนะนำ ค่อยมาแก้ตรงนี้)
-    const related = catalog
-        .filter((item) => item.id !== product.id)
-        .slice(0, 3);
-        
+
+    // เผื่อกรณี Admin เลือกหลายสีหรือสร้างสีใหม่ ให้แสดงรายชื่อสีทั้งหมดของช่อดอกไม้
+    const colorOptions: Record<string, string> = {
+        pink: 'ชมพู & พีช',
+        white: 'ขาวครีม',
+        red: 'แดงไวน์',
+    };
+    const productColorList =
+        product.colors && product.colors.length > 0
+            ? product.colors
+            : product.color
+              ? [product.color]
+              : [];
+    const color =
+        productColorList.length > 0
+            ? productColorList
+                  .map((c) => colorOptions[c.toLowerCase()] || c)
+                  .join(', ')
+            : 'ไม่ระบุ';
+
     const primary =
         'h-12 rounded-full bg-[var(--accent)] px-6 text-[var(--on-accent)] hover:bg-[var(--accent-hover)]';
-        
+
     const changeQuantity = (delta: number) =>
         setQuantity(
             String(
@@ -142,9 +155,9 @@ function ProductView({ product }: { product: any }) {
                                 className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105 motion-reduce:transition-none"
                                 fetchPriority="high"
                             />
-                            <span className="absolute top-4 left-4 rounded-full bg-[var(--cream)] px-3 py-1 text-xs">
+                            {/* <span className="absolute top-4 left-4 rounded-full bg-[var(--cream)] px-3 py-1 text-xs">
                                 ช่อดอกไม้ปลอม
-                            </span>
+                            </span> */}
                             <span className="absolute right-4 bottom-4 flex items-center gap-2 rounded-full bg-[var(--cream)] px-3 py-2 text-xs">
                                 <ZoomIn size={16} /> ขยายภาพ
                             </span>
@@ -300,7 +313,7 @@ function ProductView({ product }: { product: any }) {
                                 </div>
                                 <p className="mt-3 text-xs text-[var(--muted)]">
                                     {auth.user
-                                        ? 'ตะกร้าทดลองบันทึกในเบราว์เซอร์ ยังไม่เปิดรับคำสั่งซื้อ'
+                                        ? 'บันทึกลงตะกร้าของบัญชีคุณ พร้อมสั่งซื้อได้ที่หน้าตะกร้า'
                                         : 'เข้าสู่ระบบเพื่อเพิ่มสินค้าในตะกร้าหรือรายการโปรด'}
                                 </p>
                             </div>
@@ -360,7 +373,7 @@ function ProductView({ product }: { product: any }) {
                                 </span>
                                 <p className="mt-1 text-xs text-[var(--muted)]">
                                     {product.count
-                                        ? `จากผู้ให้คะแนน ${product.count} คน · คะแนนตัวอย่าง`
+                                        ? `จากผู้ให้คะแนน ${product.count} คน`
                                         : 'ยังไม่มีผู้ให้คะแนนสินค้านี้'}
                                 </p>
                             </div>
@@ -386,10 +399,9 @@ function ProductView({ product }: { product: any }) {
                                 className="group min-w-0"
                             >
                                 <div className="aspect-[4/3] overflow-hidden rounded-lg bg-[var(--rose-soft)]">
-                                    {/* รูปแบบสินค้าแนะนำ (ใช้ของ mock เดิมไปก่อน) */}
                                     <img
                                         loading="lazy"
-                                        src="/images/homepage/bouquets.png"
+                                        src={item.picture_path}
                                         alt={item.thai}
                                         style={{
                                             objectPosition: item.position,
@@ -441,7 +453,7 @@ function ProductView({ product }: { product: any }) {
                         </DialogTitle>
                         <DialogDescription>
                             {auth.user
-                                ? `ยังไม่สามารถ${action}ได้ เนื่องจากยังไม่ได้เชื่อมต่อระบบร้านค้า ไม่มีการบันทึกหรือสั่งซื้อสินค้า`
+                                ? 'ดูรายการสินค้าและดำเนินการต่อได้จากตะกร้าของคุณ'
                                 : `กรุณาเข้าสู่ระบบเพื่อ${action}`}
                         </DialogDescription>
                     </DialogHeader>

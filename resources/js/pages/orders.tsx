@@ -36,7 +36,7 @@ type OrderPage = {
 const statusGroup = (status: string) =>
     ['delivered', 'success'].includes(status)
         ? 'delivered'
-        : ['shipping', 'shipped', 'delivery'].includes(status)
+        : ['processing', 'shipping', 'shipped', 'delivery'].includes(status)
           ? 'shipping'
           : ['cancelled', 'canceled'].includes(status)
             ? 'cancelled'
@@ -199,7 +199,11 @@ export default function Orders({
                                         ))}
                                     </ol>
                                     <h3 className="font-bold">รายการสินค้า</h3>
-                                    <OrderItems items={order.items} />
+                                    <OrderItems
+                                        items={order.items}
+                                        orderId={order.id}
+                                        status={order.status}
+                                    />
                                 </section>
                                 <section className="rounded-2xl border border-[var(--border)] p-5 sm:p-7">
                                     <h2 className="mb-4 flex items-center gap-2 font-bold">
@@ -322,6 +326,8 @@ export default function Orders({
                                                 <div className="px-5 sm:px-7">
                                                     <OrderItems
                                                         items={item.items}
+                                                        orderId={item.id}
+                                                        status={item.status}
                                                     />
                                                     <footer className="flex flex-wrap items-center justify-between gap-4 border-t border-[var(--border)] py-5">
                                                         <p className="text-sm">

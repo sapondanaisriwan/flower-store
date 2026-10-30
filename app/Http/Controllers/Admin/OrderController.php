@@ -6,10 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\OrderProduct;
 use App\Models\Product;
+use App\Models\User;
+use App\Support\OrderStatus;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -20,46 +23,42 @@ class OrderController extends Controller
      */
     public function index(Request $request): Response
     {
-        $statusFilter = $request->query('status', 'all');
+        $filter = $request->validate(['status' => ['nullable', Rule::in(['all', 'pending', 'delivery', 'success', 'cancelled'])]]);
+        $statusFilter = $filter['status'] ?? 'all';
 
         $groups = [
             'pending' => ['pending'],
-            'delivery' => ['shipping', 'shipped', 'delivery', 'processing'],
+            'delivery' => OrderStatus::GROUPS['shipping'],
             'success' => ['delivered', 'success'],
             'cancelled' => ['cancelled', 'canceled'],
         ];
 
-        try {
-            $counts = Order::getStatusCounts($groups);
+        $counts = Order::getStatusCounts($groups);
 
-            $query = Order::withCustomer();
+        $query = Order::withCustomer();
 
-            if ($statusFilter !== 'all' && isset($groups[$statusFilter])) {
-                $query->whereIn('orders.status', $groups[$statusFilter]);
-            }
+        if ($statusFilter !== 'all' && isset($groups[$statusFilter])) {
+            $query->whereIn('orders.status', $groups[$statusFilter]);
+        }
 
-            $orders = $query->orderByDesc('orders.id')->get();
+        $orders = $query->orderByDesc('orders.id')->get();
 
-            // โหลดรายการสินค้าของแต่ละออเดอร์ผ่าน Model
-            $items = OrderProduct::whereIn('order_id', $orders->pluck('id'))
-                ->orderBy('product_order')
-                ->get()
-                ->groupBy('order_id');
+        // โหลดรายการสินค้าของแต่ละออเดอร์ผ่าน Model
+        $items = OrderProduct::whereIn('order_id', $orders->pluck('id'))
+            ->orderBy('product_order')
+            ->get()
+            ->groupBy('order_id');
 
-            foreach ($orders as $order) {
-                $order->items = $items->get($order->id, collect())->values();
-                $order->customer_name = $order->customer_name ?: 'Customer';
-                $order->delivery = null;
-                if (! empty($order->address)) {
-                    $decoded = json_decode($order->address, true);
-                    if (is_array($decoded)) {
-                        $order->delivery = $decoded;
-                    }
+        foreach ($orders as $order) {
+            $order->items = $items->get($order->id, collect())->values();
+            $order->customer_name = $order->customer_name ?: 'Customer';
+            $order->delivery = null;
+            if (! empty($order->address)) {
+                $decoded = json_decode($order->address, true);
+                if (is_array($decoded)) {
+                    $order->delivery = $decoded;
                 }
             }
-        } catch (\Throwable) {
-            $counts = ['pending' => 0, 'delivery' => 0, 'success' => 0, 'cancelled' => 0];
-            $orders = collect();
         }
 
         return Inertia::render('admin', [
@@ -67,6 +66,11 @@ class OrderController extends Controller
             'dbOrders' => $orders,
             'statusCounts' => $counts,
             'selectedOrderStatus' => $statusFilter,
+            'navCounts' => [
+                'products' => Product::count(),
+                'orders' => $counts['all'] ?? Order::count(),
+                'users' => User::count(),
+            ],
         ]);
     }
 
@@ -96,6 +100,12 @@ class OrderController extends Controller
         return Inertia::render('admin', [
             'initialTab' => 'orders',
             'selectedOrder' => $record,
+            'dbOrders' => [$record],
+            'navCounts' => [
+                'products' => Product::count(),
+                'orders' => Order::count(),
+                'users' => User::count(),
+            ],
         ]);
     }
 
@@ -104,50 +114,36 @@ class OrderController extends Controller
      */
     public function updateStatus(Request $request, int $order): RedirectResponse
     {
-        $allowed = [
-            'pending',
-            'processing',
-            'shipping',
-            'delivery',
-            'delivered',
-            'success',
-            'cancelled',
-            'canceled',
-        ];
-
         $validated = $request->validate([
-            'status' => ['required', 'string', Rule::in($allowed)],
+            'status' => ['required', 'string', Rule::in(array_merge(...array_values(OrderStatus::GROUPS)))],
         ]);
-
-        $newStatus = $validated['status'];
-
+        $newStatus = OrderStatus::normalize($validated['status']);
         DB::transaction(function () use ($order, $newStatus): void {
             $record = Order::lockForUpdate()->findOrFail($order);
-
-            $oldStatus = $record->status;
-            $wasCancelled = in_array($oldStatus, ['cancelled', 'canceled'], true);
-            $nowCancelled = in_array($newStatus, ['cancelled', 'canceled'], true);
-
-            // ถ้ายกเลิกออเดอร์ ให้คืนสต็อกสินค้ากลับเข้าร้าน
-            if (! $wasCancelled && $nowCancelled) {
-                $items = OrderProduct::where('order_id', $order)->get();
+            $oldStatus = OrderStatus::normalize($record->status);
+            if ($oldStatus === $newStatus) {
+                return;
+            }
+            $transitions = [
+                'pending' => ['shipping', 'cancelled'],
+                'shipping' => ['delivered', 'cancelled'],
+                'delivered' => [],
+                'cancelled' => [],
+            ];
+            if (! in_array($newStatus, $transitions[$oldStatus] ?? [], true)) {
+                throw ValidationException::withMessages(['status' => 'ไม่สามารถเปลี่ยนสถานะนี้ได้ ออเดอร์ที่สำเร็จหรือยกเลิกแล้วไม่สามารถเปิดใหม่']);
+            }
+            if ($newStatus === 'cancelled') {
+                $items = OrderProduct::where('order_id', $order)->orderBy('product_id')->get();
                 foreach ($items as $item) {
-                    Product::where('id', $item->product_id)
-                        ->increment('stock', (int) $item->quantity);
+                    $product = Product::where('id', $item->product_id)->lockForUpdate()->firstOrFail();
+                    if ($product->stock + $item->quantity > 1000000) {
+                        throw ValidationException::withMessages(['status' => 'คืนสต็อกไม่ได้ เพราะจำนวนจะเกินขีดจำกัด กรุณาตรวจสอบสต็อก']);
+                    }
+                    $product->increment('stock', $item->quantity);
                 }
             }
-            // ถ้าเปลี่ยนจากยกเลิกกลับมาเป็นสถานะปกติ ให้ตัดสต็อกอีกครั้ง
-            elseif ($wasCancelled && ! $nowCancelled) {
-                $items = OrderProduct::where('order_id', $order)->get();
-                foreach ($items as $item) {
-                    Product::where('id', $item->product_id)
-                        ->decrement('stock', (int) $item->quantity);
-                }
-            }
-
-            $record->update([
-                'status' => $newStatus,
-            ]);
+            $record->update(['status' => $newStatus]);
         }, 3);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => "เปลี่ยนสถานะออเดอร์เป็น {$newStatus} แล้ว"]);

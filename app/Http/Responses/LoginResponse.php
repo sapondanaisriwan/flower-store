@@ -15,7 +15,7 @@ class LoginResponse implements LoginResponseContract
     public function toResponse($request)
     {
         $role = $request->user()?->role;
-        $target = $role === 'admin' ? '/dashboard/admin' : '/dashboard/user';
+        $target = $role === 'admin' ? '/dashboard/admin' : '/';
 
         return $request->wantsJson()
             ? response()->json(['two_factor' => false, 'redirect' => $target])

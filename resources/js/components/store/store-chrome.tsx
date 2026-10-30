@@ -1,4 +1,5 @@
 import { useCart } from '@/hooks/use-cart';
+import { useWishlist } from '@/hooks/use-wishlist';
 import { Link, router, usePage } from '@inertiajs/react';
 import {
     ArrowRight,
@@ -28,6 +29,7 @@ export function StoreHeader({
 }) {
     const { auth } = usePage().props;
     const cart = useCart();
+    const wishlist = useWishlist();
     const [query, setQuery] = useState('');
     const [menu, setMenu] = useState(false);
     const [notice, setNotice] = useState<string | null>(null);
@@ -42,15 +44,13 @@ export function StoreHeader({
                     <Link
                         className="flower-brand"
                         href="/"
-                        aria-label="My Flower Shop หน้าแรก"
+                        aria-label="Bloomie Flower Shop หน้าแรก"
                     >
-                        <Flower2 size={33} strokeWidth={1.25} />
-                        <span>
-                            MY FLOWER
-                            <span className="flower-brand-bottom">
-                                SHOP <i>·</i> made to last
-                            </span>
-                        </span>
+                        <img
+                            src="/logo.png"
+                            alt="Bloomie Flower Shop"
+                            className="flower-brand-logo"
+                        />
                     </Link>
                     <form
                         className="flower-search"
@@ -91,11 +91,17 @@ export function StoreHeader({
                         {auth.user?.role !== 'admin' && (
                             <>
                                 <Link
-                                    className="flower-icon"
+                                    className="flower-icon relative"
                                     href="/wishlist"
-                                    aria-label="รายการโปรด"
+                                    aria-label={`รายการโปรด ${wishlist.count} ช่อ`}
                                 >
                                     <Heart size={21} />
+
+                                    {wishlist.count > 0 && (
+                                        <span className="absolute -top-1 -right-2 grid min-w-4 place-items-center rounded-full bg-[var(--accent)] px-1 text-[10px] text-[var(--on-accent)]">
+                                            {wishlist.count}
+                                        </span>
+                                    )}
                                 </Link>
                                 <Link
                                     className="flower-icon relative"
@@ -211,14 +217,16 @@ export function StoreFooter() {
     return (
         <footer className="flower-footer">
             <div className="flower-container">
-                <Link className="flower-brand" href="/">
-                    <Flower2 size={28} strokeWidth={1.25} />
-                    <span>
-                        MY FLOWER
-                        <span className="flower-brand-bottom">
-                            SHOP <i>·</i> made to last
-                        </span>
-                    </span>
+                <Link
+                    className="flower-brand"
+                    href="/"
+                    aria-label="Bloomie Flower Shop หน้าแรก"
+                >
+                    <img
+                        src="/logo.png"
+                        alt="Bloomie Flower Shop"
+                        className="flower-brand-logo"
+                    />
                 </Link>
                 <p>ช่อดอกไม้ปลอมสำเร็จรูป · ส่งฟรีทั่วประเทศ</p>
                 <div>

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Models\OrderProduct;
+use App\Support\OrderStatus;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -15,12 +16,7 @@ class OrderController extends Controller
     public function index(Request $request): Response
     {
         // ใช้ชื่อกลุ่มเดียวกับแท็บหน้าเว็บ และกรองก่อนแบ่งหน้า
-        $groups = [
-            'pending' => ['pending'],
-            'shipping' => ['shipping', 'shipped', 'delivery'],
-            'delivered' => ['delivered', 'success'],
-            'cancelled' => ['cancelled', 'canceled'],
-        ];
+        $groups = OrderStatus::GROUPS;
         $input = $request->validate(['status' => ['nullable', Rule::in(['all', ...array_keys($groups)])]]);
         $status = $input['status'] ?? 'all';
         $query = Order::where('user_id', $request->user()->id);
