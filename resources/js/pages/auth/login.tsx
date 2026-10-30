@@ -96,14 +96,14 @@ export default function Login({ status, canResetPassword }: Props) {
                                     จดจำการเข้าสู่ระบบ
                                 </Label>
                             </div>
-                            {canResetPassword && (
+                            {/* {canResetPassword && (
                                 <Link
                                     href={request()}
                                     className="auth-link text-xs"
                                 >
                                     ลืมรหัสผ่าน?
                                 </Link>
-                            )}
+                            )} */}
                         </div>
                         <Button
                             type="submit"

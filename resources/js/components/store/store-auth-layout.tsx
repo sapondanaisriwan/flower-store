@@ -30,10 +30,10 @@ export function StoreAuthLayout({
                         </span>
                     </Link>
                     <div className="store-auth-story-copy">
-                        <span className="store-auth-tag">
+                        {/* <span className="store-auth-tag">
                             <Sparkles size={14} /> LITTLE THINGS, LASTING
                             FEELINGS
-                        </span>
+                        </span> */}
                         <h2>
                             ความรู้สึกดี ๆ<br />
                             ที่อยู่ได้นานกว่าเดิม

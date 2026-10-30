@@ -196,9 +196,9 @@ export default function Welcome({
                                             name={product.thai}
                                         />
                                     )}
-                                    <span className="flower-product-tag">
+                                    {/* <span className="flower-product-tag">
                                         ช่อดอกไม้ปลอม
-                                    </span>
+                                    </span> */}
                                 </div>
                                 <div className="flower-product-info">
                                     <button

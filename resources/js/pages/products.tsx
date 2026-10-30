@@ -260,14 +260,14 @@ function ProductsContent({
                     ))}
                 </div>
             </fieldset>
-            <div className="catalog-filter-note">
+            {/* <div className="catalog-filter-note">
                 <Flower2 size={24} />
                 <p>
                     ช่อเล็ก ๆ<br />
                     ความรู้สึกที่ยิ่งใหญ่
                 </p>
                 <small>จัดส่งฟรีทั่วประเทศ</small>
-            </div>
+            </div> */}
         </div>
     );
     const turnPage = (next: number) => {

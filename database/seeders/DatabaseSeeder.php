@@ -20,7 +20,7 @@ class DatabaseSeeder extends Seeder
 
         // 2. สร้างบัญชี Admin เริ่มต้นสำหรับเข้าจัดการระบบ
         User::firstOrCreate(
-            ['email' => 'admin@flowerstore.com'],
+            ['email' => 'admin@gmail.com'],
             [
                 'username' => 'Shop Admin',
                 'role' => 'admin',
@@ -33,7 +33,7 @@ class DatabaseSeeder extends Seeder
         // 3. สร้างบัญชีลูกค้าทดสอบ 10 คน (customer1 - customer10)
         for ($i = 1; $i <= 10; $i++) {
             User::firstOrCreate(
-                ['email' => "customer{$i}@flowerstore.com"],
+                ['email' => "customer{$i}@gmail.com"],
                 [
                     'username' => "Customer {$i}",
                     'role' => 'customer',
