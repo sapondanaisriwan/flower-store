@@ -79,7 +79,10 @@ class CheckoutController extends Controller
                 unset($data['use_saved_address']);
                 // สร้างที่อยู่ใน transaction เดียวกัน ถ้าสั่งซื้อไม่ผ่านจะไม่เหลือที่อยู่ค้าง
                 $delivery = [...$data, 'user_id' => $userId, 'is_active' => true];
-                UserAddress::create($delivery);
+                UserAddress::updateOrCreate(
+                    ['user_id' => $userId, 'address_name' => $data['address_name']],
+                    $delivery
+                );
             }
 
             // เลือกเฉพาะข้อมูลผู้รับ/ที่อยู่มาเก็บสำเนา ไม่เปลี่ยนตามการแก้ที่อยู่ภายหลัง
