@@ -1,6 +1,49 @@
 import { WishlistButton } from '@/components/store/wishlist-button';
 import { catalog } from '@/data/catalog';
 import { Head, Link, router, usePage } from '@inertiajs/react';
+
+/** สินค้าจากฐานข้อมูล (ส่งมาจาก ProductController) */
+interface DbProduct {
+    id: number;
+    name: string;
+    description: string;
+    price: string | number;
+    stock: number;
+    color: string | null;
+    picture_path: string | null;
+    is_deleted: boolean;
+    rating: string | number;
+    rating_count: string | number;
+}
+
+/** รูปแบบภายในที่ component ใช้งาน */
+interface NormalisedProduct {
+    id: number;
+    name: string;
+    thai: string;
+    price: number;
+    color: string;
+    rating: number;
+    count: number;
+    stock: number;
+    position: string;
+    picture_path: string | null;
+}
+
+function normaliseDbProducts(dbProducts: DbProduct[]): NormalisedProduct[] {
+    return dbProducts.map((p) => ({
+        id: p.id,
+        name: p.name,
+        thai: p.description,
+        price: Number(p.price),
+        color: p.color ?? 'pink',
+        rating: Number(p.rating ?? 0),
+        count: Number(p.rating_count ?? 0),
+        stock: p.stock,
+        position: '50% 50%',
+        picture_path: p.picture_path ?? null,
+    }));
+}
 import {
     ArrowRight,
     ChevronLeft,
@@ -39,17 +82,25 @@ const prices = [
 ];
 const PAGE_SIZE = 6;
 
-export default function Products() {
+export default function Products({ dbProducts }: { dbProducts?: DbProduct[] }) {
     const { auth } = usePage().props;
     const { url } = usePage();
     const initialQuery =
         new URL(url, 'http://localhost').searchParams.get('q') ?? '';
+
+    // ใช้ข้อมูลจาก DB ถ้ามี มิฉะนั้นใช้ catalog mock
+    const products: NormalisedProduct[] =
+        dbProducts && dbProducts.length > 0
+            ? normaliseDbProducts(dbProducts)
+            : (catalog as NormalisedProduct[]);
+
     return (
         <ProductsContent
             key={initialQuery}
             initialQuery={initialQuery}
             isAdmin={auth.user?.role === 'admin'}
             loggedIn={Boolean(auth.user)}
+            products={products}
         />
     );
 }
@@ -57,10 +108,12 @@ function ProductsContent({
     initialQuery,
     isAdmin,
     loggedIn,
+    products,
 }: {
     initialQuery: string;
     isAdmin: boolean;
     loggedIn: boolean;
+    products: NormalisedProduct[];
 }) {
     const [query, setQuery] = useState(initialQuery);
     const [chosenColors, setChosenColors] = useState<string[]>([]);
@@ -71,7 +124,7 @@ function ProductsContent({
     const [filtersOpen, setFiltersOpen] = useState(false);
     const [wishlistOpen, setWishlistOpen] = useState(false);
     const range = prices.find((item) => item.value === price) ?? prices[0];
-    const filtered = catalog
+    const filtered = products
         .filter(
             (item) =>
                 `${item.name} ${item.thai}`
@@ -410,7 +463,7 @@ function ProductsContent({
                                             aria-label={`ดูรายละเอียด ${item.thai}`}
                                         >
                                             <img
-                                                src="/images/homepage/bouquets.png"
+                                                src={item.picture_path ?? '/images/homepage/bouquets.png'}
                                                 alt={item.thai}
                                                 style={{
                                                     objectPosition:
