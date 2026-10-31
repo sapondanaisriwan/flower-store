@@ -9,10 +9,61 @@ on:
 
 jobs:
   # ============================================================================
-  # Job 1: Build Docker Image & Push to Docker Hub
+  # Job 1: CI Test (ทดสอบ Migration, Seeder และโค้ดบน MySQL จำลองของ GitHub)
+  # ============================================================================
+  test:
+    name: Test & Verify Database
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: flower_shop_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up PHP 8.4
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, pdo, pdo_mysql, bcmath, intl, zip, gd
+          coverage: none
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Prepare environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Test Migrations and Seeders (Isolated Test DB)
+        env:
+          DB_CONNECTION: mysql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_DATABASE: flower_shop_test
+          DB_USERNAME: root
+          DB_PASSWORD: root
+        run: php artisan migrate:fresh --seed --force
+
+  # ============================================================================
+  # Job 2: Build Docker Image & Push to Docker Hub (รันเมื่อ Job test ผ่านแล้ว)
   # ============================================================================
   build:
     name: Build & Push Docker Image
+    needs: test
     runs-on: ubuntu-latest
 
     steps:
