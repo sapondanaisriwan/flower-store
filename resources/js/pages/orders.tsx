@@ -310,7 +310,6 @@ export default function Orders({
                                                 <header className="flex flex-wrap items-center justify-between gap-4 bg-[var(--rose-soft)] px-5 py-4 sm:px-7">
                                                     <div>
                                                         <h2 className="font-bold">
-                                                            {item.id}
                                                         </h2>
                                                         <p className="mt-1 text-xs text-[var(--muted)]">
                                                             สั่งซื้อเมื่อ{' '}
