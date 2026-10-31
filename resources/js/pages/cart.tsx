@@ -271,7 +271,8 @@ export default function Cart({ items }: { items: CartProduct[] }) {
                     </DialogHeader>
                     <div className="flex justify-end gap-3">
                         <Button
-                            variant="outline"
+                            className={primary}
+                            disabled={cart.pending}
                             onClick={() => setRemoveId(null)}
                         >
                             เก็บไว้ก่อน

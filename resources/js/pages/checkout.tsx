@@ -1128,11 +1128,10 @@ export default function Checkout({
                         <div className="mt-6 flex items-center justify-end gap-3 border-t border-[var(--border)] pt-4">
                             <Button
                                 type="button"
-                                variant="outline"
                                 onClick={() => setIsModalOpen(false)}
-                                className="h-10 rounded-full px-5 text-xs text-[var(--muted)] hover:bg-neutral-100"
+                                className="h-10 gap-1.5 rounded-full bg-[var(--accent)] px-6 text-xs text-white hover:bg-[var(--accent-hover)]"
                             >
-                                ยกเลิก
+ยกเลิก
                             </Button>
                             <Button
                                 type="submit"

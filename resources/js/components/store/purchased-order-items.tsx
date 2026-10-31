@@ -113,12 +113,14 @@ function PurchaseRating({
                     ))}
                 </span>
                 <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setEditing(true)}
-                >
-                    แก้ไขคะแนน
-                </Button>
+    size="sm"
+    disabled={!form.data.rating || form.processing}
+    variant="ghost"
+    onClick={() => setEditing(true)}
+    className="rounded-full text-green-800 hover:bg-green-100 hover:text-green-800"
+>
+    แก้ไขคะแนน
+</Button>
             </div>
         );
     return (
@@ -170,26 +172,30 @@ function PurchaseRating({
                         </label>
                     ))}
                     <Button
-                        type="submit"
-                        size="sm"
-                        disabled={!form.data.rating || form.processing}
-                        className="rounded-full bg-[var(--accent)] text-white"
-                    >
-                        {form.processing ? 'กำลังบันทึก…' : 'บันทึก'}
-                    </Button>
-                    {item.rating != null && (
-                        <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                                form.reset();
-                                form.clearErrors();
-                                setEditing(false);
-                            }}
-                        >
-                            ยกเลิก
-                        </Button>
+    type="submit"
+    size="sm"
+    disabled={!form.data.rating || form.processing}
+    variant="ghost"
+    className="rounded-full text-green-800 hover:bg-green-100 hover:text-green-800"
+>
+    {form.processing ? 'กำลังบันทึก…' : 'บันทึก'}
+</Button>
+
+{item.rating != null && (
+    <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        onClick={() => {
+            form.reset();
+            form.clearErrors();
+            setEditing(false);
+        }}
+        className="rounded-full text-green-800 hover:bg-green-100 hover:text-green-800"
+    >
+        ยกเลิก
+    </Button>
+
                     )}
                 </div>
             </fieldset>

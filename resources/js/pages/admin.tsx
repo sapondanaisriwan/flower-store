@@ -2433,7 +2433,7 @@ export default function AdminPage({
                                     className={`rounded-full px-4 py-2 text-xs transition-colors ${
                                         orderStatusFilter === tab.id
                                             ? 'bg-[var(--accent)] text-[var(--on-accent)]'
-                                            : 'text-[var(--muted)] hover:bg-[var(--rose-soft)] hover:text-[var(--ink)]'
+                                            : 'hover:text-green'
                                     }`}
                                 >
                                     {tab.label}

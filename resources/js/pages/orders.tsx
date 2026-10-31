@@ -146,8 +146,9 @@ export default function Orders({
                                 <section className="rounded-2xl border border-[var(--border)] p-5 sm:p-7">
                                     <div className="flex flex-wrap items-center justify-between gap-3">
                                         <div>
+                                            
                                             <h2 className="text-xl font-bold">
-                                                {order.id}
+                                                คำสั่งซื้อ#{order.id}
                                             </h2>
                                             <p className="mt-2 text-xs text-[var(--muted)]">
                                                 สั่งซื้อเมื่อ {orderDate(order.date)}
@@ -264,22 +265,22 @@ export default function Orders({
                         }
                     >
                         <TabsList className="mb-6 h-auto w-full justify-start gap-1 overflow-x-auto rounded-none border-b border-[var(--border)] bg-transparent p-0 pb-3 group-data-[orientation=horizontal]/tabs:h-auto">
-                            {[
-                                { id: 'all', label: 'ทั้งหมด' },
-                                { id: 'pending', label: 'รอจัดส่ง' },
-                                { id: 'shipping', label: 'ระหว่างจัดส่ง' },
-                                { id: 'delivered', label: 'สำเร็จ' },
-                                { id: 'cancelled', label: 'ยกเลิก' },
-                            ].map((tab) => (
-                                <TabsTrigger
-                                    key={tab.id}
-                                    value={tab.id}
-                                    className="h-auto flex-none rounded-full px-4 py-2 text-[var(--muted)] data-[state=active]:bg-[var(--accent)] data-[state=active]:text-[var(--on-accent)] dark:text-[var(--muted)] dark:data-[state=active]:bg-[var(--accent)] dark:data-[state=active]:text-[var(--on-accent)]"
-                                >
-                                    {tab.label} ({statusCounts[tab.id] ?? 0})
-                                </TabsTrigger>
-                            ))}
-                        </TabsList>
+    {[
+        { id: 'all', label: 'ทั้งหมด' },
+        { id: 'pending', label: 'รอจัดส่ง' },
+        { id: 'shipping', label: 'ระหว่างจัดส่ง' },
+        { id: 'delivered', label: 'สำเร็จ' },
+        { id: 'cancelled', label: 'ยกเลิก' },
+    ].map((tab) => (
+        <TabsTrigger
+            key={tab.id}
+            value={tab.id}
+            className="h-auto flex-none rounded-full px-4 py-2 text-[var(--muted)] hover:text-green-800 data-[state=active]:bg-[var(--accent)] data-[state=active]:text-[var(--on-accent)] dark:text-[var(--muted)] dark:hover:text-green-600 dark:data-[state=active]:bg-[var(--accent)] dark:data-[state=active]:text-[var(--on-accent)]"
+        >
+            {tab.label} ({statusCounts[tab.id] ?? 0})
+        </TabsTrigger>
+    ))}
+</TabsList>
                         {[
                             'all',
                             'pending',
@@ -310,6 +311,7 @@ export default function Orders({
                                                 <header className="flex flex-wrap items-center justify-between gap-4 bg-[var(--rose-soft)] px-5 py-4 sm:px-7">
                                                     <div>
                                                         <h2 className="font-bold">
+                                                            คำสั่งซื้อ#{item.id}
                                                         </h2>
                                                         <p className="mt-1 text-xs text-[var(--muted)]">
                                                             สั่งซื้อเมื่อ{' '}
