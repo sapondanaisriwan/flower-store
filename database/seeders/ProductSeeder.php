@@ -19,7 +19,7 @@ class ProductSeeder extends Seeder
                 'description' => 'ช่อกุหลาบโทนพีช ผสมผสานดอกไม้โทนอบอุ่น สร้างความสดใสในทุกเช้าวันใหม่',
                 'price' => '690.00',
                 'stock' => 8,
-                'color' => 'โรสพิงค์',
+                'color' => 'ม่วงลาเวนเดอร์',
                 'picture_path' => '/images/products/flower1.jpg',
                 'is_deleted' => false,
                 'created_at' => now(),
@@ -31,7 +31,7 @@ class ProductSeeder extends Seeder
                 'description' => 'ช่อกุหลาบสีขาวครีม บริสุทธิ์และสง่างาม สื่อถึงความรักที่มั่นคงและจริงใจ',
                 'price' => '590.00',
                 'stock' => 5,
-                'color' => 'ขาวครีม',
+                'color' => ['ขาวครีม', 'ฟ้าพาสเทล', 'เหลืองพาสเทล', 'โรสพิงค์'],
                 'picture_path' => '/images/products/flower2.jpg',
                 'is_deleted' => false,
                 'created_at' => now(),
@@ -43,7 +43,7 @@ class ProductSeeder extends Seeder
                 'description' => 'ช่อดอกไม้ชมพูโรแมนติก คัดสรรกลีบดอกไม้อ่อนหวานเพื่อคนพิเศษของคุณ',
                 'price' => '790.00',
                 'stock' => 4,
-                'color' => 'โรสพิงค์',
+                'color' => 'เหลืองพาสเทล',
                 'picture_path' => '/images/products/flower3.jpg',
                 'is_deleted' => false,
                 'created_at' => now(),
@@ -55,7 +55,7 @@ class ProductSeeder extends Seeder
                 'description' => 'ช่อกุหลาบสีแดงไวน์ ลึกซึ้งและน่าหลงใหล สำหรับช่วงเวลาสุดพิเศษที่น่าจดจำ',
                 'price' => '890.00',
                 'stock' => 10,
-                'color' => 'แดงไวน์',
+                'color' => ['ขาวครีม', 'ฟ้าพาสเทล', 'เหลืองพาสเทล', 'โรสพิงค์'],
                 'picture_path' => '/images/products/flower4.jpg',
                 'is_deleted' => false,
                 'created_at' => now(),
@@ -67,7 +67,7 @@ class ProductSeeder extends Seeder
                 'description' => 'ช่อกุหลาบขาวละมุน เรียบง่ายแต่เปี่ยมด้วยความอ่อนโยนและความหมายดีๆ',
                 'price' => '490.00',
                 'stock' => 12,
-                'color' => 'ขาวครีม',
+                'color' => 'ฟ้าพาสเทล',
                 'picture_path' => '/images/products/flower5.jpg',
                 'is_deleted' => false,
                 'created_at' => now(),
@@ -79,7 +79,7 @@ class ProductSeeder extends Seeder
                 'description' => 'ช่อกุหลาบชมพูหวาน สื่อถึงความรักอันแสนสดชื่นและรอยยิ้มที่มีให้กันเสมอ',
                 'price' => '990.00',
                 'stock' => 6,
-                'color' => 'โรสพิงค์',
+                'color' => ['ขาวครีม', 'ฟ้าพาสเทล', 'โรสพิงค์'],
                 'picture_path' => '/images/products/flower6.jpg',
                 'is_deleted' => false,
                 'created_at' => now(),
@@ -91,7 +91,7 @@ class ProductSeeder extends Seeder
                 'description' => 'ช่อกุหลาบแดงแทนใจ บรรจงจัดด้วยกุหลาบแดงคัดพิเศษ เพื่อคำบอกรักที่ไม่ต้องเอ่ย',
                 'price' => '1290.00',
                 'stock' => 6,
-                'color' => 'แดงไวน์',
+                'color' => ['ส้มพีช', 'ฟ้าพาสเทล', 'เหลืองพาสเทล'],
                 'picture_path' => '/images/products/flower7.jpg',
                 'is_deleted' => false,
                 'created_at' => now(),
@@ -103,7 +103,7 @@ class ProductSeeder extends Seeder
                 'description' => 'ช่อดอกไม้พีชแสนอบอุ่น เติมเต็มความสุขเล็กๆ ในชีวิตประจำวันด้วยสีสันสดใส',
                 'price' => '390.00',
                 'stock' => 10,
-                'color' => 'โรสพิงค์',
+                'color' => ['ฟ้าพาสเทล', 'ขาวครีม'],
                 'picture_path' => '/images/products/flower8.jpg',
                 'is_deleted' => false,
                 'created_at' => now(),
@@ -115,7 +115,7 @@ class ProductSeeder extends Seeder
                 'description' => 'ช่อดอกไม้ขาวเรียบหรู ผสมผสานดอกไม้นานาพันธุ์สีขาวครีม เหมาะกับทุกโอกาสสำคัญ',
                 'price' => '1090.00',
                 'stock' => 5,
-                'color' => 'ขาวครีม',
+                'color' => ['ขาวครีม', 'โรสพิงค์'],
                 'picture_path' => '/images/products/flower9.jpg',
                 'is_deleted' => false,
                 'created_at' => now(),
@@ -123,6 +123,7 @@ class ProductSeeder extends Seeder
             ],
         ];
 
+        // Colors
         $colors = [
             'โรสพิงค์' => '#dca3b2',
             'ขาวครีม' => '#fff9e9',
@@ -134,6 +135,7 @@ class ProductSeeder extends Seeder
             'ส้มพีช' => '#d99866',
         ];
 
+        // Insert or update colors
         foreach ($colors as $name => $hexCode) {
             DB::table('colors')->updateOrInsert(
                 ['name' => $name],
@@ -141,16 +143,36 @@ class ProductSeeder extends Seeder
             );
         }
 
+        // Insert or update products and their colors
         foreach ($products as $product) {
-            $colorName = $product['color'];
+
+            // Get product colors
+            $colorNames = $product['color'];
+
+            // Convert single color to array
+            if (!is_array($colorNames)) {
+                $colorNames = [$colorNames];
+            }
+
+            // Remove color from product data
             unset($product['color']);
 
-            DB::table('products')->updateOrInsert(['id' => $product['id']], $product);
+            // Insert or update product
+            DB::table('products')->updateOrInsert(
+                ['id' => $product['id']],
+                $product
+            );
 
-            DB::table('color_product')->updateOrInsert([
-                'color_name' => $colorName,
-                'product_id' => $product['id'],
-            ]);
+            // Insert or update product-color relationships
+            foreach ($colorNames as $colorName) {
+                DB::table('color_product')->updateOrInsert(
+                    [
+                        'color_name' => $colorName,
+                        'product_id' => $product['id'],
+                    ],
+                    []
+                );
+            }
         }
     }
 }
