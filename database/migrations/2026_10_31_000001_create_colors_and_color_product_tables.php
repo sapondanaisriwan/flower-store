@@ -9,25 +9,29 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('colors', function (Blueprint $table) {
-            // ใช้ name เป็น Primary Key ตาม ER Diagram (name ขีดเส้นใต้)
-            $table->string('name', 100)->primary();
-            $table->string('hex_code', 20);
-        });
+        if (! Schema::hasTable('colors')) {
+            Schema::create('colors', function (Blueprint $table) {
+                // ใช้ name เป็น Primary Key ตาม ER Diagram (name ขีดเส้นใต้)
+                $table->string('name', 100)->primary();
+                $table->string('hex_code', 20);
+            });
+        }
 
-        Schema::create('color_product', function (Blueprint $table) {
-            // ความสัมพันธ์ N:M (features_in) ระหว่าง Color และ Product
-            $table->string('color_name', 100);
-            $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
+        if (! Schema::hasTable('color_product')) {
+            Schema::create('color_product', function (Blueprint $table) {
+                // ความสัมพันธ์ N:M (features_in) ระหว่าง Color และ Product
+                $table->string('color_name', 100);
+                $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
 
-            $table->foreign('color_name')
-                ->references('name')
-                ->on('colors')
-                ->cascadeOnUpdate()
-                ->restrictOnDelete();
+                $table->foreign('color_name')
+                    ->references('name')
+                    ->on('colors')
+                    ->cascadeOnUpdate()
+                    ->restrictOnDelete();
 
-            $table->primary(['color_name', 'product_id']);
-        });
+                $table->primary(['color_name', 'product_id']);
+            });
+        }
 
         // ย้ายข้อมูลสีเดิมจาก products.color เข้าตาราง colors และ color_product ก่อนลบคอลัมน์
         if (Schema::hasColumn('products', 'color')) {

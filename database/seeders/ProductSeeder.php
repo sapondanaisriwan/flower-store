@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Models\Product;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 
 class ProductSeeder extends Seeder
 {
@@ -18,7 +18,7 @@ class ProductSeeder extends Seeder
                 'description' => 'ช่อดอกกุหลาบขาวจำนวน 11 ดอก สลับสีโอลด์โรสจำนวน 11 ดอก จัดช่อรวมกันอย่างลงตัว แซมด้วยใบหิมะให้ช่อดูสวยงามไม่เหมือนใคร ห่อด้วยกระดาษสีชมพูเพิ่มความสวยหวาน สื่อถึงความรักและความมุ่งมั่นอยากจะปกป้องดูแลเธอผู้เป็นที่รัก',
                 'price' => '3099.00',
                 'stock' => 8,
-                'picture_path' => '/images/homepage/amani.png',
+                'picture_path' => '/images/products/amani.png',
                 'colors' => ['White', 'Orange'],
             ],
             [
@@ -26,7 +26,7 @@ class ProductSeeder extends Seeder
                 'description' => 'ช่อดอกทานตะวัน 1 ดอก ล้อมรอบด้วยดอกเดซี่ จัดเป็นช่อดอกไม้ขนาดเล็กสไตล์มินิมอล ห่อด้วยกระดาษสีน้ำตาลไข่ไก่ และกระดาษสีขาว ผูกช่อด้วยริบบิ้นสองสี ความหมายของช่อนี้ สื่อถึงความรักมั่นคง เหมือนที่ดอกทานตะวันคอยหันหน้ามองแต่ดวงอาทิตย์ไม่เคยเปลี่ยน',
                 'price' => '1099.00',
                 'stock' => 16,
-                'picture_path' => '/images/homepage/delight_love.png',
+                'picture_path' => '/images/products/delight_love.png',
                 'colors' => ['White', 'Yellow'],
             ],
             [
@@ -34,7 +34,7 @@ class ProductSeeder extends Seeder
                 'description' => 'ช่อดอกกุหลาบสีม่วงเข้ม สวยแปลกตา พิเศษกว่าใคร ประกอบด้วยกุหลาบสีม่วงเข้มจำนวน 10 ดอก และแซมด้วยแคสเปีย ผูกช่อด้วยริบบิ้นสีม่วงอ่อนตัดกับกระดาษห่อสีเทา เป็นตัวแทนของความรู้สึกดี ๆ ได้ทุกโอกาส',
                 'price' => '1699.00',
                 'stock' => 8,
-                'picture_path' => '/images/homepage/evangeline.png',
+                'picture_path' => '/images/products/evangeline.png',
                 'colors' => ['Purple'],
             ],
             [
@@ -42,7 +42,7 @@ class ProductSeeder extends Seeder
                 'description' => 'ช่อดอกไม้ที่ผสมผสานไปด้วยดอกกุหลาบสีแดงจำนวน 6 ดอก และดอกกุหลาบสีขาว จำนวน 6 ดอก ห่อหุ้มด้วยกระดาษสีส้มเอิร์ธโทน ที่ให้ความรู้สึกอบอุ่น พิเศษ และมีค่าในเวลาเดียวกัน สื่อความหมายได้ว่าช่อดอกไม้นี้ถูกจัดทำขึ้นมาเพื่อคุณคนเดียวเท่านั้น',
                 'price' => '2299.00',
                 'stock' => 20,
-                'picture_path' => '/images/homepage/made_for_you.png',
+                'picture_path' => '/images/products/made_for_you.png',
                 'colors' => ['White','Red'],
             ],
             [
@@ -50,7 +50,7 @@ class ProductSeeder extends Seeder
                 'description' => 'ช่อดอกกุหลาบ จัดช่อด้วยดอกกุหลาบสีแดง 13 ดอก แซมดอกยิปซีและใบยูคาลิปตัส ห่อด้วยกระดาษสีชมพู ผูกริบบิ้นเพื่อเพิ่มความสวยงามให้ช่อด้วยริบบิ้นสีแดงซ้อนสีขาว เหมาะแก่การมอบให้คนของใจเนื่องในโอกาสสำคัญ เพิ่มความโรแมนติกและสร้างความประทับใจให้กับคนที่คุณรัก',
                 'price' => '2699.00',
                 'stock' => 9,
-                'picture_path' => '/images/homepage/romantic_love.png',
+                'picture_path' => '/images/products/romantic_love.png',
                 'colors' => ['White','Red'],
             ],
             [
@@ -58,7 +58,7 @@ class ProductSeeder extends Seeder
                 'description' => 'ช่อกุหลาบขาว 5 ดอก ห่อด้วยกระดาษสีฟ้า Clear Sky ดูสว่างสดใสราวกับท้องฟ้าปลอดโปร่ง แซมใบไม้เติมเต็มให้แลดูสดชื่น พร้อมผูกริบบิ้นสีขาวอย่างลงตัว ส่งมอบความสดใสพร้อมปราถนาขอให้เป็นวันที่ดีสำหรับผู้รับ',
                 'price' => '1599.00',
                 'stock' => 12,
-                'picture_path' => '/images/homepage/brighten_sky.png',
+                'picture_path' => '/images/products/brighten_sky.png',
                 'colors' => ['White','Blue'],
             ],
             [
@@ -66,7 +66,7 @@ class ProductSeeder extends Seeder
                 'description' => 'ช่อดอกไม้เจ้าสาวสีขาว สวยสง่า เรียบง่าย แต่ดูดี จะแบบสไตล์มินิมอลด้วยดอกกุหลาบสีขาวจำนวน 7 ดอก แซมด้วยดอกยิปโซและแคสเปีย เป็นตัวแทนของความรักบริสุทธิ์และเพื่อบอกว่าตลอดทั้งวันจันทร์จน วนมาถึงวันอาทิตย์ ความรักของคุณที่มีให้กันจะมั่นคง ไม่เปลี่ยนไป มีแต่จะเพิ่มมากขึ้นตามวันและเวลาที่ผ่านไป',
                 'price' => '2099.00',
                 'stock' => 10,
-                'picture_path' => '/images/homepage/white_lady.png',
+                'picture_path' => '/images/products/white_lady.png',
                 'colors' => ['White'],
             ],
             [
@@ -74,7 +74,7 @@ class ProductSeeder extends Seeder
                 'description' => 'Rabbit Love ช่อดอกปิงปองสีขาวจำนวน 1 ดอก ตกแต่งให้เหมือนน้องกระต่ายด้วยดอกหญ้า รับกับดอกยิปโซสีม่วงและสีชมพูที่มาช่วยเสริมดอกปิงปองโดดเด่นมากขึ้น พร้อมห่อด้านนอกด้วยกระดาษ Pink a boo ด้านในเพิ่มความสดใสด้วยพลาสติกใสสีรุ้ง และริบบิ้นสีทองพิมพ์ลาย Love You Flower  ใครได้รับเป็นต้องยิ้มหวานแน่นอน',
                 'price' => '899.00',
                 'stock' => 20,
-                'picture_path' => '/images/homepage/rabbit_love.png',
+                'picture_path' => '/images/products/rabbit_love.png',
                 'colors' => ['Purple','Pink'],
             ],
             [
@@ -82,7 +82,7 @@ class ProductSeeder extends Seeder
                 'description' => 'ช่อดอกไม้โทนสีขาวที่เรียบง่ายแต่เต็มไปด้วยเสน่ห์ ประกอบด้วย ดอกทิวลิปสีขาว 10 ดอก ที่สื่อถึงความบริสุทธิ์ ความจริงใจ และความรักอันอ่อนโยน พร้อมแซมด้วย ดอกเดซี่ ดอกเล็ก ๆ ที่ช่วยเติมความสดใสและทำให้ช่อดูมีชีวิตชีวามากยิ่งขึ้น ออกแบบด้วยกระดาษห่อโทนสีขาวสะอาดตา พร้อมริบบิ้นที่ช่วยเติมความเรียบหรูให้กับช่ออย่างลงตัว “Pure Whisper” จึงเป็นตัวแทนของความรู้สึกที่ไม่จำเป็นต้องเอ่ยออกมาเป็นคำพูด เหมาะสำหรับมอบให้คนพิเศษในวันเกิด วันครบรอบ วันแห่งความรัก วันแสดงความยินดี หรือเพียงต้องการส่งความคิดถึงและสร้างรอยยิ้มให้กันในวันธรรมดา',
                 'price' => '2599.00',
                 'stock' => 9,
-                'picture_path' => '/images/homepage/pure_whisper.png',
+                'picture_path' => '/images/products/pure_whisper.png',
                 'colors' => ['White'],
             ],
             [
@@ -90,7 +90,7 @@ class ProductSeeder extends Seeder
                 'description' => 'ช่อไฮเดรนเยียฟ้า แซมดอกไม้และใบไม้โทนสีเขียว ดูละเอียดอ่อนและสดชื่น ห่อด้วยกระดาษสีนาวี (Navy Blue) แบบเปิดหน้าเห็นช่อชัด พร้อมผูกริบบิ้นสีดำ พิมพ์ตัวอักษรสีชมพู ให้ความสุขุม จริงจัง เปรียบกับความรู้สึกดี ๆ จริงใจ และมั่นคงให้กับคนพิเศษ หรือจะมอบให้กับผู้ชายในโอกาสต่าง ๆ ได้ โดยที่เขาไม่เขิน',
                 'price' => '1299.00',
                 'stock' => 8,
-                'picture_path' => '/images/homepage/thought_of_you.png',
+                'picture_path' => '/images/products/thought_of_you.png',
                 'colors' => ['Blue'],
             ],
             [
@@ -98,7 +98,7 @@ class ProductSeeder extends Seeder
                 'description' => 'ช่อดอกกุหลาบสีส้มจำนวน 11 ดอก แซมด้วยยูคาลิปตัสใบกลม ตัวช่อดอกไม้ชั้นในถูกห่อด้วยกระดาษสาสีม่วงอ่อน ชั้นนอกห่อด้วยกระดาษสีส้มชานม เพื่อให้เข้ากับสีของดอกไม้ และตกแต่งด้วยริบบิ้นสีขาว-ดำ เหมาะสำหรับมอบให้คนสำคัญ เพื่อเป็นการเติมความสดใสและเติมพลังให้แก่กัน',
                 'price' => '2199.00',
                 'stock' => 11,
-                'picture_path' => '/images/homepage/wake_up_love.png',
+                'picture_path' => '/images/products/wake_up_love.png',
                 'colors' => ['Orange'],
             ],
             [
@@ -106,7 +106,7 @@ class ProductSeeder extends Seeder
                 'description' => 'ช่อดอกไม้โทนสีชมพู ฟ้า เป็นการผสมผสานดอกไม้หลายชนิดอย่างลงตัว เพิ่มความโดดเด่นด้วยดอกไฮเดรนเยียสีฟ้า 2 หัว และใส่ความหวานละมุนด้วย กุหลาบสีชมพู 6 ดอก เยอบีร่าแสงอาทิตย์ 4 ดอก แซมด้วย ดอกไลเซนทัส ดอกกุหลาบพวงสีพีช และสเปรย์มัมสีขาว ห่อด้วยกระดาษสี Midnight blue ตกแต่งด้วยโบว์สีทองลาย Love You Flower ตัดกับช่อดอกไม้อย่างลงตัว เลือกช่อดอกไม้นี้เป็นแทนความรัก ความห่วงใย และความยินดีให้กับวันที่แสนพิเศษของเพื่อนและคนรู้ใจ',
                 'price' => '2999.00',
                 'stock' => 7,
-                'picture_path' => '/images/homepage/blushing_twilight.png',
+                'picture_path' => '/images/products/blushing_twilight.png',
                 'colors' => ['Blue','Pink'],
             ],
             [
@@ -114,7 +114,7 @@ class ProductSeeder extends Seeder
                 'description' => 'ช่อดอกกุหลาบโทนสีส้ม ประกอบไปด้วย ดอกกุหลาบส้ม 9 ดอกกุหลาบพีช 10 ดอก แซมด้วยกุหลาบพวงส้ม 20 ดอก ห่อด้วยกระดาษสี Lily Green ประดับโบว์สีดำลาย Love  You Flower เหมาะสำหรับส่งต่อความอบอุ่น ความสุข และความมั่นใจ ให้กับเพื่อนที่ดีของคุณ ทั้งในงานรับปริญญา และโอกาสอื่น ๆ เพื่อแสดงถึงความยินดี และความภูมิใจในตัวเขาคนนั้น',
                 'price' => '1699.00',
                 'stock' => 15,
-                'picture_path' => '/images/homepage/cheerful_sun_kissed.png',
+                'picture_path' => '/images/products/cheerful_sun_kissed.png',
                 'colors' => ['Orange','Pink'],
             ],
             [
@@ -122,7 +122,7 @@ class ProductSeeder extends Seeder
                 'description' => 'Ferrero rocher ช็อกโกแลตเกรดพรีเมี่ยม 20 ชิ้น ที่เปรียบเหมือนทองคำสุดล้ำค่า รักแท้ที่หาที่เปรียบมิได้ จัดช่อบูเก้อย่างสวยงามด้วยกระดาษห่อสีขาวเรียบหรูสุดคลาสสิก',
                 'price' => '2199.00',
                 'stock' => 999,
-                'picture_path' => '/images/homepage/ferrero_rocher.png',
+                'picture_path' => '/images/products/ferrero_rocher.png',
                 'colors' => ['Yellow'],
             ],
             [
@@ -130,61 +130,57 @@ class ProductSeeder extends Seeder
                 'description' => '"Young at Heart" ช่อดอกลิลลี่สีขาว 4 ดอก และดอกกุหลาบสีขาว 5 ดอก สื่อถึงความสดใสและความอ่อนเยาว์ในหัวใจที่ไม่เคยเลือนหาย จัดช่อด้วยกระดาษโทนชมพู ผูกโบว์สีขาว  เหมาะสำหรับมอบให้แก่ผู้ที่คุณรักและให้ความเคารพ ไม่ว่าจะเป็นคนในครอบครัว เช่น คุณแม่ คุณย่า หรือคุณยาย หรือคนสำคัญที่มีบุคลิกอ่อนโยน และยังคงมีหัวใจที่สดใสและเต็มไปด้วยพลังบวก',
                 'price' => '2999.00',
                 'stock' => 10,
-                'picture_path' => '/images/homepage/young_at_heart.png',
+                'picture_path' => '/images/products/young_at_heart.png',
                 'colors' => ['White'],
             ],
         ];
 
         // Colors
-        $colors = [
-            'โรสพิงค์' => '#dca3b2',
-            'ขาวครีม' => '#fff9e9',
-            'แดงไวน์' => '#9a3b50',
-            'ม่วงลาเวนเดอร์' => '#a78bbd',
-            'เหลืองพาสเทล' => '#e6c871',
-            'เขียวเซจ' => '#6b8f71',
-            'ฟ้าพาสเทล' => '#779fbd',
-            'ส้มพีช' => '#d99866',
-        ];
+        // $colors = [
+        //     'โรสพิงค์' => '#dca3b2',
+        //     'ขาวครีม' => '#fff9e9',
+        //     'แดงไวน์' => '#9a3b50',
+        //     'ม่วงลาเวนเดอร์' => '#a78bbd',
+        //     'เหลืองพาสเทล' => '#e6c871',
+        //     'เขียวเซจ' => '#6b8f71',
+        //     'ฟ้าพาสเทล' => '#779fbd',
+        //     'ส้มพีช' => '#d99866',
+        // ];
 
-        // Insert or update colors
-        foreach ($colors as $name => $hexCode) {
-            DB::table('colors')->updateOrInsert(
-                ['name' => $name],
-                ['hex_code' => $hexCode]
-            );
-        }
+        // // Insert or update colors
+        // foreach ($colors as $name => $hexCode) {
+        //     DB::table('colors')->updateOrInsert(
+        //         ['name' => $name],
+        //         ['hex_code' => $hexCode]
+        //     );
+        // }
 
         // Insert or update products and their colors
-        foreach ($products as $product) {
-
+        foreach ($products as $index => $productData) {
             // Get product colors
-            $colorNames = $product['color'];
+            $colorNames = $productData['colors'] ?? $productData['color'] ?? [];
 
             // Convert single color to array
-            if (!is_array($colorNames)) {
+            if (! is_array($colorNames)) {
                 $colorNames = [$colorNames];
             }
 
-            // Remove color from product data
-            unset($product['color']);
+            // Remove color fields from product data
+            unset($productData['colors'], $productData['color']);
 
-            // Insert or update product
-            DB::table('products')->updateOrInsert(
-                ['id' => $product['id']],
-                $product
+            $productId = $productData['id'] ?? ($index + 1);
+            unset($productData['id']);
+
+            $productData['is_deleted'] = $productData['is_deleted'] ?? false;
+
+            // Insert or update product via Product model
+            $product = Product::updateOrCreate(
+                ['id' => $productId],
+                $productData
             );
 
-            // Insert or update product-color relationships
-            foreach ($colorNames as $colorName) {
-                DB::table('color_product')->updateOrInsert(
-                    [
-                        'color_name' => $colorName,
-                        'product_id' => $product['id'],
-                    ],
-                    []
-                );
-            }
+            // Sync product-color relationships via Eloquent relationship
+            $product->colors()->sync($colorNames);
         }
     }
 }

@@ -2,8 +2,11 @@
 
 namespace Database\Seeders;
 
+use App\Models\Order;
+use App\Models\OrderProduct;
+use App\Models\Product;
+use App\Models\UserAddress;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 
 class OrderSeeder extends Seeder
 {
@@ -15,11 +18,11 @@ class OrderSeeder extends Seeder
     {
         mt_srand(2026); // ให้ผลลัพธ์เหมือนเดิมทุกครั้ง
 
-        $products  = DB::table('products')->orderBy('id')->get()->keyBy('id');
-        $productIds = $products->keys()->values()->all(); // [1..9]
-        $count = count($productIds);
+        $products   = Product::orderBy('id')->get()->keyBy('id');
+        $productIds = $products->keys()->values()->all();
+        $count      = count($productIds);
 
-        // ลำดับสินค้าวนเป็นรอบ 1..9,1..9,... ทำให้ทุกสินค้าถูกซื้อจำนวนเท่ากัน
+        // ลำดับสินค้าวนเป็นรอบ ทำให้ทุกสินค้าถูกซื้อจำนวนเท่ากัน
         // และ 3 ชิ้นติดกัน (ในออเดอร์เดียว) จะไม่ซ้ำกันเสมอ
         $sequence = [];
         $total = self::DELIVERED_ORDERS * self::ITEMS_PER_ORDER;
@@ -59,53 +62,51 @@ class OrderSeeder extends Seeder
             ];
         }
 
-        foreach ($orders as $order) {
-            $address = DB::table('user_addresses')
-                ->where('user_id', $order['user_id'])
+        foreach ($orders as $orderData) {
+            $address = UserAddress::where('user_id', $orderData['user_id'])
                 ->where('is_active', true)
                 ->first();
 
-            if (!$address) {
-                throw new \Exception("Address for user {$order['user_id']} not found");
+            if (! $address) {
+                throw new \Exception("Address for user {$orderData['user_id']} not found");
             }
 
             $totalPrice = 0;
-            foreach ($order['items'] as $item) {
+            foreach ($orderData['items'] as $item) {
                 $product = $products->get($item['product_id']);
-                if (!$product) {
+                if (! $product) {
                     throw new \Exception("Product ID {$item['product_id']} not found");
                 }
                 $totalPrice += $product->price * $item['quantity'];
             }
 
-            DB::table('orders')->updateOrInsert(
-                ['id' => $order['id']],
-                [
-                    'user_id'      => $order['user_id'],
-                    'status'       => $order['status'],
-                    'total_price'  => $totalPrice,
-                    'address_name' => $address->address_name,
-                    'address'      => "{$address->address_line}, {$address->subdistrict}, {$address->district}, {$address->province} {$address->postal_code}",
-                    'created_at'   => $order['created_at'],
-                    'updated_at'   => $order['created_at'],
-                ]
-            );
+            $order = Order::firstOrNew(['id' => $orderData['id']]);
+            $order->fill([
+                'user_id'      => $orderData['user_id'],
+                'status'       => $orderData['status'],
+                'total_price'  => $totalPrice,
+                'address_name' => $address->address_name,
+                'address'      => "{$address->address_line}, {$address->subdistrict}, {$address->district}, {$address->province} {$address->postal_code}",
+            ]);
+            $order->created_at = $orderData['created_at'];
+            $order->updated_at = $orderData['created_at'];
+            $order->save();
 
-            foreach ($order['items'] as $index => $item) {
+            foreach ($orderData['items'] as $index => $item) {
                 $product = $products->get($item['product_id']);
 
-                DB::table('order_product')->updateOrInsert(
-                    [
-                        'order_id'   => $order['id'],
-                        'product_id' => $item['product_id'],
-                    ],
-                    [
+                OrderProduct::query()->upsert(
+                    [[
+                        'order_id'       => $order->id,
+                        'product_id'     => $item['product_id'],
                         'product_name'   => $product->name,
                         'purchase_price' => $product->price,
                         'quantity'       => $item['quantity'],
                         'picture_path'   => $product->picture_path,
                         'product_order'  => $index + 1,
-                    ]
+                    ]],
+                    ['order_id', 'product_id'],
+                    ['product_name', 'purchase_price', 'quantity', 'picture_path', 'product_order']
                 );
             }
         }

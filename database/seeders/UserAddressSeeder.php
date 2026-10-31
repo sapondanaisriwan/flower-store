@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Models\UserAddress;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 
 class UserAddressSeeder extends Seeder
 {
@@ -28,7 +28,7 @@ class UserAddressSeeder extends Seeder
             $row = [
                 'user_id'        => $userId,
                 'address_name'   => $name,
-                'recipient_name' => $userId === 1 ? 'Gam' : "Customer " . ($userId - 1),
+                'recipient_name' => $userId === 1 ? 'Gam' : 'Customer ' . ($userId - 1),
                 'address_line'   => $line,
                 'subdistrict'    => $subdistrict,
                 'district'       => 'Mueang Chiang Mai',
@@ -36,14 +36,14 @@ class UserAddressSeeder extends Seeder
                 'postal_code'    => $postal,
                 'phone_number'   => '08' . str_pad((string) (10000000 + $userId * 1111111), 8, '0', STR_PAD_LEFT),
                 'is_active'      => true,
+                'created_at'     => now(),
+                'updated_at'     => now(),
             ];
 
-            DB::table('user_addresses')->updateOrInsert(
-                ['user_id' => $row['user_id'], 'address_name' => $row['address_name']],
-                array_merge($row, [
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ])
+            UserAddress::query()->upsert(
+                [$row],
+                ['user_id', 'address_name'],
+                ['recipient_name', 'address_line', 'subdistrict', 'district', 'province', 'postal_code', 'phone_number', 'is_active', 'updated_at']
             );
         }
     }

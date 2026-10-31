@@ -510,7 +510,7 @@ function ProductsContent({
                                         }
                                     >
                                         <h3>{item.name}</h3>
-                                        <p>{item.thai}</p>
+                                        <p className="line-clamp-2">{item.thai}</p>
                                     </button>
                                     <div className="catalog-price">
                                         ฿{item.price.toLocaleString('th-TH')}

@@ -38,13 +38,13 @@ class DatabaseSeeder extends Seeder
             );
         }
 
-        // 3. Seed ข้อมูลร้าน (ลำดับสำคัญ: สินค้า -> ที่อยู่ -> ออเดอร์ -> เรทติ้ง)
+        // 3. Seed ข้อมูลร้าน (ลำดับสำคัญ: สี -> สินค้า -> ที่อยู่ -> ออเดอร์ -> เรทติ้ง)
         $this->call([
+            ColorSeeder::class,
             ProductSeeder::class,
             UserAddressSeeder::class,
             OrderSeeder::class,
             RatingSeeder::class,
-            ColorSeeder::class
         ]);
     }
 }

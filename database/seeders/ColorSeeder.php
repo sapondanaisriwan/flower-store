@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
+use App\Models\Color;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 
 class ColorSeeder extends Seeder
 {
@@ -24,8 +24,16 @@ class ColorSeeder extends Seeder
         ];
 
         foreach ($colors as $color) {
-            // TODO: change this to color model instead
-            DB::table('colors')->updateOrInsert(['name' => $color['name']], $color);
+            Color::updateOrCreate(
+                ['name' => $color['name']],
+                ['hex_code' => $color['hex_code']]
+            );
         }
+    }
+
+    public function rollback(): void
+    {
+        // drop all colors from the table
+        Color::query()->delete();
     }
 }

@@ -2,8 +2,10 @@
 
 namespace Database\Seeders;
 
+use App\Models\OrderProduct;
+use App\Models\Rating;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Carbon;
 
 class RatingSeeder extends Seeder
 {
@@ -28,15 +30,10 @@ class RatingSeeder extends Seeder
         mt_srand(2027);
 
         // รายการสินค้าในออเดอร์ที่จัดส่งแล้วเท่านั้น
-        $items = DB::table('order_product')
-            ->join('orders', 'orders.id', '=', 'order_product.order_id')
-            ->where('orders.status', 'DELIVERED')
-            ->orderBy('order_product.order_id')
-            ->get([
-                'order_product.order_id',
-                'order_product.product_id',
-                'orders.created_at as order_created_at',
-            ])
+        $items = OrderProduct::with('order')
+            ->whereHas('order', fn ($query) => $query->where('status', 'delivered'))
+            ->orderBy('order_id')
+            ->get()
             ->groupBy('product_id');
 
         foreach ($items as $productId => $rows) {
@@ -50,28 +47,28 @@ class RatingSeeder extends Seeder
             shuffle($pool);
 
             foreach ($rows as $i => $row) {
-                if (!isset($pool[$i])) {
+                if (! isset($pool[$i])) {
                     break;
                 }
 
                 // วันที่รีวิว = หลังสั่งซื้อ 1-7 วัน (ไม่เกินปัจจุบัน)
-                $reviewedAt = \Illuminate\Support\Carbon::parse($row->order_created_at)
+                $reviewedAt = Carbon::parse($row->order->created_at)
                     ->addDays(mt_rand(1, 7))
                     ->addMinutes(mt_rand(0, 1439));
                 if ($reviewedAt->isFuture()) {
                     $reviewedAt = now();
                 }
 
-                DB::table('ratings')->updateOrInsert(
-                    [
+                Rating::query()->upsert(
+                    [[
                         'order_id'   => $row->order_id,
                         'product_id' => $row->product_id,
-                    ],
-                    [
                         'rating'     => $pool[$i],
                         'created_at' => $reviewedAt,
                         'updated_at' => $reviewedAt,
-                    ]
+                    ]],
+                    ['order_id', 'product_id'],
+                    ['rating', 'updated_at']
                 );
             }
         }
