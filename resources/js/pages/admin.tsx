@@ -937,20 +937,14 @@ export default function AdminPage({
 
     // Delete Product on backend
     const handleDeleteProduct = (productId: number) => {
-        router.delete(`/admin/products/${productId}`, { preserveScroll: true });
-
-        if (editingProduct?.id === productId) {
-            setEditingProduct(null);
-        }
-    };
-
-    // Toggle sell on backend
-    const handleToggleSell = (productId: number) => {
-        router.patch(
-            `/admin/products/${productId}/toggle`,
-            {},
-            { preserveScroll: true },
-        );
+        router.delete(`/admin/products/${productId}`, {
+            preserveScroll: true,
+            onSuccess: () => {
+                if (editingProduct?.id === productId) {
+                    setEditingProduct(null);
+                }
+            },
+        });
     };
 
     // Add Product Submit to backend
@@ -1536,14 +1530,12 @@ export default function AdminPage({
                                     <button
                                         type="button"
                                         onClick={() =>
-                                            handleToggleSell(editingProduct.id)
+                                            handleDeleteProduct(editingProduct.id)
                                         }
-                                        className="inline-flex min-h-12 items-center gap-2 rounded-full border border-[var(--border)] px-5 text-xs text-[var(--ink)] hover:bg-[var(--rose-soft)]"
+                                        className="inline-flex min-h-12 items-center gap-2 rounded-full border border-[#9a3b50]/30 px-5 text-xs text-[#9a3b50] hover:bg-[var(--rose)]"
                                     >
-                                        <Ban size={15} />
-                                        {editingProduct.is_deleted
-                                            ? 'เปิดการขาย'
-                                            : 'ปิดการขายชั่วคราว'}
+                                        <Trash2 size={15} />
+                                        ลบสินค้า
                                     </button>
                                 </div>
                             </div>
@@ -1992,26 +1984,6 @@ export default function AdminPage({
                                                 <button
                                                     type="button"
                                                     onClick={() =>
-                                                        handleToggleSell(
-                                                            item.id,
-                                                        )
-                                                    }
-                                                    className={`grid size-9 place-items-center rounded-full transition-colors ${
-                                                        item.is_deleted
-                                                            ? 'bg-[var(--accent)] text-[var(--on-accent)]'
-                                                            : 'bg-[#fff9f6ed] text-[var(--muted)] hover:bg-[var(--rose)]'
-                                                    }`}
-                                                    title={
-                                                        item.is_deleted
-                                                            ? 'เปิดการขายอีกครั้ง'
-                                                            : 'ซ่อน/ปิดการขายชั่วคราว'
-                                                    }
-                                                >
-                                                    <Ban size={15} />
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() =>
                                                         handleDeleteProduct(
                                                             item.id,
                                                         )
@@ -2022,13 +1994,6 @@ export default function AdminPage({
                                                     <Trash2 size={15} />
                                                 </button>
                                             </div>
-
-                                            {/* Top-left Status Tag */}
-                                            {item.is_deleted ? (
-                                                <span className="flower-product-tag !bg-[#9a3b50] !text-white">
-                                                    ปิดการขาย
-                                                </span>
-                                            ) : null}
 
                                             {/* Bottom-left Stock Pill matching .catalog-stock */}
                                             <span className="catalog-stock">

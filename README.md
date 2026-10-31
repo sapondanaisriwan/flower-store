@@ -147,3 +147,4 @@ sail npm run dev
 sail artisan migrate:fresh --seed
 
 
+sail artisan storage:link

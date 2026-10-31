@@ -9,6 +9,7 @@ use App\Models\Product;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -21,7 +22,7 @@ class ProductController extends Controller
     public function index(Request $request): Response
     {
         $products = Product::withRatingStats()
-            ->orderBy('products.is_deleted', 'asc')
+            ->where('products.is_deleted', false)
             ->orderBy('products.id', 'asc')
             ->get();
 
@@ -46,9 +47,10 @@ class ProductController extends Controller
      */
     public function edit(int $product): Response
     {
-        Product::findOrFail($product);
+        Product::where('id', $product)->where('is_deleted', false)->firstOrFail();
 
         $products = Product::withRatingStats()
+            ->where('products.is_deleted', false)
             ->orderBy('products.id', 'asc')
             ->get();
 
@@ -121,17 +123,12 @@ class ProductController extends Controller
             throw ValidationException::withMessages(['color' => 'กรุณาเลือกสีดอกไม้อย่างน้อย 1 สี']);
         }
 
-        $picturePath = '/images/products/bouquets.png';
+        $picturePath = '/images/homepage/bouquets.png';
 
         $file = $request->file('picture') ?? $request->file('image');
         if ($file && $file->isValid()) {
-            $destDir = public_path('images/products');
-            if (! file_exists($destDir)) {
-                mkdir($destDir, 0755, true);
-            }
-            $filename = time().'_'.uniqid().'.'.$file->extension();
-            $file->move($destDir, $filename);
-            $picturePath = '/images/products/'.$filename;
+            $storedPath = $file->store('products', 'public');
+            $picturePath = '/storage/'.$storedPath;
         } elseif ($request->filled('picture_path')) {
             $picturePath = $request->input('picture_path');
         }
@@ -181,13 +178,11 @@ class ProductController extends Controller
 
         $file = $request->file('picture') ?? $request->file('image');
         if ($file && $file->isValid()) {
-            $destDir = public_path('images/products');
-            if (! file_exists($destDir)) {
-                mkdir($destDir, 0755, true);
+            if ($item->picture_path && str_starts_with($item->picture_path, '/storage/')) {
+                Storage::disk('public')->delete(substr($item->picture_path, strlen('/storage/')));
             }
-            $filename = time().'_'.uniqid().'.'.$file->extension();
-            $file->move($destDir, $filename);
-            $picturePath = '/images/products/'.$filename;
+            $storedPath = $file->store('products', 'public');
+            $picturePath = '/storage/'.$storedPath;
         } elseif ($request->filled('picture_path')) {
             $picturePath = $request->input('picture_path');
         }
@@ -268,9 +263,24 @@ class ProductController extends Controller
     public function destroy(int $product): RedirectResponse
     {
         $item = Product::findOrFail($product);
-        $item->update([
-            'is_deleted' => true,
-        ]);
+
+        // ลบออกจากตะกร้าและ Wishlist ของลูกค้าเพื่อไม่ให้ค้างหลังถูกลบ
+        $item->cartProducts()->delete();
+        $item->wishlistProducts()->delete();
+
+        // หากยังไม่เคยถูกสั่งซื้อในออเดอร์ใดเลย สามารถลบออกจากฐานข้อมูลได้จริง
+        if (! $item->orderProducts()->exists()) {
+            if ($item->picture_path && str_starts_with($item->picture_path, '/storage/')) {
+                Storage::disk('public')->delete(substr($item->picture_path, strlen('/storage/')));
+            }
+            $item->colorProducts()->delete();
+            $item->delete();
+        } else {
+            // หากมีประวัติในคำสั่งซื้อแล้ว ให้ใช้ is_deleted = true เพื่อไม่ให้ประวัติออเดอร์พัง
+            $item->update([
+                'is_deleted' => true,
+            ]);
+        }
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'ลบสินค้าเรียบร้อยแล้ว']);
 

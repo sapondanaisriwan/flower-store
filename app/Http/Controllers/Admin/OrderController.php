@@ -67,7 +67,7 @@ class OrderController extends Controller
             'statusCounts' => $counts,
             'selectedOrderStatus' => $statusFilter,
             'navCounts' => [
-                'products' => Product::count(),
+                'products' => Product::where('is_deleted', false)->count(),
                 'orders' => $counts['all'] ?? Order::count(),
                 'users' => User::count(),
             ],
@@ -102,7 +102,7 @@ class OrderController extends Controller
             'selectedOrder' => $record,
             'dbOrders' => [$record],
             'navCounts' => [
-                'products' => Product::count(),
+                'products' => Product::where('is_deleted', false)->count(),
                 'orders' => Order::count(),
                 'users' => User::count(),
             ],

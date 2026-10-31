@@ -36,7 +36,7 @@ class UserController extends Controller
             'initialTab' => 'users',
             'dbUsers' => $users,
             'navCounts' => [
-                'products' => Product::count(),
+                'products' => Product::where('is_deleted', false)->count(),
                 'orders' => Order::count(),
                 'users' => $users->count(),
             ],
