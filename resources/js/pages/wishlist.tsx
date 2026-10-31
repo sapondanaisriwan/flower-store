@@ -112,7 +112,7 @@ export default function Wishlist({ items }: { items: WishlistItem[] }) {
                                     <h2 className="mt-2 text-base">
                                         {item.name}
                                     </h2>
-                                    <p className="mt-1 text-xs text-[var(--muted)]">
+                                    <p className="line-clamp-2 mt-1 text-xs text-[var(--muted)]">
                                         {item.description}
                                     </p>
                                 </Link>
