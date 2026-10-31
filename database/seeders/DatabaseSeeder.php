@@ -10,15 +10,9 @@ class DatabaseSeeder extends Seeder
 {
     use WithoutModelEvents;
 
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
-        // 1. Seed ดอกไม้ 9 รายการเริ่มต้นเข้าร้าน
-        $this->call(ProductSeeder::class);
-
-        // 2. สร้างบัญชี Admin เริ่มต้นสำหรับเข้าจัดการระบบ
+        // 1. สร้างบัญชี Admin (id = 1)
         User::firstOrCreate(
             ['email' => 'admin@gmail.com'],
             [
@@ -30,7 +24,7 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        // 3. สร้างบัญชีลูกค้าทดสอบ 10 คน (customer1 - customer10)
+        // 2. สร้างลูกค้าทดสอบ 10 คน (id 2 - 11)
         for ($i = 1; $i <= 10; $i++) {
             User::firstOrCreate(
                 ['email' => "customer{$i}@gmail.com"],
@@ -43,5 +37,13 @@ class DatabaseSeeder extends Seeder
                 ]
             );
         }
+
+        // 3. Seed ข้อมูลร้าน (ลำดับสำคัญ: สินค้า -> ที่อยู่ -> ออเดอร์ -> เรทติ้ง)
+        $this->call([
+            ProductSeeder::class,
+            UserAddressSeeder::class,
+            OrderSeeder::class,
+            RatingSeeder::class,
+        ]);
     }
 }
