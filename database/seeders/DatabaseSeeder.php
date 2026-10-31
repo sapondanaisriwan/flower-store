@@ -12,7 +12,7 @@ class DatabaseSeeder extends Seeder
 
     public function run(): void
     {
-        // 1. สร้างบัญชี Admin (id = 1)
+        // 2. สร้างบัญชี Admin เริ่มต้นสำหรับเข้าจัดการระบบ
         User::firstOrCreate(
             ['email' => 'admin@gmail.com'],
             [
@@ -44,6 +44,7 @@ class DatabaseSeeder extends Seeder
             UserAddressSeeder::class,
             OrderSeeder::class,
             RatingSeeder::class,
+            ColorSeeder::class
         ]);
     }
 }
