@@ -148,3 +148,10 @@ sail artisan migrate:fresh --seed
 
 
 sail artisan storage:link
+
+docker compose -f compose.prod.yaml up -d
+
+docker compose -f compose.prod.yaml exec app php artisan migrate --seed --force
+
+<!-- แก้ upload รูป -->
+docker compose -f compose.prod.yaml exec app chown -R www-data:www-data /var/lib/nginx

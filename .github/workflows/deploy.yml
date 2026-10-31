@@ -1,0 +1,55 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches:
+      # - main
+      - dev
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    name: Build Docker Image & Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. ดึงโค้ดล่าสุดจาก Repository
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. ตั้งค่า Docker Buildx (ช่วยทำ Layer Caching ให้ build เร็วขึ้น)
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # 3. ล็อกอินเข้าสู่ Docker Hub
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # 4. Build และ Push Image ขึ้น Docker Hub
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/flower-shop:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # 5. SSH เข้าเครื่อง VPS เพื่อ Pull Image ใหม่และอัปเดต Container
+      - name: Deploy to VPS via SSH
+        uses: appleboy/ssh-action@v1.1.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          script: |
+            cd ~
+            docker compose -f compose.prod.yaml pull app
+            docker compose -f compose.prod.yaml up -d app
+            docker image prune -f
+
