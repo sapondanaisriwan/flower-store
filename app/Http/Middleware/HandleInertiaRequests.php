@@ -2,8 +2,9 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\CartProduct;
+use App\Models\WishlistProduct;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -44,12 +45,12 @@ class HandleInertiaRequests extends Middleware
             ],
             // ส่งรหัสสินค้าที่บันทึกไว้ ให้ปุ่มหัวใจทุกหน้ารู้สถานะเดียวกัน
             'wishlistIds' => fn () => $request->user()?->role === 'customer' && ! $request->user()->is_banned
-                ? DB::table('wishlist_product')->join('products', 'products.id', '=', 'wishlist_product.product_id')
+                ? WishlistProduct::join('products', 'products.id', '=', 'wishlist_product.product_id')
                     ->where('wishlist_user_id', $request->user()->id)->where('products.is_deleted', false)
                     ->pluck('product_id')->all()
                 : [],
             'cartLines' => fn () => $request->user()?->role === 'customer' && ! $request->user()->is_banned
-                ? DB::table('cart_product')->where('cart_user_id', $request->user()->id)
+                ? CartProduct::where('cart_user_id', $request->user()->id)
                     ->select('product_id as id', 'quantity')->orderBy('product_id')->get()
                 : [],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',

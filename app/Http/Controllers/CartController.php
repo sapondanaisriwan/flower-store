@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\Cart\CartItemRequest;
+use App\Models\Cart;
+use App\Models\CartProduct;
+use App\Models\Product;
 use App\Support\CustomerCart;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -42,12 +45,12 @@ class CartController extends Controller
         DB::transaction(function () use ($request, $productId, $adding): void {
             $userId = $request->user()->id;
             CustomerCart::lockOwner($userId);
-            $product = DB::table('products')->where('id', $productId)->lockForUpdate()->first();
+            $product = Product::where('id', $productId)->lockForUpdate()->first();
             if (! $product || $product->is_deleted) {
                 throw ValidationException::withMessages(['cart' => 'สินค้าไม่พร้อมขาย']);
             }
 
-            $line = DB::table('cart_product')->where('cart_user_id', $userId)->where('product_id', $productId)->first();
+            $line = CartProduct::where('cart_user_id', $userId)->where('product_id', $productId)->first();
             // ถ้าเป็นการแก้ ต้องมีรายการนี้ในตะกร้าของตัวเองก่อน ไม่พบตอบ 404
             abort_if(! $adding && ! $line, 404);
             // เพิ่มสินค้าเดิมให้บวกจำนวน แต่แก้จำนวนให้ใช้ค่าใหม่แทน
@@ -60,14 +63,18 @@ class CartController extends Controller
             }
 
             // สร้างตะกร้าถ้ายังไม่มี ถ้ามีแล้วข้ามไป ไม่สร้างซ้ำ
-            DB::table('carts')->insertOrIgnore(['user_id' => $userId]);
+            Cart::firstOrCreate(['user_id' => $userId]);
             if ($line) {
-                DB::table('cart_product')->where('cart_user_id', $userId)->where('product_id', $productId)
+                CartProduct::where('cart_user_id', $userId)
+                    ->where('product_id', $productId)
                     ->update(['quantity' => $quantity, 'updated_at' => now()]);
             } else {
-                DB::table('cart_product')->insert([
-                    'cart_user_id' => $userId, 'product_id' => $productId, 'quantity' => $quantity,
-                    'added_at' => now(), 'updated_at' => now(),
+                CartProduct::create([
+                    'cart_user_id' => $userId,
+                    'product_id' => $productId,
+                    'quantity' => $quantity,
+                    'added_at' => now(),
+                    'updated_at' => now(),
                 ]);
             }
         }, 3);
@@ -78,7 +85,7 @@ class CartController extends Controller
     {
         DB::transaction(function () use ($request, $product): void {
             CustomerCart::lockOwner($request->user()->id);
-            DB::table('cart_product')->where('cart_user_id', $request->user()->id)->where('product_id', $product)->delete();
+            CartProduct::where('cart_user_id', $request->user()->id)->where('product_id', $product)->delete();
         }, 3);
 
         return back();

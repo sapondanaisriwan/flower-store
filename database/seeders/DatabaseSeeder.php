@@ -10,18 +10,11 @@ class DatabaseSeeder extends Seeder
 {
     use WithoutModelEvents;
 
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
-        // 1. Seed ดอกไม้ 9 รายการเริ่มต้นเข้าร้าน
-        $this->call(ProductSeeder::class);
-        $this->call(ColorSeeder::class);
-
         // 2. สร้างบัญชี Admin เริ่มต้นสำหรับเข้าจัดการระบบ
         User::firstOrCreate(
-            ['email' => 'admin@flowerstore.com'],
+            ['email' => 'admin@gmail.com'],
             [
                 'username' => 'Shop Admin',
                 'role' => 'admin',
@@ -31,16 +24,27 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        // 3. สร้างบัญชีลูกค้าทดสอบ
-        User::firstOrCreate(
-            ['email' => 'customer@flowerstore.com'],
-            [
-                'username' => 'Test Customer',
-                'role' => 'customer',
-                'is_banned' => false,
-                'password' => bcrypt('password'),
-                'email_verified_at' => now(),
-            ]
-        );
+        // 2. สร้างลูกค้าทดสอบ 10 คน (id 2 - 11)
+        for ($i = 1; $i <= 10; $i++) {
+            User::firstOrCreate(
+                ['email' => "customer{$i}@gmail.com"],
+                [
+                    'username' => "Customer {$i}",
+                    'role' => 'customer',
+                    'is_banned' => false,
+                    'password' => bcrypt('password'),
+                    'email_verified_at' => now(),
+                ]
+            );
+        }
+
+        // 3. Seed ข้อมูลร้าน (ลำดับสำคัญ: สินค้า -> ที่อยู่ -> ออเดอร์ -> เรทติ้ง)
+        $this->call([
+            ProductSeeder::class,
+            UserAddressSeeder::class,
+            OrderSeeder::class,
+            RatingSeeder::class,
+            ColorSeeder::class
+        ]);
     }
 }

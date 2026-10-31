@@ -11,11 +11,21 @@ trait ShopFixtures
     // สร้างสินค้าทดสอบ เปลี่ยนราคา/สต็อกได้ผ่าน attributes
     private function product(array $attributes = []): int
     {
-        return DB::table('products')->insertGetId([
-            'name' => 'ช่อชมพู', 'price' => '590.25', 'stock' => 5, 'color' => 'pink',
+        $color = $attributes['color'] ?? 'pink';
+        unset($attributes['color']);
+
+        $id = DB::table('products')->insertGetId([
+            'name' => 'ช่อชมพู', 'price' => '590.25', 'stock' => 5,
             'description' => 'ดอกไม้', 'picture_path' => 'products/test.jpg', 'is_deleted' => false,
             'created_at' => now(), 'updated_at' => now(), ...$attributes,
         ]);
+
+        if (is_string($color) && trim($color) !== '') {
+            DB::table('colors')->insertOrIgnore(['name' => $color, 'hex_code' => '#dca3b2']);
+            DB::table('color_product')->insertOrIgnore(['color_name' => $color, 'product_id' => $id]);
+        }
+
+        return $id;
     }
 
     // ใส่รายการตะกร้าทดสอบให้เจ้าของที่ระบุ

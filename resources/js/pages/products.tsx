@@ -1,6 +1,42 @@
+import { productColors } from '@/data/product-colors';
+import { normalizeProduct } from '@/data/store-product';
 import { WishlistButton } from '@/components/store/wishlist-button';
-import { catalog } from '@/data/catalog';
 import { Head, Link, router, usePage } from '@inertiajs/react';
+
+/** สินค้าจากฐานข้อมูล (ส่งมาจาก ProductController) */
+interface DbProduct {
+    id: number;
+    name: string;
+    description: string;
+    price: string | number;
+    stock: number;
+    color: string | null;
+    colors?: { name: string; hex_code?: string }[];
+    picture_path: string | null;
+    is_deleted: boolean;
+    rating: string | number;
+    rating_count: string | number;
+}
+
+/** รูปแบบภายในที่ component ใช้งาน */
+interface NormalisedProduct {
+    id: number;
+    name: string;
+    thai: string;
+    price: number;
+    color: string;
+    colors: string[];
+    colorObjects: { name: string; hex_code?: string }[];
+    rating: number;
+    count: number;
+    stock: number;
+    position: string;
+    picture_path: string | null;
+}
+
+function normaliseDbProducts(dbProducts: DbProduct[]): NormalisedProduct[] {
+    return dbProducts.map(normalizeProduct);
+}
 import {
     ArrowRight,
     ChevronLeft,
@@ -26,30 +62,30 @@ import { login } from '@/routes';
 import '../../css/homepage.css';
 import '../../css/products.css';
 
-const colors = [
-    { value: 'pink', label: 'ชมพู & พีช', hex: '#dca3b2' },
-    { value: 'white', label: 'ขาวครีม', hex: '#fff9e9' },
-    { value: 'red', label: 'แดงไวน์', hex: '#9a3b50' },
-];
 const prices = [
     { value: 'all', label: 'ทุกราคา', min: 0, max: Infinity },
-    { value: 'under500', label: 'ต่ำกว่า ฿500', min: 0, max: 499 },
-    { value: '500to999', label: '฿500 – ฿999', min: 500, max: 999 },
+    { value: 'under500', label: 'ต่ำกว่า ฿500', min: 0, max: 500 },
+    { value: '500to999', label: '฿500 – ต่ำกว่า ฿1,000', min: 500, max: 1000 },
     { value: '1000plus', label: '฿1,000 ขึ้นไป', min: 1000, max: Infinity },
 ];
 const PAGE_SIZE = 6;
 
-export default function Products() {
+export default function Products({ dbProducts }: { dbProducts?: DbProduct[] }) {
     const { auth } = usePage().props;
     const { url } = usePage();
     const initialQuery =
         new URL(url, 'http://localhost').searchParams.get('q') ?? '';
+
+    // แสดงรายการจริงจาก Controller รวมถึงกรณีไม่มีสินค้า
+    const products: NormalisedProduct[] = normaliseDbProducts(dbProducts ?? []);
+
     return (
         <ProductsContent
             key={initialQuery}
             initialQuery={initialQuery}
             isAdmin={auth.user?.role === 'admin'}
             loggedIn={Boolean(auth.user)}
+            products={products}
         />
     );
 }
@@ -57,11 +93,14 @@ function ProductsContent({
     initialQuery,
     isAdmin,
     loggedIn,
+    products,
 }: {
     initialQuery: string;
     isAdmin: boolean;
     loggedIn: boolean;
+    products: NormalisedProduct[];
 }) {
+    const colors = productColors(products);
     const [query, setQuery] = useState(initialQuery);
     const [chosenColors, setChosenColors] = useState<string[]>([]);
     const [price, setPrice] = useState('all');
@@ -71,15 +110,21 @@ function ProductsContent({
     const [filtersOpen, setFiltersOpen] = useState(false);
     const [wishlistOpen, setWishlistOpen] = useState(false);
     const range = prices.find((item) => item.value === price) ?? prices[0];
-    const filtered = catalog
+    const filtered = products
         .filter(
             (item) =>
                 `${item.name} ${item.thai}`
                     .toLowerCase()
                     .includes(query.trim().toLowerCase()) &&
-                (!chosenColors.length || chosenColors.includes(item.color)) &&
+                (!chosenColors.length ||
+                    chosenColors.some(
+                        (c) =>
+                            item.colors.some(
+                                (ic) => ic.toLowerCase() === c.toLowerCase(),
+                            ) || item.color.toLowerCase() === c.toLowerCase(),
+                    )) &&
                 item.price >= range.min &&
-                item.price <= range.max &&
+                item.price < range.max &&
                 item.rating >= Number(rating),
         )
         .sort((a, b) =>
@@ -224,14 +269,14 @@ function ProductsContent({
                     ))}
                 </div>
             </fieldset>
-            <div className="catalog-filter-note">
+            {/* <div className="catalog-filter-note">
                 <Flower2 size={24} />
                 <p>
                     ช่อเล็ก ๆ<br />
                     ความรู้สึกที่ยิ่งใหญ่
                 </p>
                 <small>จัดส่งฟรีทั่วประเทศ</small>
-            </div>
+            </div> */}
         </div>
     );
     const turnPage = (next: number) => {
@@ -390,8 +435,7 @@ function ProductsContent({
                             </div>
                         )}
                         <p className="catalog-demo">
-                            คอลเลกชันตัวอย่าง · ภาพ ราคา คะแนน
-                            และสต็อกใช้เพื่อแสดงหน้าร้าน
+                            เลือกช่อที่ชอบ · จัดส่งฟรีทั่วประเทศ
                         </p>
                         <div className="catalog-grid">
                             {shown.map((item) => (
@@ -410,7 +454,10 @@ function ProductsContent({
                                             aria-label={`ดูรายละเอียด ${item.thai}`}
                                         >
                                             <img
-                                                src="/images/homepage/bouquets.png"
+                                                src={
+                                                    item.picture_path ??
+                                                    '/images/homepage/bouquets.png'
+                                                }
                                                 alt={item.thai}
                                                 style={{
                                                     objectPosition:

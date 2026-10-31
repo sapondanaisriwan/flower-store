@@ -1,4 +1,7 @@
-import { Link } from '@inertiajs/react';
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import InputError from '@/components/input-error';
+import { Link, useForm } from '@inertiajs/react';
 import { Check, Star, Truck } from 'lucide-react';
 import {
     type PurchasedProduct,
@@ -21,7 +24,15 @@ export function PurchasedOrderStatus({ status }: { status: string }) {
     );
 }
 
-export function PurchasedOrderItems({ items }: { items: PurchasedProduct[] }) {
+export function PurchasedOrderItems({
+    items,
+    orderId,
+    status,
+}: {
+    items: PurchasedProduct[];
+    orderId: number;
+    status: string;
+}) {
     return (
         <div className="divide-y divide-[var(--border)]">
             {items.map((item) => (
@@ -55,27 +66,134 @@ export function PurchasedOrderItems({ items }: { items: PurchasedProduct[] }) {
                             {money(item.purchase_price)} / ช่อ · จำนวน{' '}
                             {item.quantity} ช่อ
                         </p>
-                        {item.rating != null && (
-                            <span
-                                className="mt-3 flex gap-1 text-[var(--accent)]"
-                                aria-label={`คะแนน ${item.rating} จาก 5 ดาว`}
-                            >
-                                {[1, 2, 3, 4, 5].map((star) => (
-                                    <Star
-                                        key={star}
-                                        size={15}
-                                        fill={
-                                            star <= item.rating!
-                                                ? 'currentColor'
-                                                : 'none'
-                                        }
-                                    />
-                                ))}
-                            </span>
+                        {['delivered', 'success'].includes(status) ? (
+                            <PurchaseRating
+                                key={String(item.rating)}
+                                orderId={orderId}
+                                item={item}
+                            />
+                        ) : (
+                            <p className="mt-3 text-xs text-[var(--muted)]">
+                                ให้คะแนนได้เมื่อจัดส่งสำเร็จ
+                            </p>
                         )}
                     </div>
                 </div>
             ))}
         </div>
+    );
+}
+
+function PurchaseRating({
+    orderId,
+    item,
+}: {
+    orderId: number;
+    item: PurchasedProduct;
+}) {
+    const [editing, setEditing] = useState(item.rating == null);
+    const form = useForm({ rating: item.rating ?? 0 });
+    if (!editing)
+        return (
+            <div className="mt-3 flex items-center gap-2 text-[var(--accent)]">
+                <span
+                    aria-label={item.rating + ' จาก 5 ดาว'}
+                    className="flex gap-1"
+                >
+                    {[1, 2, 3, 4, 5].map((value) => (
+                        <Star
+                            key={value}
+                            size={16}
+                            fill={
+                                value <= (item.rating ?? 0)
+                                    ? 'currentColor'
+                                    : 'none'
+                            }
+                        />
+                    ))}
+                </span>
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setEditing(true)}
+                >
+                    แก้ไขคะแนน
+                </Button>
+            </div>
+        );
+    return (
+        <form
+            className="mt-3 space-y-2"
+            onSubmit={(event) => {
+                event.preventDefault();
+                form.put(
+                    '/orders/' +
+                        orderId +
+                        '/products/' +
+                        item.product_id +
+                        '/rating',
+                    {
+                        preserveScroll: true,
+                        onSuccess: () => setEditing(false),
+                    },
+                );
+            }}
+        >
+            <fieldset disabled={form.processing}>
+                <legend className="text-xs text-[var(--muted)]">
+                    ให้คะแนน {item.product_name}
+                </legend>
+                <div className="flex flex-wrap items-center gap-1">
+                    {[1, 2, 3, 4, 5].map((value) => (
+                        <label
+                            key={value}
+                            className="cursor-pointer p-2 text-[var(--accent)]"
+                        >
+                            <input
+                                type="radio"
+                                name="rating"
+                                value={value}
+                                checked={form.data.rating === value}
+                                onChange={() => form.setData('rating', value)}
+                                className="peer sr-only"
+                                aria-label={value + ' ดาว'}
+                            />
+                            <Star
+                                size={20}
+                                fill={
+                                    value <= form.data.rating
+                                        ? 'currentColor'
+                                        : 'none'
+                                }
+                                className="peer-focus-visible:outline-2"
+                            />
+                        </label>
+                    ))}
+                    <Button
+                        type="submit"
+                        size="sm"
+                        disabled={!form.data.rating || form.processing}
+                        className="rounded-full bg-[var(--accent)] text-white"
+                    >
+                        {form.processing ? 'กำลังบันทึก…' : 'บันทึก'}
+                    </Button>
+                    {item.rating != null && (
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                                form.reset();
+                                form.clearErrors();
+                                setEditing(false);
+                            }}
+                        >
+                            ยกเลิก
+                        </Button>
+                    )}
+                </div>
+            </fieldset>
+            <InputError message={form.errors.rating} />
+        </form>
     );
 }

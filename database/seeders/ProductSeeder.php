@@ -135,15 +135,56 @@ class ProductSeeder extends Seeder
             ],
         ];
 
-        foreach ($products as $product) {
-            $colors = $product['colors'];
-            unset($product['colors']);
+        // Colors
+        $colors = [
+            'โรสพิงค์' => '#dca3b2',
+            'ขาวครีม' => '#fff9e9',
+            'แดงไวน์' => '#9a3b50',
+            'ม่วงลาเวนเดอร์' => '#a78bbd',
+            'เหลืองพาสเทล' => '#e6c871',
+            'เขียวเซจ' => '#6b8f71',
+            'ฟ้าพาสเทล' => '#779fbd',
+            'ส้มพีช' => '#d99866',
+        ];
 
-            $product['created_at'] = now();
-            $product['updated_at'] = now();
-            
-            //TODO: Make model and use it to add product and add colors
-            DB::table('products')->updateOrInsert($product);
+        // Insert or update colors
+        foreach ($colors as $name => $hexCode) {
+            DB::table('colors')->updateOrInsert(
+                ['name' => $name],
+                ['hex_code' => $hexCode]
+            );
+        }
+
+        // Insert or update products and their colors
+        foreach ($products as $product) {
+
+            // Get product colors
+            $colorNames = $product['color'];
+
+            // Convert single color to array
+            if (!is_array($colorNames)) {
+                $colorNames = [$colorNames];
+            }
+
+            // Remove color from product data
+            unset($product['color']);
+
+            // Insert or update product
+            DB::table('products')->updateOrInsert(
+                ['id' => $product['id']],
+                $product
+            );
+
+            // Insert or update product-color relationships
+            foreach ($colorNames as $colorName) {
+                DB::table('color_product')->updateOrInsert(
+                    [
+                        'color_name' => $colorName,
+                        'product_id' => $product['id'],
+                    ],
+                    []
+                );
+            }
         }
     }
 }

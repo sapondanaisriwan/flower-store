@@ -23,12 +23,19 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { catalog, type CatalogProduct } from '@/data/catalog';
+import { normalizeProduct, type StoreProduct } from '@/data/store-product';
 import { login, register } from '@/routes';
 import '../../css/homepage.css';
 
-export default function ProductDetail({ productId }: { productId: number }) {
-    const product = catalog.find((item) => item.id === productId);
+export default function ProductDetail({
+    dbProduct,
+    relatedProducts = [],
+}: {
+    productId: number;
+    dbProduct: StoreProduct;
+    relatedProducts?: StoreProduct[];
+}) {
+    const product = dbProduct;
     if (!product)
         return (
             <div className="flower-home">
@@ -43,29 +50,60 @@ export default function ProductDetail({ productId }: { productId: number }) {
                 <StoreFooter />
             </div>
         );
-    return <ProductView key={product.id} product={product} />;
+
+    return (
+        <ProductView
+            key={product.id}
+            product={normalizeProduct(product)}
+            related={relatedProducts.map(normalizeProduct)}
+        />
+    );
 }
-function ProductView({ product }: { product: CatalogProduct }) {
+
+function ProductView({
+    product,
+    related,
+}: {
+    product: ReturnType<typeof normalizeProduct>;
+    related: ReturnType<typeof normalizeProduct>[];
+}) {
     const { auth } = usePage().props;
     const cart = useCart();
     const [quantity, setQuantity] = useState(product.stock ? '1' : '0');
     const [zoom, setZoom] = useState(false);
     const [action, setAction] = useState<string | null>(null);
+
     const amount = Number(quantity);
     const validQuantity =
         quantity.trim() !== '' &&
         Number.isInteger(amount) &&
         amount >= 1 &&
         amount <= product.stock;
+
     const isAdmin = auth.user?.role === 'admin';
-    const color = { pink: 'ชมพู & พีช', white: 'ขาวครีม', red: 'แดงไวน์' }[
-        product.color
-    ];
-    const related = catalog
-        .filter((item) => item.id !== product.id)
-        .slice(0, 3);
+
+    // เผื่อกรณี Admin เลือกหลายสีหรือสร้างสีใหม่ ให้แสดงรายชื่อสีทั้งหมดของช่อดอกไม้
+    const colorOptions: Record<string, string> = {
+        pink: 'ชมพู & พีช',
+        white: 'ขาวครีม',
+        red: 'แดงไวน์',
+    };
+    const productColorList =
+        product.colors && product.colors.length > 0
+            ? product.colors
+            : product.color
+              ? [product.color]
+              : [];
+    const color =
+        productColorList.length > 0
+            ? productColorList
+                  .map((c) => colorOptions[c.toLowerCase()] || c)
+                  .join(', ')
+            : 'ไม่ระบุ';
+
     const primary =
         'h-12 rounded-full bg-[var(--accent)] px-6 text-[var(--on-accent)] hover:bg-[var(--accent-hover)]';
+
     const changeQuantity = (delta: number) =>
         setQuantity(
             String(
@@ -79,6 +117,7 @@ function ProductView({ product }: { product: CatalogProduct }) {
                 ),
             ),
         );
+
     return (
         <div className="flower-home">
             <Head title={`${product.name} — My Flower Shop`}>
@@ -108,24 +147,21 @@ function ProductView({ product }: { product: CatalogProduct }) {
                             aria-label={`ขยายภาพ ${product.thai}`}
                             className="group relative block aspect-[4/5] w-full overflow-hidden rounded-xl bg-[var(--rose-soft)]"
                         >
+                            {/* แก้ไขให้ดึง src มาจากข้อมูลใน Database */}
                             <img
-                                src="/images/homepage/bouquets.png"
+                                src={product.picture_path}
                                 alt={product.thai}
                                 style={{ objectPosition: product.position }}
                                 className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105 motion-reduce:transition-none"
                                 fetchPriority="high"
                             />
-                            <span className="absolute top-4 left-4 rounded-full bg-[var(--cream)] px-3 py-1 text-xs">
+                            {/* <span className="absolute top-4 left-4 rounded-full bg-[var(--cream)] px-3 py-1 text-xs">
                                 ช่อดอกไม้ปลอม
-                            </span>
+                            </span> */}
                             <span className="absolute right-4 bottom-4 flex items-center gap-2 rounded-full bg-[var(--cream)] px-3 py-2 text-xs">
                                 <ZoomIn size={16} /> ขยายภาพ
                             </span>
                         </button>
-                        <p className="mt-3 text-xs leading-relaxed text-[var(--muted)]">
-                            ภาพประกอบตัวอย่าง · สินค้า ราคา คะแนน
-                            และสต็อกในหน้านี้เป็นข้อมูลสาธิต
-                        </p>
                     </section>
                     <section
                         aria-labelledby="product-title"
@@ -277,7 +313,7 @@ function ProductView({ product }: { product: CatalogProduct }) {
                                 </div>
                                 <p className="mt-3 text-xs text-[var(--muted)]">
                                     {auth.user
-                                        ? 'ตะกร้าทดลองบันทึกในเบราว์เซอร์ ยังไม่เปิดรับคำสั่งซื้อ'
+                                        ? 'บันทึกลงตะกร้าของบัญชีคุณ พร้อมสั่งซื้อได้ที่หน้าตะกร้า'
                                         : 'เข้าสู่ระบบเพื่อเพิ่มสินค้าในตะกร้าหรือรายการโปรด'}
                                 </p>
                             </div>
@@ -337,7 +373,7 @@ function ProductView({ product }: { product: CatalogProduct }) {
                                 </span>
                                 <p className="mt-1 text-xs text-[var(--muted)]">
                                     {product.count
-                                        ? `จากผู้ให้คะแนน ${product.count} คน · คะแนนตัวอย่าง`
+                                        ? `จากผู้ให้คะแนน ${product.count} คน`
                                         : 'ยังไม่มีผู้ให้คะแนนสินค้านี้'}
                                 </p>
                             </div>
@@ -365,7 +401,7 @@ function ProductView({ product }: { product: CatalogProduct }) {
                                 <div className="aspect-[4/3] overflow-hidden rounded-lg bg-[var(--rose-soft)]">
                                     <img
                                         loading="lazy"
-                                        src="/images/homepage/bouquets.png"
+                                        src={item.picture_path}
                                         alt={item.thai}
                                         style={{
                                             objectPosition: item.position,
@@ -394,8 +430,9 @@ function ProductView({ product }: { product: CatalogProduct }) {
                         <DialogTitle>{product.name}</DialogTitle>
                         <DialogDescription>ภาพประกอบสินค้า</DialogDescription>
                     </DialogHeader>
+                    {/* แก้ไขให้ดึงรูปตอนกดซูมมาจาก Database */}
                     <img
-                        src="/images/homepage/bouquets.png"
+                        src={product.picture_path}
                         alt={product.thai}
                         className="max-h-[70dvh] w-full rounded-md object-contain"
                     />
@@ -416,7 +453,7 @@ function ProductView({ product }: { product: CatalogProduct }) {
                         </DialogTitle>
                         <DialogDescription>
                             {auth.user
-                                ? `ยังไม่สามารถ${action}ได้ เนื่องจากยังไม่ได้เชื่อมต่อระบบร้านค้า ไม่มีการบันทึกหรือสั่งซื้อสินค้า`
+                                ? 'ดูรายการสินค้าและดำเนินการต่อได้จากตะกร้าของคุณ'
                                 : `กรุณาเข้าสู่ระบบเพื่อ${action}`}
                         </DialogDescription>
                     </DialogHeader>
