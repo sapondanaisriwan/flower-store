@@ -825,45 +825,50 @@ export default function Checkout({
                                     </div>
                                 </dl>
 
-                                <section className="mt-8 border-t border-[var(--border)] pt-6">
-                                    <h2 className="mb-5 flex items-center gap-3 text-xl font-bold text-[var(--ink)]">
-                                        <QrCode
-                                            size={21}
-                                            className="text-[var(--accent)]"
-                                        />{' '}
-                                        วิธีชำระเงิน
-                                    </h2>
-                                    <div className="flex items-center justify-between rounded-xl bg-white/70 p-4 border border-[var(--border)]/60">
-                                        <div>
-                                            <p className="text-sm font-bold text-[var(--ink)]">
-                                                สแกนจ่ายด้วย QR Code
-                                            </p>
-                                            <p className="mt-1 text-xs text-[var(--muted)]">
-                                                ช่องทางชำระเงินของร้าน
-                                            </p>
-                                        </div>
-                                        <Check
-                                            size={19}
-                                            className="text-[var(--accent)]"
-                                        />
-                                    </div>
-                                    <div className="mt-5 flex flex-col items-center rounded-2xl border border-dashed border-[var(--border)] bg-white/40 px-5 py-7 text-center">
-                                        <QrCode
-                                            size={50}
-                                            strokeWidth={1}
-                                            className="mb-3 text-[var(--muted)]"
-                                            aria-hidden="true"
-                                        />
-                                        <p className="font-bold text-sm text-[var(--ink)]">
-                                            QR ชำระเงินจริงยังไม่พร้อม
-                                        </p>
-                                        <p className="mt-2 max-w-sm text-xs leading-6 text-[var(--muted)]">
-                                            เมื่อเชื่อมต่อระบบชำระเงินแล้ว จะแสดง QR
-                                            สำหรับยอดคำสั่งซื้อที่นี่ ยืนยันคำสั่งซื้อได้
-                                            แต่ยังไม่ถือว่าชำระเงินแล้ว
-                                        </p>
-                                    </div>
-                                </section>
+                                
+<section className="mt-8 border-t border-[var(--border)] pt-6">
+    <h2 className="mb-5 flex items-center gap-3 text-xl font-bold text-[var(--ink)]">
+        <QrCode
+            size={21}
+            className="text-[var(--accent)]"
+        />
+        วิธีชำระเงิน
+    </h2>
+
+    <div className="flex items-center justify-between rounded-xl border border-[var(--border)]/60 bg-white/70 p-4">
+        <div>
+            <p className="text-sm font-bold text-[var(--ink)]">
+                สแกนจ่ายด้วย QR Code
+            </p>
+
+            <p className="mt-1 text-xs text-[var(--muted)]">
+                ช่องทางชำระเงินของร้าน
+            </p>
+        </div>
+
+        <Check
+            size={19}
+            className="text-[var(--accent)]"
+        />
+    </div>
+
+    <div className="mt-5 flex flex-col items-center rounded-2xl border border-dashed border-[var(--border)] bg-white/40 px-5 py-4 text-center">
+        <img
+            src="/images/qrcode/qrcode.jpg"
+            alt="BloomyShop Payment QR Code"
+            className="mb-3 h-[200px] w-[200px] object-contain"
+        />
+
+        <p className="text-sm font-bold text-[var(--ink)]">
+            BloomyShop
+        </p>
+
+        <p className="mt-1 text-xs text-[var(--muted)]">
+            สแกนเพื่อชำระเงิน
+        </p>
+    </div>
+</section>
+
 
                                 {serverOrderError && (
                                     <p
