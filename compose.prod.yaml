@@ -1,0 +1,89 @@
+name: flower-shop-final
+services:
+    # 1. Nginx Proxy Manager (รับพอร์ต 80, 443 จาก Cloudflare และพอร์ต 81 สำหรับหน้าตั้งค่า)
+    npm:
+        image: 'jc21/nginx-proxy-manager:latest'
+        container_name: flower-npm
+        restart: unless-stopped
+        ports:
+            - '80:80'
+            - '443:443'
+            - '81:81'
+        volumes:
+            - 'npm-data:/data'
+            - 'npm-letsencrypt:/etc/letsencrypt'
+        networks:
+            - flower-net
+
+    # 2. Flower Shop Application (Nginx + PHP-FPM ในตัว ดึงจาก Docker Hub)
+    app:
+        image: '${DOCKERHUB_IMAGE:-adashima/flower-shop:latest}'
+        container_name: flower-app
+        restart: unless-stopped
+        ports:
+            - '${APP_PORT:-8080}:80'
+        env_file:
+            - .env
+        volumes:
+            - 'app-storage:/var/www/html/storage'
+        networks:
+            - flower-net
+        depends_on:
+            mysql:
+                condition: service_healthy
+
+    # 3. MySQL 8.4 Database
+    mysql:
+        image: 'mysql:8.4'
+        container_name: flower-mysql
+        restart: unless-stopped
+        environment:
+            MYSQL_ROOT_PASSWORD: '${DB_PASSWORD}'
+            MYSQL_DATABASE: '${DB_DATABASE:-flower_shop}'
+            MYSQL_USER: '${DB_USERNAME:-admin}'
+            MYSQL_PASSWORD: '${DB_PASSWORD}'
+        volumes:
+            - 'mysql-data:/var/lib/mysql'
+        networks:
+            - flower-net
+        healthcheck:
+            test:
+                - CMD
+                - mysqladmin
+                - ping
+                - '-p${DB_PASSWORD}'
+            retries: 5
+            timeout: 5s
+            interval: 10s
+
+    # 4. phpMyAdmin (จัดการฐานข้อมูลผ่านเว็บ เช่น pma.sapondanai.dev)
+    phpmyadmin:
+        image: 'phpmyadmin:latest'
+        container_name: flower-phpmyadmin
+        restart: unless-stopped
+        ports:
+            - '${PMA_PORT:-8081}:80'
+        environment:
+            PMA_HOST: mysql
+            PMA_PORT: 3306
+            UPLOAD_LIMIT: 50M
+        networks:
+            - flower-net
+        depends_on:
+            mysql:
+                condition: service_healthy
+
+networks:
+    flower-net:
+        driver: bridge
+
+volumes:
+    npm-data:
+        driver: local
+    npm-letsencrypt:
+        driver: local
+    app-storage:
+        driver: local
+    mysql-data:
+        driver: local
+
