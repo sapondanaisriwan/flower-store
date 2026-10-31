@@ -222,7 +222,7 @@ export default function Welcome({
                                         }
                                     >
                                         <h3>{product.name}</h3>
-                                        <p>{product.thai}</p>
+                                        <p className="line-clamp-2">{product.thai}</p>
                                     </button>
                                     <span className="flower-price">
                                         ฿{product.price.toLocaleString()}
