@@ -1,38 +1,257 @@
-import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import {
     ArrowRight,
     Check,
+    Edit3,
     Flower2,
     Heart,
+    Loader2,
     LoaderCircle,
     LogOut,
+    MapPin,
     Package,
+    Plus,
     ShieldCheck,
+    Trash2,
     UserRound,
 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import DeleteUser from '@/components/delete-user';
 import InputError from '@/components/input-error';
 import { StoreFooter, StoreHeader } from '@/components/store/store-chrome';
 import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { logout } from '@/routes';
 import { edit, update } from '@/routes/profile';
 import { send } from '@/routes/verification';
+import { type DeliveryAddress } from '@/types/shop';
 import '../../../css/homepage.css';
+
+const emptyAddressForm: DeliveryAddress = {
+    address_name: '',
+    recipient_name: '',
+    phone_number: '',
+    address_line: '',
+    subdistrict: '',
+    district: '',
+    province: '',
+    postal_code: '',
+};
 
 export default function Profile({
     mustVerifyEmail,
     status,
+    addresses: initialAddresses = [],
 }: {
     mustVerifyEmail: boolean;
     status?: string;
+    addresses?: DeliveryAddress[];
 }) {
     const { auth } = usePage().props;
     const form = useForm({
         username: auth.user.username,
         email: auth.user.email,
     });
+
+    const [addressList, setAddressList] =
+        useState<DeliveryAddress[]>(initialAddresses);
+
+    useEffect(() => {
+        setAddressList(initialAddresses);
+    }, [initialAddresses]);
+
+    // Address Modal (Add / Edit) State
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
+    const [editingOriginalName, setEditingOriginalName] = useState<
+        string | null
+    >(null);
+    const [modalData, setModalData] =
+        useState<DeliveryAddress>(emptyAddressForm);
+    const [modalErrors, setModalErrors] = useState<Record<string, string>>({});
+    const [isSubmittingAddress, setIsSubmittingAddress] = useState(false);
+
+    const openAddModal = () => {
+        setModalMode('add');
+        setEditingOriginalName(null);
+        setModalData({ ...emptyAddressForm });
+        setModalErrors({});
+        setIsModalOpen(true);
+    };
+
+    const openEditModal = (addr: DeliveryAddress, e?: React.MouseEvent) => {
+        e?.stopPropagation();
+        setModalMode('edit');
+        setEditingOriginalName(addr.address_name);
+        setModalData({ ...addr });
+        setModalErrors({});
+        setIsModalOpen(true);
+    };
+
+    const handleDeleteAddress = (
+        addressName: string,
+        e?: React.MouseEvent,
+    ) => {
+        e?.stopPropagation();
+        if (
+            !window.confirm(
+                `คุณต้องการลบที่อยู่ "${addressName}" หรือไม่?`,
+            )
+        ) {
+            return;
+        }
+
+        router.delete(`/addresses/${encodeURIComponent(addressName)}`, {
+            preserveScroll: true,
+            onSuccess: () => {
+                toast.success(`ลบที่อยู่ "${addressName}" แล้ว`);
+                setAddressList((prev) =>
+                    prev.filter((a) => a.address_name !== addressName),
+                );
+            },
+            onError: () => {
+                toast.error('ไม่สามารถลบที่อยู่นี้ได้');
+            },
+        });
+    };
+
+    const handleSaveAddress = (e: React.FormEvent) => {
+        e.preventDefault();
+        const errors: Record<string, string> = {};
+
+        if (!modalData.address_name.trim()) {
+            errors.address_name = 'กรุณากรอกชื่อที่อยู่ เช่น บ้าน หรือ ที่ทำงาน';
+        } else if (
+            modalMode === 'add' &&
+            addressList.some(
+                (a) =>
+                    a.address_name.toLowerCase() ===
+                    modalData.address_name.trim().toLowerCase(),
+            )
+        ) {
+            errors.address_name =
+                'มีที่อยู่ที่ใช้ชื่อนี้อยู่แล้ว กรุณาตั้งชื่ออื่น';
+        } else if (
+            modalMode === 'edit' &&
+            editingOriginalName &&
+            modalData.address_name.trim().toLowerCase() !==
+                editingOriginalName.toLowerCase() &&
+            addressList.some(
+                (a) =>
+                    a.address_name.toLowerCase() ===
+                    modalData.address_name.trim().toLowerCase(),
+            )
+        ) {
+            errors.address_name =
+                'มีที่อยู่ที่ใช้ชื่อนี้อยู่แล้ว กรุณาตั้งชื่ออื่น';
+        }
+
+        if (!modalData.recipient_name.trim()) {
+            errors.recipient_name = 'กรุณากรอกชื่อ–นามสกุลผู้รับ';
+        }
+
+        const cleanedPhone = modalData.phone_number.replace(/[\s-]/g, '');
+        if (!cleanedPhone) {
+            errors.phone_number = 'กรุณากรอกเบอร์โทรศัพท์';
+        } else if (!/^0\d{8,9}$/.test(cleanedPhone)) {
+            errors.phone_number =
+                'เบอร์โทรศัพท์ต้องขึ้นต้นด้วย 0 และมีความยาว 9–10 หลัก';
+        }
+
+        if (!modalData.address_line.trim()) {
+            errors.address_line =
+                'กรุณากรอกรายละเอียดที่อยู่ (บ้านเลขที่ หมู่ ซอย ถนน)';
+        }
+
+        if (!modalData.subdistrict.trim()) {
+            errors.subdistrict = 'กรุณากรอกตำบล / แขวง';
+        }
+
+        if (!modalData.district.trim()) {
+            errors.district = 'กรุณากรอกอำเภอ / เขต';
+        }
+
+        if (!modalData.province.trim()) {
+            errors.province = 'กรุณากรอกจังหวัด';
+        }
+
+        const cleanedPostal = modalData.postal_code.trim();
+        if (!cleanedPostal) {
+            errors.postal_code = 'กรุณากรอกรหัสไปรษณีย์';
+        } else if (!/^[1-9]\d{4}$/.test(cleanedPostal)) {
+            errors.postal_code = 'รหัสไปรษณีย์ต้องเป็นตัวเลข 5 หลัก';
+        }
+
+        setModalErrors(errors);
+        if (Object.keys(errors).length > 0) return;
+
+        setIsSubmittingAddress(true);
+
+        const payload: DeliveryAddress = {
+            address_name: modalData.address_name.trim(),
+            recipient_name: modalData.recipient_name.trim(),
+            phone_number: cleanedPhone,
+            address_line: modalData.address_line.trim(),
+            subdistrict: modalData.subdistrict.trim(),
+            district: modalData.district.trim(),
+            province: modalData.province.trim(),
+            postal_code: cleanedPostal,
+        };
+
+        if (modalMode === 'add') {
+            router.post('/addresses', payload, {
+                preserveScroll: true,
+                onSuccess: () => {
+                    toast.success('บันทึกที่อยู่เรียบร้อยแล้ว');
+                    setIsModalOpen(false);
+                    setAddressList((prev) => {
+                        const filtered = prev.filter(
+                            (a) => a.address_name !== payload.address_name,
+                        );
+                        return [...filtered, payload];
+                    });
+                },
+                onError: (serverErrors) => {
+                    setModalErrors(serverErrors);
+                    toast.error('กรุณาตรวจสอบข้อมูลที่กรอก');
+                },
+                onFinish: () => setIsSubmittingAddress(false),
+            });
+        } else if (modalMode === 'edit' && editingOriginalName) {
+            router.patch(
+                `/addresses/${encodeURIComponent(editingOriginalName)}`,
+                payload,
+                {
+                    preserveScroll: true,
+                    onSuccess: () => {
+                        toast.success('แก้ไขที่อยู่เรียบร้อยแล้ว');
+                        setIsModalOpen(false);
+                        setAddressList((prev) =>
+                            prev.map((a) =>
+                                a.address_name === editingOriginalName
+                                    ? payload
+                                    : a,
+                            ),
+                        );
+                    },
+                    onError: (serverErrors) => {
+                        setModalErrors(serverErrors);
+                        toast.error('กรุณาตรวจสอบข้อมูลที่กรอก');
+                    },
+                    onFinish: () => setIsSubmittingAddress(false),
+                },
+            );
+        }
+    };
     const primary =
         'h-11 rounded-full bg-[var(--accent)] px-6 text-[var(--on-accent)] hover:bg-[var(--accent-hover)]';
     const inputStyle =
@@ -289,39 +508,430 @@ export default function Profile({
                                 </div>
                             </form>
                         </section>
-                        {/* <section className="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-[var(--rose-soft)] p-6">
-                            <div className="flex gap-3">
-                                <ShieldCheck
-                                    size={23}
-                                    className="shrink-0 text-[var(--accent)]"
-                                />
-                                <div>
-                                    <h2 className="font-bold">
-                                        ดูแลบัญชีให้ปลอดภัย
-                                    </h2>
-                                    <p className="mt-2 text-xs leading-6 text-[var(--muted)]">
-                                        จัดการรหัสผ่านและวิธีเข้าสู่ระบบของคุณ
-                                    </p>
+
+                        {auth.user.role !== 'admin' && (
+                            <section className="rounded-2xl border border-[var(--border)] p-5 sm:p-8">
+                                <div className="mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-[var(--border)] pb-5">
+                                    <div>
+                                        <h2 className="flex items-center gap-2.5 text-xl font-bold">
+                                            <MapPin
+                                                size={21}
+                                                className="text-[var(--accent)]"
+                                            />
+                                            ที่อยู่จัดส่งของฉัน (
+                                            {addressList.length})
+                                        </h2>
+                                        <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
+                                            จัดการที่อยู่สำหรับจัดส่งดอกไม้ของคุณ
+                                        </p>
+                                    </div>
+                                    <Button
+                                        type="button"
+                                        size="sm"
+                                        onClick={openAddModal}
+                                        className="h-9 gap-1.5 rounded-full bg-[var(--accent)] px-4 text-xs text-white hover:bg-[var(--accent-hover)]"
+                                    >
+                                        <Plus size={15} />
+                                        เพิ่มที่อยู่ใหม่
+                                    </Button>
                                 </div>
-                            </div>
-                            <Link
-                                href="/settings/security"
-                                className="flower-text-link text-sm"
-                            >
-                                ตั้งค่าความปลอดภัย <ArrowRight size={16} />
-                            </Link>
-                        </section> */}
-                        {/* <details className="rounded-2xl border border-[var(--border)] p-5 sm:p-6">
-                            <summary className="cursor-pointer text-sm text-[var(--muted)]">
-                                จัดการการลบบัญชี
-                            </summary>
-                            <div className="mt-6">
-                                <DeleteUser />
-                            </div>
-                        </details> */}
+
+                                {addressList.length === 0 ? (
+                                    <div className="my-2 rounded-2xl border border-dashed border-[var(--border)] bg-white/50 p-8 text-center">
+                                        <MapPin
+                                            size={36}
+                                            className="mx-auto mb-3 text-[var(--muted)]"
+                                        />
+                                        <p className="text-sm font-semibold text-[var(--ink)]">
+                                            ยังไม่มีที่อยู่ที่บันทึกไว้
+                                        </p>
+                                        <p className="mt-1 text-xs text-[var(--muted)]">
+                                            เพิ่มที่อยู่สำหรับจัดส่งดอกไม้ของคุณได้ทันที
+                                        </p>
+                                        <Button
+                                            type="button"
+                                            onClick={openAddModal}
+                                            className="mt-4 gap-1.5 rounded-full bg-[var(--accent)] px-5 text-xs text-white hover:bg-[var(--accent-hover)]"
+                                        >
+                                            <Plus size={14} /> เพิ่มที่อยู่แรกของคุณ
+                                        </Button>
+                                    </div>
+                                ) : (
+                                    <div className="grid gap-3.5 sm:grid-cols-2">
+                                        {addressList.map((addr) => (
+                                            <div
+                                                key={addr.address_name}
+                                                className="relative flex flex-col justify-between rounded-2xl border border-[var(--border)] bg-white/60 p-4 text-left transition-all duration-200 hover:border-[var(--accent)]/40 hover:bg-white"
+                                            >
+                                                <div>
+                                                    <div className="mb-2 flex items-center justify-between gap-2">
+                                                        <span className="inline-flex items-center rounded-full bg-[var(--rose)] px-2.5 py-0.5 text-xs font-bold text-[var(--accent)]">
+                                                            {addr.address_name}
+                                                        </span>
+                                                    </div>
+
+                                                    <div className="text-sm font-bold text-[var(--ink)]">
+                                                        {addr.recipient_name}
+                                                        <span className="ml-2 text-xs font-normal text-[var(--muted)]">
+                                                            {addr.phone_number}
+                                                        </span>
+                                                    </div>
+
+                                                    <p className="mt-1.5 text-xs leading-relaxed text-[var(--muted)]">
+                                                        {addr.address_line} ต.
+                                                        {addr.subdistrict} อ.
+                                                        {addr.district} จ.
+                                                        {addr.province}{' '}
+                                                        {addr.postal_code}
+                                                    </p>
+                                                </div>
+
+                                                <div className="mt-4 flex items-center justify-end gap-2 border-t border-[var(--border)]/60 pt-3">
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="h-8 gap-1 rounded-full px-3 text-xs text-[var(--muted)] hover:bg-[var(--rose-soft)] hover:text-[var(--ink)]"
+                                                        onClick={(e) =>
+                                                            openEditModal(
+                                                                addr,
+                                                                e,
+                                                            )
+                                                        }
+                                                    >
+                                                        <Edit3 size={13} />
+                                                        แก้ไข
+                                                    </Button>
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="h-8 gap-1 rounded-full px-3 text-xs text-red-500 hover:bg-red-50 hover:text-red-700"
+                                                        onClick={(e) =>
+                                                            handleDeleteAddress(
+                                                                addr.address_name,
+                                                                e,
+                                                            )
+                                                        }
+                                                    >
+                                                        <Trash2 size={13} />
+                                                        ลบ
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        ))}
+
+                                        {/* Add Address Card Button */}
+                                        <button
+                                            type="button"
+                                            onClick={openAddModal}
+                                            className="flex min-h-[140px] flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[var(--border)] bg-white/40 p-4 text-[var(--accent)] transition-all hover:border-[var(--accent)] hover:bg-white"
+                                        >
+                                            <div className="grid size-9 place-items-center rounded-full bg-[var(--rose-soft)]">
+                                                <Plus size={18} />
+                                            </div>
+                                            <span className="text-sm font-semibold">
+                                                + เพิ่มที่อยู่ใหม่
+                                            </span>
+                                            <span className="text-xs text-[var(--muted)]">
+                                                บันทึกที่อยู่จัดส่งเพิ่มเติม
+                                            </span>
+                                        </button>
+                                    </div>
+                                )}
+                            </section>
+                        )}
                     </div>
                 </div>
             </main>
+
+            {/* MODAL DIALOG: Add / Edit Address */}
+            <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+                <DialogContent className="flower-dialog max-h-[90vh] overflow-y-auto sm:max-w-xl">
+                    <DialogHeader>
+                        <DialogTitle className="text-xl font-bold">
+                            {modalMode === 'add'
+                                ? 'เพิ่มที่อยู่จัดส่งใหม่'
+                                : `แก้ไขที่อยู่: ${editingOriginalName}`}
+                        </DialogTitle>
+                        <DialogDescription className="text-xs text-[var(--muted)]">
+                            กรอกรายละเอียดที่อยู่จัดส่งให้ครบถ้วนเพื่อใช้สำหรับส่งดอกไม้
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <form
+                        onSubmit={handleSaveAddress}
+                        className="mt-4 space-y-4"
+                    >
+                        <div className="space-y-1.5">
+                            <Label
+                                htmlFor="modal-address_name"
+                                className="text-xs font-semibold"
+                            >
+                                ชื่อที่อยู่{' '}
+                                <span className="text-[var(--accent)]">*</span>
+                            </Label>
+                            <Input
+                                id="modal-address_name"
+                                placeholder="เช่น บ้าน, คอนโด, ที่ทำงาน"
+                                value={modalData.address_name}
+                                onChange={(e) =>
+                                    setModalData((prev) => ({
+                                        ...prev,
+                                        address_name: e.target.value,
+                                    }))
+                                }
+                                className="h-11 border-[var(--border)] bg-white text-sm"
+                            />
+                            {modalErrors.address_name && (
+                                <p className="text-xs font-medium text-red-600">
+                                    {modalErrors.address_name}
+                                </p>
+                            )}
+                        </div>
+
+                        <div className="grid gap-4 sm:grid-cols-2">
+                            <div className="space-y-1.5">
+                                <Label
+                                    htmlFor="modal-recipient_name"
+                                    className="text-xs font-semibold"
+                                >
+                                    ชื่อ–นามสกุลผู้รับ{' '}
+                                    <span className="text-[var(--accent)]">
+                                        *
+                                    </span>
+                                </Label>
+                                <Input
+                                    id="modal-recipient_name"
+                                    placeholder="ชื่อและนามสกุล"
+                                    value={modalData.recipient_name}
+                                    onChange={(e) =>
+                                        setModalData((prev) => ({
+                                            ...prev,
+                                            recipient_name: e.target.value,
+                                        }))
+                                    }
+                                    className="h-11 border-[var(--border)] bg-white text-sm"
+                                />
+                                {modalErrors.recipient_name && (
+                                    <p className="text-xs font-medium text-red-600">
+                                        {modalErrors.recipient_name}
+                                    </p>
+                                )}
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <Label
+                                    htmlFor="modal-phone_number"
+                                    className="text-xs font-semibold"
+                                >
+                                    เบอร์โทรศัพท์{' '}
+                                    <span className="text-[var(--accent)]">
+                                        *
+                                    </span>
+                                </Label>
+                                <Input
+                                    id="modal-phone_number"
+                                    placeholder="0812345678"
+                                    type="tel"
+                                    maxLength={15}
+                                    value={modalData.phone_number}
+                                    onChange={(e) =>
+                                        setModalData((prev) => ({
+                                            ...prev,
+                                            phone_number: e.target.value,
+                                        }))
+                                    }
+                                    className="h-11 border-[var(--border)] bg-white text-sm"
+                                />
+                                {modalErrors.phone_number && (
+                                    <p className="text-xs font-medium text-red-600">
+                                        {modalErrors.phone_number}
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="space-y-1.5">
+                            <Label
+                                htmlFor="modal-address_line"
+                                className="text-xs font-semibold"
+                            >
+                                รายละเอียดที่อยู่ (บ้านเลขที่ หมู่ อาคาร ซอย
+                                ถนน){' '}
+                                <span className="text-[var(--accent)]">*</span>
+                            </Label>
+                            <Input
+                                id="modal-address_line"
+                                placeholder="บ้านเลขที่ ซอย ถนน รายละเอียดเพิ่มเติม"
+                                value={modalData.address_line}
+                                onChange={(e) =>
+                                    setModalData((prev) => ({
+                                        ...prev,
+                                        address_line: e.target.value,
+                                    }))
+                                }
+                                className="h-11 border-[var(--border)] bg-white text-sm"
+                            />
+                            {modalErrors.address_line && (
+                                <p className="text-xs font-medium text-red-600">
+                                    {modalErrors.address_line}
+                                </p>
+                            )}
+                        </div>
+
+                        <div className="grid gap-4 sm:grid-cols-2">
+                            <div className="space-y-1.5">
+                                <Label
+                                    htmlFor="modal-subdistrict"
+                                    className="text-xs font-semibold"
+                                >
+                                    ตำบล / แขวง{' '}
+                                    <span className="text-[var(--accent)]">
+                                        *
+                                    </span>
+                                </Label>
+                                <Input
+                                    id="modal-subdistrict"
+                                    placeholder="ตำบล หรือ แขวง"
+                                    value={modalData.subdistrict}
+                                    onChange={(e) =>
+                                        setModalData((prev) => ({
+                                            ...prev,
+                                            subdistrict: e.target.value,
+                                        }))
+                                    }
+                                    className="h-11 border-[var(--border)] bg-white text-sm"
+                                />
+                                {modalErrors.subdistrict && (
+                                    <p className="text-xs font-medium text-red-600">
+                                        {modalErrors.subdistrict}
+                                    </p>
+                                )}
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <Label
+                                    htmlFor="modal-district"
+                                    className="text-xs font-semibold"
+                                >
+                                    อำเภอ / เขต{' '}
+                                    <span className="text-[var(--accent)]">
+                                        *
+                                    </span>
+                                </Label>
+                                <Input
+                                    id="modal-district"
+                                    placeholder="อำเภอ หรือ เขต"
+                                    value={modalData.district}
+                                    onChange={(e) =>
+                                        setModalData((prev) => ({
+                                            ...prev,
+                                            district: e.target.value,
+                                        }))
+                                    }
+                                    className="h-11 border-[var(--border)] bg-white text-sm"
+                                />
+                                {modalErrors.district && (
+                                    <p className="text-xs font-medium text-red-600">
+                                        {modalErrors.district}
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="grid gap-4 sm:grid-cols-2">
+                            <div className="space-y-1.5">
+                                <Label
+                                    htmlFor="modal-province"
+                                    className="text-xs font-semibold"
+                                >
+                                    จังหวัด{' '}
+                                    <span className="text-[var(--accent)]">
+                                        *
+                                    </span>
+                                </Label>
+                                <Input
+                                    id="modal-province"
+                                    placeholder="จังหวัด"
+                                    value={modalData.province}
+                                    onChange={(e) =>
+                                        setModalData((prev) => ({
+                                            ...prev,
+                                            province: e.target.value,
+                                        }))
+                                    }
+                                    className="h-11 border-[var(--border)] bg-white text-sm"
+                                />
+                                {modalErrors.province && (
+                                    <p className="text-xs font-medium text-red-600">
+                                        {modalErrors.province}
+                                    </p>
+                                )}
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <Label
+                                    htmlFor="modal-postal_code"
+                                    className="text-xs font-semibold"
+                                >
+                                    รหัสไปรษณีย์{' '}
+                                    <span className="text-[var(--accent)]">
+                                        *
+                                    </span>
+                                </Label>
+                                <Input
+                                    id="modal-postal_code"
+                                    placeholder="รหัสไปรษณีย์ 5 หลัก"
+                                    maxLength={5}
+                                    inputMode="numeric"
+                                    value={modalData.postal_code}
+                                    onChange={(e) =>
+                                        setModalData((prev) => ({
+                                            ...prev,
+                                            postal_code: e.target.value,
+                                        }))
+                                    }
+                                    className="h-11 border-[var(--border)] bg-white text-sm"
+                                />
+                                {modalErrors.postal_code && (
+                                    <p className="text-xs font-medium text-red-600">
+                                        {modalErrors.postal_code}
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="mt-6 flex items-center justify-end gap-3 border-t border-[var(--border)] pt-4">
+                            <Button
+                                type="button"
+                                onClick={() => setIsModalOpen(false)}
+                                className="h-10 gap-1.5 rounded-full bg-[var(--accent)] px-6 text-xs text-white hover:bg-[var(--accent-hover)]"
+                            >
+                                ยกเลิก
+                            </Button>
+                            <Button
+                                type="submit"
+                                disabled={isSubmittingAddress}
+                                className="h-10 gap-1.5 rounded-full bg-[var(--accent)] px-6 text-xs text-white hover:bg-[var(--accent-hover)]"
+                            >
+                                {isSubmittingAddress ? (
+                                    <>
+                                        <Loader2
+                                            size={14}
+                                            className="animate-spin"
+                                        />
+                                        กำลังบันทึก...
+                                    </>
+                                ) : (
+                                    'บันทึกที่อยู่'
+                                )}
+                            </Button>
+                        </div>
+                    </form>
+                </DialogContent>
+            </Dialog>
+
             <StoreFooter />
         </div>
     );

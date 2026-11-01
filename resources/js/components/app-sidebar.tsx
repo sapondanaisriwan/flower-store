@@ -23,7 +23,7 @@ export function AppSidebar() {
         ? [
               {
                   title: 'Admin Dashboard',
-                  href: '/dashboard/admin',
+                  href: '/admin/products',
                   icon: LayoutGrid,
               },
               {
@@ -89,7 +89,7 @@ export function AppSidebar() {
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg" asChild>
-                            <Link href={isAdmin ? '/dashboard/admin' : '/dashboard/user'} prefetch>
+                            <Link href={isAdmin ? '/admin/products' : '/dashboard/user'} prefetch>
                                 <AppLogo />
                             </Link>
                         </SidebarMenuButton>

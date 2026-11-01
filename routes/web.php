@@ -20,10 +20,10 @@ Route::get('/', [ProductController::class, 'home'])->name('home');
 Route::get('/products', [ProductController::class, 'index'])->name('products');
 Route::get('/products/{product}', [ProductController::class, 'show'])->whereNumber('product')->name('products.show');
 
-// หน้าแยก Dashboard ตามสิทธิ์ (Admin -> /dashboard/admin, User -> /dashboard/user)
+// หน้าแยก Dashboard ตามสิทธิ์ (Admin -> /admin/products, User -> /dashboard/user)
 Route::get('/dashboard', function (Request $request) {
     if ($request->user()?->role === 'admin') {
-        return redirect()->to('/dashboard/admin');
+        return redirect()->to('/admin/products');
     }
 
     return redirect()->to('/dashboard/user');
@@ -32,7 +32,7 @@ Route::get('/dashboard', function (Request $request) {
 // Dashboard สำหรับ User ทั่วไป / ลูกค้า
 Route::get('/dashboard/user', function (Request $request) {
     if ($request->user()?->role === 'admin') {
-        return redirect()->to('/dashboard/admin');
+        return redirect()->to('/admin/products');
     }
 
     return Inertia::render('dashboard');
@@ -40,10 +40,10 @@ Route::get('/dashboard/user', function (Request $request) {
 
 // Dashboard สำหรับ Admin
 Route::middleware(['auth', EnsureAdmin::class])->group(function () {
-    Route::get('/dashboard/admin', [AdminProductController::class, 'index'])->name('dashboard.admin');
-    Route::get('/dashboard/admin/products', [AdminProductController::class, 'index']);
-    Route::get('/dashboard/admin/orders', [AdminOrderController::class, 'index']);
-    Route::get('/dashboard/admin/users', [AdminUserController::class, 'index']);
+    Route::get('/admin/products', [AdminProductController::class, 'index'])->name('dashboard.admin');
+    Route::get('/admin/products/products', [AdminProductController::class, 'index']);
+    Route::get('/admin/products/orders', [AdminOrderController::class, 'index']);
+    Route::get('/admin/products/users', [AdminUserController::class, 'index']);
 });
 
 // งานฝั่งผู้ดูแลระบบ (Admin)
@@ -71,7 +71,7 @@ Route::middleware(['auth', EnsureAdmin::class])->prefix('admin')->name('admin.')
     Route::patch('/users/{user}/ban', [AdminUserController::class, 'toggleBan'])->whereNumber('user')->name('users.ban');
     Route::patch('/users/{user}/role', [AdminUserController::class, 'updateRole'])->whereNumber('user')->name('users.role');
 });
-Route::redirect('/admin', '/dashboard/admin');
+Route::redirect('/admin', '/admin/products');
 
 // งานฝั่งลูกค้า ต้องล็อกอินและไม่ถูกแบน
 Route::middleware(['auth', EnsureCustomer::class])->group(function () {

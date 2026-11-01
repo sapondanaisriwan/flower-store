@@ -53,7 +53,7 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
         ? [
               {
                   title: 'Admin Dashboard',
-                  href: '/dashboard/admin',
+                  href: '/admin/products',
                   icon: LayoutGrid,
               },
               {
@@ -174,7 +174,7 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                     </div>
 
                     <Link
-                        href={isAdmin ? '/dashboard/admin' : '/'}
+                        href={isAdmin ? '/admin/products' : '/'}
                         prefetch
                         className="flex items-center space-x-2"
                     >

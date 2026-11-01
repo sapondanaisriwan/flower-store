@@ -15,7 +15,7 @@ class TwoFactorLoginResponse implements TwoFactorLoginResponseContract
     public function toResponse($request)
     {
         $role = $request->user()?->role;
-        $target = $role === 'admin' ? '/dashboard/admin' : '/';
+        $target = $role === 'admin' ? '/admin/products' : '/';
 
         return $request->wantsJson()
             ? response()->json(['two_factor' => false, 'redirect' => $target])
