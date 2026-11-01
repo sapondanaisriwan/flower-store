@@ -50,8 +50,12 @@ class HandleInertiaRequests extends Middleware
                     ->pluck('product_id')->all()
                 : [],
             'cartLines' => fn () => $request->user()?->role === 'customer' && ! $request->user()->is_banned
-                ? CartProduct::where('cart_user_id', $request->user()->id)
-                    ->select('product_id as id', 'quantity')->orderBy('product_id')->get()
+                ? CartProduct::join('products', 'products.id', '=', 'cart_product.product_id')
+                    ->where('cart_user_id', $request->user()->id)
+                    ->where('products.is_deleted', false)
+                    ->select('cart_product.product_id as id', 'cart_product.quantity')
+                    ->orderBy('cart_product.product_id')
+                    ->get()
                 : [],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];

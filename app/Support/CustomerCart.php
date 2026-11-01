@@ -12,9 +12,9 @@ class CustomerCart
     // Cart และ Checkout ใช้คำค้นเดียวกัน อ่านข้อมูลสินค้าจริงกับจำนวนที่เลือก
     public static function items(int $userId): Collection
     {
-        // เก็บสินค้าที่หมดหรือปิดขายไว้ให้ลูกค้าเห็นและลบออกเอง
         return CartProduct::where('cart_user_id', $userId)
             ->join('products', 'products.id', '=', 'cart_product.product_id')
+            ->where('products.is_deleted', false)
             ->select('products.*', 'cart_product.quantity')
             ->orderBy('products.id')
             ->get();

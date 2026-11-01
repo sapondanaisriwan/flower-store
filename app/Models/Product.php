@@ -167,7 +167,7 @@ class Product extends Model
     }
 
     /**
-     * ดึงรายชื่อสีทั้งหมดที่มีอยู่ในระบบ
+     * ดึงรายชื่อสีทั้งหมดที่มีอยู่ในสินค้าที่ยังเปิดขาย
      */
     public static function getDistinctColors(): Collection
     {
